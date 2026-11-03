@@ -272,7 +272,7 @@ p { margin: 0; }
       <p class="muted small">すべての進行が消えます。元に戻せません。</p>
       <div class="acts"><button class="btn" type="button" id="resetBtn"><span class="lbl">データを消して最初から</span><span class="cf">もう一度タップで消去</span></button></div>
     </div>
-    <p class="muted small">AddAll 第2版</p>
+    <p class="muted small">AddAll 第3版</p>
   </div>
 </div>
 
@@ -396,7 +396,7 @@ const TRAITS = {
   skill: { name: '修練', fx: '熟練の伸び +15%', d: '採取のたびに増える熟練が、1レベルごとに15%多くなります。', now: l => `熟練の伸び +${l * 15}%` },
   mana: { name: '錬金', fx: 'マナ +8%', d: '分解や依頼で得られるマナが、1レベルごとに8%増えます。素材の価値が上がるので、生成に必要なマナも同じだけ増えます。', now: l => `マナ +${l * 8}%` },
   fam: { name: '使役', fx: '使い魔の速さ +10%', d: 'すべての採取地の使い魔が、1レベルごとに10%速く採取します。', now: l => `使い魔の速さ +${l * 10}%` },
-  craft: { name: '職人', fx: '加工の生産量 +5%', d: '加工でできる加工品の数が、1レベルごとに5%増えます（材料の数は変わりません）。', now: l => `加工の生産量 +${l * 5}%` },
+  craft: { name: '探究', fx: '探索の進み +10%', d: '採取地の探索が、1レベルごとに10%速く進みます。珍しい素材が早く見つかるようになります。', now: l => `探索の進み +${l * 10}%` },
 };
 const TRAIT_IDS = Object.keys(TRAITS);
 const MAX_TOOLS = 40;
@@ -410,7 +410,7 @@ const MIS = [
   { id: 'm2', area: 'a1', name: '石拾い', text: '小石を累計200個採取する', prog: () => S.col.stone || 0, goal: 200, rw: ['mana', 1.1], brute: 300 },
   { id: 'm3', area: 'a1', name: 'マナの目覚め', text: 'マナを累計500集める', prog: () => S.st.totalMana, goal: 500, rw: ['power', 1.25], brute: 2000 },
   { id: 'm4', area: 'a1', name: '図鑑の1ページ目', text: '図鑑に5種類登録する', prog: () => regCount(), goal: 5, rw: ['fam', 1.25], brute: 5000 },
-  { id: 'm5', area: 'a1', name: '煉瓦を焼く', text: '煉瓦を20個加工する', prog: () => S.st.crafted.brick || 0, goal: 20, rw: ['skill', 1.5], brute: 3000 },
+  { id: 'm5', area: 'a1', name: '煉瓦を焼く', text: '煉瓦を20個納品する', deliver: 'brick', goal: 20, rw: ['skill', 1.5], brute: 3000 },
   { id: 'm6', area: 'a1', name: '最初の道具', text: '道具を1つ作る', prog: () => S.st.toolsMade, goal: 1, rw: ['power', 1.3], brute: 5000 },
   { id: 'm7', area: 'a1', name: '慣れた手つき', text: '熟練を300にする', prog: () => S.skill, goal: 300, rw: ['power', 1.3], brute: 1e4 },
   { id: 'm8', area: 'a1', name: '銅の納品', text: '銅のインゴットを30個納品する', deliver: 'cuIngot', goal: 30, rw: ['mana', 1.2], brute: 3e4 },
@@ -423,7 +423,7 @@ const MIS = [
   { id: 'm15', area: 'a1', name: '熟練の極み', text: '熟練を1万にする', prog: () => S.skill, goal: 1e4, rw: ['skill', 2], brute: 1e9 },
   // 霧の森
   { id: 'f1', area: 'a2', name: '森の第一歩', text: '霧の森で100回採取する', prog: () => S.st.areaTaps.a2 || 0, goal: 100, rw: ['power', 1.3], brute: 1e6 },
-  { id: 'f2', area: 'a2', name: '土を育てる', text: '腐葉土を50個加工する', prog: () => S.st.crafted.humus || 0, goal: 50, rw: ['mana', 1.2], brute: 3e6 },
+  { id: 'f2', area: 'a2', name: '土を育てる', text: '腐葉土を50個納品する', deliver: 'humus', goal: 50, rw: ['mana', 1.2], brute: 3e6 },
   { id: 'f3', area: 'a2', name: 'はじめての融合', text: '道具を1回融合する', prog: () => S.st.fusions, goal: 1, rw: ['power', 1.3], brute: 5e6 },
   { id: 'f4', area: 'a2', name: '樹脂の納品', text: '樹脂を30個納品する', deliver: 'resin', goal: 30, rw: ['fam', 1.3], brute: 1e7 },
   { id: 'f5', area: 'a2', name: '良い道具', text: '品質50%以上の道具を持つ', prog: () => maxToolQ() * 100, goal: 50, rw: ['skill', 1.5], brute: 3e7 },
@@ -434,7 +434,7 @@ const MIS = [
   { id: 'f10', area: 'a2', name: '森の主', text: 'マナを累計1兆集める', prog: () => S.st.totalMana, goal: 1e12, rw: ['mana', 2], brute: 5e12 },
   // 水晶の洞窟
   { id: 'c1', area: 'a3', name: '洞窟の入口', text: '水晶の洞窟で500回採取する', prog: () => S.st.areaTaps.a3 || 0, goal: 500, rw: ['power', 1.5], brute: 1e12 },
-  { id: 'c2', area: 'a3', name: '本物の金', text: '金のインゴットを100個加工する', prog: () => S.st.crafted.auIngot || 0, goal: 100, rw: ['mana', 1.3], brute: 3e12 },
+  { id: 'c2', area: 'a3', name: '本物の金', text: '金のインゴットを100個納品する', deliver: 'auIngot', goal: 100, rw: ['mana', 1.3], brute: 3e12 },
   { id: 'c3', area: 'a3', name: '火薬の納品', text: '火薬を50個納品する', deliver: 'gunpowder', goal: 50, rw: ['power', 1.5], brute: 1e13 },
   { id: 'c4', area: 'a3', name: '完璧に近づく', text: '品質90%以上の道具を持つ', prog: () => maxToolQ() * 100, goal: 90, rw: ['skill', 2], brute: 3e13 },
   { id: 'c5', area: 'a3', name: '特性の継承', text: '特性レベルの合計が6以上の道具を持つ', prog: () => maxTraitSum(), goal: 6, rw: ['fam', 2], brute: 1e14 },
@@ -463,7 +463,8 @@ const UP = Object.fromEntries(UPS.map(u => [u.id, u]));
 
 /* ===================== 状態 ===================== */
 const fresh = () => ({
-  v: 3, mana: 0, skill: 0, fame: 0, autoCraft: {},
+  v: 4, mana: 0, skill: 0, fame: 0,
+  run: 1, mc: {}, stones: 0, pu: {}, life: { totalMana: 0, prestiges: 0, bestStones: 0 },
   area: 'a1', unlocked: { a1: true },
   inv: {}, reg: {}, col: {}, dis: {}, ref: {},
   tools: [], eq: { hand: null, waist: null, neck: null }, toolSeq: 1,
@@ -503,7 +504,13 @@ function normalize(o) {
   if ((o.v || 1) < 3) {
     for (const id in f.ref) { const n = f.ref[id] || 0; f.ref[id] = Math.min(REF_MAX, Math.ceil((1 - 0.9 ** n) * REF_MAX - 1e-9)); }
   }
-  f.v = 3;
+  // ミッションの達成回数（周回をまたいで残る）を、それまでの達成済みから作る
+  if ((o.v || 1) < 4) {
+    f.mc = {}; for (const id in f.done) if (f.done[id]) f.mc[id] = 1;
+    f.life.totalMana = Math.max(f.life.totalMana, f.st.totalMana || 0);
+    delete f.autoCraft;
+  }
+  f.v = 4;
   return f;
 }
 let S = fresh();
@@ -511,7 +518,10 @@ const ui = { tab: 'gather', gArea: 'a1', labView: 'dg', labArea: 'a1', misView: 
 
 /* ===================== 数式 ===================== */
 const regCount = () => ITEMS.filter(i => S.reg[i.id]).length;
-function mult(type) { let x = 1; for (const m of MIS) if (S.done[m.id] && m.rw[0] === type) x *= m.rw[1]; return x; }
+function mult(type) { let x = 1; for (const m of MIS) if (m.rw[0] === type && S.mc[m.id]) x *= m.rw[1] ** S.mc[m.id]; return x; }
+const misOpen = m => (S.mc[m.id] || 0) < S.run;
+const misBehind = m => S.run - (S.mc[m.id] || 0);
+const pu = id => S.pu[id] || 0;
 const toolById = u => S.tools.find(t => t.u === u);
 const toolEff = t => 1 + (TOOL[t.b].base - 1) * (0.6 + 0.8 * t.q);
 const eqMult = slot => { const t = toolById(S.eq[slot]); return t ? toolEff(t) : 1; };
@@ -519,12 +529,12 @@ function traitLv(id) { let s = 0; for (const sl of SLOTS) { const t = toolById(S
 const fameMult = () => 1 + 0.03 * S.fame;
 const skillMult = () => 1 + S.skill * 0.004;
 const skillGain = () => mult('skill') * (1 + 0.15 * traitLv('skill'));
-const power = () => (1 + S.up.tool) * skillMult() * mult('power') * eqMult('hand') * (1 + 0.1 * traitLv('power'));
+const power = () => (1 + S.up.tool) * skillMult() * mult('power') * 1.5 ** pu('power') * eqMult('hand') * (1 + 0.1 * traitLv('power'));
 const famLv = a => S.up['fam_' + a] || 0;
-const famMulti = () => mult('fam') * eqMult('waist') * (1 + 0.1 * traitLv('fam'));
+const famMulti = () => mult('fam') * 1.5 ** pu('fam') * eqMult('waist') * (1 + 0.1 * traitLv('fam'));
 const famRate = (a = S.area) => famLv(a) * 0.5 * famMulti();
 const famTotal = () => unlockedAreas().reduce((s, a) => s + famRate(a.id), 0);
-const manaMult = () => 1.1 ** S.up.furnace * mult('mana') * eqMult('neck') * (1 + 0.08 * traitLv('mana')) * fameMult();
+const manaMult = () => 1.1 ** S.up.furnace * mult('mana') * 1.5 ** pu('mana') * eqMult('neck') * (1 + 0.08 * traitLv('mana')) * fameMult();
 // 精錬は20段階。1段階ごとに品質+5%、100%で「完璧」（価値2.5倍）
 const REF_MAX = 20;
 const refSteps = id => Math.min(REF_MAX, S.ref[id] || 0);
@@ -540,7 +550,7 @@ const traitSum = t => Object.values(t.t).reduce((a, b) => a + b, 0);
 const maxTraitSum = () => S.tools.reduce((a, t) => Math.max(a, traitSum(t)), 0);
 const refineCost = id => Math.ceil(10 * 1.3 ** refSteps(id));
 const procOn = p => (S.st.crafted[p.id] || 0) > 0 && S.unlocked[p.area];
-const autoUsed = () => { const s = new Set(); for (const p of PROC) if (procOn(p)) Object.keys(p.in).forEach(id => s.add(id)); return s; };
+const exploreMult = () => (1 + 0.1 * traitLv('craft')) * 2 ** pu('explore');
 function avgValue(a = S.area) {
   const f = eyeF(); const raws = availOf(a);
   const tot = raws.reduce((s, i) => s + i.w, 0);
@@ -568,7 +578,7 @@ const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;'
 const nameOf = id => S.reg[id] || inv(id) > 0 || (S.col[id] || 0) > 0 ? ITEM[id].name : '？？？';
 
 /* ===================== ゲーム処理 ===================== */
-function addMana(x) { S.mana += x; S.st.totalMana += x; }
+function addMana(x) { S.mana += x; S.st.totalMana += x; S.life.totalMana += x; }
 // 一度手に入れたものは自動で図鑑に登録する
 function register(id) { if (!S.reg[id]) { S.reg[id] = true; toast(`図鑑に登録: ${ITEM[id].name}`); } }
 function addItem(id, c) { S.inv[id] = inv(id) + c; if (c > 0) register(id); }
@@ -613,28 +623,23 @@ function gather(n, a = S.area) {
   for (const id in got) {
     const c = got[id];
     S.col[id] = (S.col[id] || 0) + c;
-    addItem(id, c);
+    // 自動分解がオンなら、手持ちに入れずにその場でマナにする（表示が増えたり減ったりしないように）
+    if (autoDisOn()) dissolve(id, c); else addItem(id, c);
   }
   return got;
 }
-// 自動加工 → 自動分解（自動加工の材料は残す）。採取のあと少しずつ呼ばれる
+// 自動分解: 採取した素材（加工品以外）をマナにする
 function processAuto() {
-  for (const p of PROC) {
-    if (!procOn(p)) continue;
-    const n = canMake(p.in);
-    if (n > 0) craft(p, n);
-  }
   if (!autoDisOn()) return;
-  const keep = autoUsed();
   for (const i of ITEMS) {
-    if (keep.has(i.id)) continue;
+    if (i.kind !== 'raw') continue;
     const c = inv(i.id);
     if (c > 0) { dissolve(i.id, c); S.inv[i.id] = 0; }
   }
 }
 function autoTaps(k, a) {
   S.st.auto += k;
-  S.st.areaTaps[a] = (S.st.areaTaps[a] || 0) + k;
+  S.st.areaTaps[a] = (S.st.areaTaps[a] || 0) + k * exploreMult();
   S.skill += 0.1 * k * skillGain();
   return gather(power() * k, a);
 }
@@ -673,8 +678,7 @@ const canMake = ins => Math.min(...Object.entries(ins).map(([id, n]) => Math.flo
 function craft(p, times) {
   if (times <= 0 || canMake(p.in) < times) return false;
   for (const [id, n] of Object.entries(p.in)) S.inv[id] -= n * times;
-  const out = times * (1 + 0.05 * traitLv('craft'));
-  const got = Math.floor(out) + (Math.random() < out % 1 ? 1 : 0);
+  const got = times;
   addItem(p.id, got);
   S.st.crafted[p.id] = (S.st.crafted[p.id] || 0) + times;
   return got;
@@ -755,6 +759,7 @@ function scrapTool(u) {
 function ready(m) { return m.deliver ? inv(m.deliver) >= m.goal : m.prog() >= m.goal; }
 function complete(m, how) {
   S.done[m.id] = true;
+  S.mc[m.id] = (S.mc[m.id] || 0) + 1;
   toast(`ミッション達成「${m.name}」 ${RW_NAME[m.rw[0]]} ${fmtX(m.rw[1])}${how ? '（' + how + '）' : ''}`, 4000);
 }
 function buy(id) {
@@ -768,6 +773,52 @@ function buy(id) {
 }
 function canUnlock(a) { const u = AREA[a].unlock; return !!u && missionDoneIn(u.area) >= u.n; }
 function unlock(a) { S.unlocked[a] = true; S.area = a; ui.gArea = a; toast(`新しい採取地「${AREA[a].name}」へ行けるようになりました`, 4000); }
+
+/* --- 賢者の石（周回） --- */
+const STONE_IN = { catalyst: 3, spiritCrystal: 3, primal: 1 };
+const stoneGain = () => Math.max(1, Math.floor(Math.cbrt(S.st.totalMana / 1e10)));
+const PUS = [
+  { id: 'mana', name: '錬金の心得', info: 'マナ ×1.5（レベルごとに掛け算）', cost: l => l + 1 },
+  { id: 'power', name: '熟達の手', info: '採取力 ×1.5（レベルごとに掛け算）', cost: l => l + 1 },
+  { id: 'fam', name: '使い魔との契約', info: 'すべての使い魔の速さ ×1.5（レベルごとに掛け算）', cost: l => l + 1 },
+  { id: 'explore', name: '先達の地図', info: '探索の進み ×2（レベルごとに掛け算）', cost: l => 2 * (l + 1) },
+  { id: 'skillKeep', name: '熟練の記憶', info: '周回のときに残す熟練 +10%（もとは10%、最大100%）', cost: l => 2 * (l + 1), max: 9 },
+  { id: 'famStart', name: '使い魔の手ほどき', info: '周回のあと、すべての採取地の使い魔が Lv5 ずつ高い状態から始まる', cost: l => 3 * (l + 1) },
+  { id: 'autodis', name: '始まりの装置', info: '周回のあと、最初から自動分解装置がある', cost: () => 1, max: 1 },
+  { id: 'keepFame', name: '名声の記憶', info: '周回のときに名声を残す', cost: () => 5, max: 1 },
+  { id: 'keepBook', name: '図鑑の記憶', info: '周回のときに図鑑の登録と加工の解放を残す', cost: () => 5, max: 1 },
+  { id: 'keepRef', name: '精錬の記憶', info: '周回のときに素材の精錬（品質）を残す', cost: () => 10, max: 1 },
+];
+const PU = Object.fromEntries(PUS.map(p => [p.id, p]));
+function buyPu(id) {
+  const p = PU[id], l = pu(id);
+  if (p.max !== undefined && l >= p.max) return false;
+  const c = p.cost(l); if (S.stones < c) return false;
+  S.stones -= c; S.pu[id] = l + 1; return true;
+}
+function prestige() {
+  if (!fillMissing(STONE_IN, 1)) return 0;
+  for (const [id, n] of Object.entries(STONE_IN)) S.inv[id] -= n;
+  const gain = stoneGain();
+  const o = S, n = fresh();
+  // 周回をまたいで残るもの
+  n.run = o.run + 1; n.mc = o.mc; n.stones = o.stones + gain; n.pu = o.pu;
+  n.life = { totalMana: o.life.totalMana, prestiges: o.life.prestiges + 1, bestStones: Math.max(o.life.bestStones, gain) };
+  n.skill = o.skill * Math.min(1, 0.1 + 0.1 * pu('skillKeep'));
+  n.tools = SLOTS.map(sl => o.tools.find(t => t.u === o.eq[sl.id])).filter(Boolean);
+  for (const t of n.tools) n.eq[TOOL[t.b].slot] = t.u;
+  n.toolSeq = o.toolSeq;
+  if (pu('keepFame')) n.fame = o.fame;
+  if (pu('keepBook')) { n.reg = Object.assign({}, o.reg); n.st.crafted = Object.assign({}, o.st.crafted); }
+  if (pu('keepRef')) n.ref = Object.assign({}, o.ref);
+  if (pu('autodis')) { n.up.autodis = 1; n.autoDis = o.autoDis; }
+  for (const a of AREAS) n.up['fam_' + a.id] = 5 * pu('famStart');
+  n.created = o.created;
+  S = n;
+  ui.gArea = 'a1'; ui.misArea = 'a1'; ui.fuse = null; ui.tab = 'gather'; ui.upView = 'shop';
+  refreshReqs();
+  return gain;
+}
 
 /* --- 依頼 --- */
 const REQ_SLOTS = 3;
@@ -819,9 +870,9 @@ function structKey() {
       return base + regSig(labIds());
     }
     case 'tools': return `t${ua}${ui.fuse}${ui.traitHelp ? 'h' : ''}|${S.tools.map(t => t.u).join(',')}|${SLOTS.map(s => S.eq[s.id]).join(',')}|${S.st.fusions}`;
-    case 'mission': return `m${ui.misView}${ui.misArea}${ua}${Object.keys(S.done).length}|${S.reqs.map(r => r ? (r.wait ? 'w' : r.id) : '-').join(',')}`;
+    case 'mission': return `m${ui.misView}${ui.misArea}${ua}${S.run}:${MIS.filter(misOpen).length}|${S.reqs.map(r => r ? (r.wait ? 'w' : r.id) : '-').join(',')}`;
     case 'book': return `b${regCount()}${ua}`;
-    case 'up': return 'u' + S.up.autodis + Object.keys(S.unlocked).join(',');
+    case 'up': return 'u' + (ui.upView || 'shop') + S.up.autodis + Object.keys(S.unlocked).join(',') + S.run + JSON.stringify(S.pu);
   }
   return ui.tab;
 }
@@ -855,7 +906,7 @@ function update() {
   const perSec = () => unlockedAreas().reduce((s, a) => s + famRate(a.id) * avgValue(a.id), 0) * power() * manaMult();
   document.getElementById('hRate').textContent = r <= 0 ? AREA[S.area].name :
     autoDisOn() ? `${AREA[S.area].name}　+${fmt(perSec())} /秒` : `${AREA[S.area].name}　使い魔 計${fmtD(r)} 回/秒`;
-  const nReady = MIS.filter(m => !S.done[m.id] && S.unlocked[m.area] && ready(m)).length
+  const nReady = MIS.filter(m => misOpen(m) && S.unlocked[m.area] && ready(m)).length
     + S.reqs.filter(q => q && !q.wait && inv(q.id) >= q.n).length;
   const bd = document.getElementById('misBadge');
   bd.hidden = nReady === 0; bd.textContent = nReady;
@@ -891,7 +942,7 @@ function vGather() {
   const bagValue = () => raws.reduce((s, id) => s + inv(id) * unitMana(id), 0);
   const here = S.area === a.id;
   return `${chips}
-  <section class="area-head"><span class="eyebrow">採取地 ${AREAS.indexOf(a) + 1}</span><h2>${esc(a.name)}</h2><p class="muted small">${esc(a.desc)}</p></section>
+  <section class="area-head"><span class="eyebrow">${S.run > 1 ? S.run + '周目　' : ''}採取地 ${AREAS.indexOf(a) + 1}</span><h2>${esc(a.name)}</h2><p class="muted small">${esc(a.desc)}</p></section>
   <div class="tapzone" id="tapzone">
     <button class="tap" id="tap" type="button" aria-label="採取する"><b>採取</b><small>タップ</small></button>
   </div>
@@ -925,7 +976,7 @@ function bindTap() {
   const go = (x, y) => {
     S.area = ui.gArea;
     S.st.manual++;
-    S.st.areaTaps[S.area] = (S.st.areaTaps[S.area] || 0) + 1;
+    S.st.areaTaps[S.area] = (S.st.areaTaps[S.area] || 0) + exploreMult();
     S.skill += skillGain();
     const got = gather(power());
     t.classList.add('hit');
@@ -1011,15 +1062,15 @@ function vLabCraft() {
     const rows = PROC.filter(p => p.area === a.id).map(p => {
       if (procOn(p)) {
         return `<div class="item r${p.r}">
-          <div class="top-row"><span class="nm">${esc(p.name)} <span class="tag">自動で加工中</span></span><span class="own">所持 <b>${tx(() => fmt(inv(p.id)))}</b></span></div>
-          <div class="meta">価値 ${tx(() => fmt(unitMana(p.id)))} マナ　加工した数 ${tx(() => fmt(S.st.crafted[p.id] || 0))}</div>
+          <div class="top-row"><span class="nm">${esc(p.name)} <span class="tag">解放済み</span></span><span class="own">所持 <b>${tx(() => fmt(inv(p.id)))}</b></span></div>
+          <div class="meta">価値 ${tx(() => fmt(unitMana(p.id)))} マナ</div>
           ${insHtml(p.in, 1)}
         </div>`;
       }
       const mc = () => missingCost(p.in, 1);
       return `<div class="item r${p.r}">
         <div class="top-row"><span class="nm">${esc(p.name)} <span class="tag none">未解放</span></span></div>
-        <div class="meta">価値 ${tx(() => fmt(unitMana(p.id)))} マナ（材料の合計の約1.5倍）</div>
+        <div class="meta">価値 ${tx(() => fmt(unitMana(p.id)))} マナ</div>
         ${insHtml(p.in, 1)}
         <div class="acts">
           <button class="btn pri" type="button" data-act="unlockcraft" data-id="${p.id}" ${dz(() => { if (canMake(p.in) >= 1) return false; const c = mc(); return c === null || S.mana < c; })}>加工して解放 <small>${tx(() => { if (canMake(p.in) >= 1) return '手持ちで足ります'; const c = mc(); return c === null ? '未登録の材料あり' : '不足分 ' + fmt(c) + ' マナ'; })}</small></button>
@@ -1029,7 +1080,7 @@ function vLabCraft() {
     return `<h4>${esc(a.name)}のレシピ</h4>${rows}`;
   }).join('');
   return `<div class="panel"><div class="row-between"><span>解放した加工品</span><b>${made} / ${avail.length}</b></div><div class="prog"><i style="width:${avail.length ? made / avail.length * 100 : 0}%"></i></div></div>
-  <p class="muted small">一度加工すると解放され、それからは材料がそろうたびに自動で加工されます。加工品は材料の合計より価値が高いので、そのまま分解するより多くのマナになります。自動分解がオンのときも、解放したレシピの材料は分解されずに残ります。</p>
+  <p class="muted small">一度加工すると解放され、図鑑に載ります。解放した加工品は、道具の作成・精錬・納品で足りないときに「不足分を生成」でマナから作れるようになります。</p>
   <div class="list">${groups}</div>`;
 }
 function vLabRefine() {
@@ -1167,14 +1218,15 @@ function vMission() {
 function vMis() {
   if (!S.unlocked[ui.misArea]) ui.misArea = 'a1';
   const list = MIS.filter(m => m.area === ui.misArea);
-  const open = list.filter(m => !S.done[m.id]);
-  const done = list.filter(m => S.done[m.id]);
+  const open = list.filter(misOpen);
+  const done = list.filter(m => !misOpen(m));
   const card = m => {
     const cur = () => m.deliver ? Math.min(inv(m.deliver), m.goal) : Math.min(m.prog(), m.goal);
     const gen = m.deliver ? () => { const c = missingCost({ [m.deliver]: m.goal }, 1); return c; } : null;
     return `<div class="mis" ${cl(() => ready(m), 'ready')}>
       <div class="hd"><h3>${esc(m.name)}</h3><span class="rw">${RW_NAME[m.rw[0]]} ${fmtX(m.rw[1])}</span></div>
       <p class="tx">${esc(m.text)}</p>
+      ${S.run > 1 ? `<p class="small muted">これまでに ${tx(() => fmt(S.mc[m.id] || 0))} 回達成${tx(() => misBehind(m) > 1 ? `　取り返し あと${misBehind(m)}回` : '')}</p>` : ''}
       <div class="prog"><i ${wd(() => cur() / m.goal * 100)}></i></div>
       <div class="pv">${m.deliver ? '手持ち ' : ''}${tx(() => fmt(cur()))} / ${fmt(m.goal)}</div>
       <div class="acts">
@@ -1184,12 +1236,12 @@ function vMis() {
       </div>
     </div>`;
   };
-  const doneRow = m => `<div class="mis done"><span class="nm">${esc(m.name)}</span><span class="ck">達成 ${RW_NAME[m.rw[0]]} ${fmtX(m.rw[1])}</span></div>`;
+  const doneRow = m => `<div class="mis done"><span class="nm">${esc(m.name)}</span><span class="ck">達成${S.run > 1 ? '（累計' + fmt(S.mc[m.id]) + '回）' : ''} ${RW_NAME[m.rw[0]]} ${fmtX(m.rw[1])}</span></div>`;
   const bonus = Object.keys(RW_NAME).map(k => `<div class="row-between"><span>${RW_NAME[k]}</span><b>${fmtX(mult(k))}</b></div>`).join('');
   return `${areaChips(ui.misArea, 'misarea')}
   <section class="area-head">
     <span class="eyebrow">${esc(AREA[ui.misArea].name)}のミッション ${done.length} / ${list.length}</span>
-    <p class="muted small">達成すると、ずっと続く強化がもらえます。条件を満たせないときは、マナで押し通すこともできます。</p>
+    <p class="muted small">達成すると、ずっと続く強化がもらえます。条件を満たせないときは、マナで押し通すこともできます。ミッションは周回のたびに最初からになり、報酬は周回ごとに重なります。前の周で達成しなかったものは、その分だけ続けて達成して取り返せます。</p>
   </section>
   <div class="panel"><div class="small muted">ミッションで得た強化（すべての採取地の合計）</div><div class="bonus">${bonus}</div></div>
   ${open.map(card).join('')}
@@ -1259,6 +1311,47 @@ function vBook() {
 
 /* --- 強化 --- */
 function vUp() {
+  const seg = [['shop', '工房の強化'], ['stone', '賢者の石']]
+    .map(([k, n]) => `<button type="button" data-act="upview" data-id="${k}" aria-pressed="${(ui.upView || 'shop') === k}">${n}</button>`).join('');
+  return `<div class="seg full" role="group" aria-label="強化の種類">${seg}</div>${ui.upView === 'stone' ? vStone() : vShop()}`;
+}
+function vStone() {
+  const mc = () => missingCost(STONE_IN, 1);
+  const pus = PUS.map(p => {
+    const l = () => pu(p.id);
+    const maxed = p.max !== undefined && pu(p.id) >= p.max;
+    return `<div class="up">
+      <div class="row-between"><h3>${esc(p.name)}</h3><span class="lv">${p.max === 1 ? (maxed ? '習得済み' : '') : 'Lv ' + tx(() => fmt(l())) + (p.max ? ' / ' + p.max : '')}</span></div>
+      <p class="small muted">${esc(p.info)}</p>
+      ${maxed ? '' : `<div class="acts"><button class="btn pri" type="button" data-act="buypu" data-id="${p.id}" ${dz(() => S.stones < p.cost(l()))}>習得 <small>賢者の石 ${tx(() => fmt(p.cost(l())))}個</small></button></div>`}
+    </div>`;
+  }).join('');
+  const keep = ['ミッションの報酬（達成回数）', '装備中の道具3つ（品質と特性）', `熟練の${Math.round(Math.min(1, 0.1 + 0.1 * pu('skillKeep')) * 100)}%`, '賢者の石と、石で習得した強化']
+    .concat(pu('keepFame') ? ['名声'] : [], pu('keepBook') ? ['図鑑と加工の解放'] : [], pu('keepRef') ? ['精錬'] : [], pu('autodis') ? ['自動分解装置'] : []);
+  return `
+  <section class="area-head">
+    <span class="eyebrow">${S.run}周目</span>
+    <h2>賢者の石</h2>
+    <p class="muted small">師匠が探し続けた、完璧な物質。錬成すると世界がはじまりに戻り、錬金術師としての力の一部だけを持って、もう一度やり直します。</p>
+  </section>
+  <div class="panel">
+    <div class="row-between"><span>持っている賢者の石</span><b class="q">${tx(() => fmt(S.stones))} 個</b></div>
+    <div class="row-between small"><span class="muted">これまでの周回</span><span>${fmt(S.life.prestiges)} 回</span></div>
+  </div>
+  <div class="panel">
+    <h3>賢者の石を錬成して周回する</h3>
+    ${insHtml(STONE_IN, 1)}
+    <div class="row-between"><span class="small">手に入る賢者の石</span><b class="q">${tx(() => fmt(stoneGain()))} 個</b></div>
+    <p class="small muted">この周で集めたマナが多いほど増えます（この周の累計 ${tx(() => fmt(S.st.totalMana))} マナ）。</p>
+    <p class="small"><b>残るもの</b>: ${keep.join('、')}</p>
+    <p class="small"><b>はじまりに戻るもの</b>: マナ、素材、採取地と探索、腕前・使い魔・分解炉などの強化、そのほかの道具、依頼${pu('keepFame') ? '' : '、名声'}${pu('keepBook') ? '' : '、図鑑と加工の解放'}${pu('keepRef') ? '' : '、精錬'}、ミッションの達成状況（報酬は残る）</p>
+    <div class="acts">${confirmBtn('pri', `data-act="prestige" ${dz(() => { const c = mc(); return c === null || S.mana < c; })}`, `錬成して周回する <small>${tx(() => { const c = mc(); return c === null ? '未登録の材料あり' : c > 0 ? '不足分 ' + fmt(c) + ' マナ' : '手持ちで足ります'; })}</small>`, 'もう一度タップで周回')}</div>
+  </div>
+  <h3>賢者の石で習得する強化</h3>
+  <p class="small muted">習得した強化は、周回しても失われません。</p>
+  <div class="list">${pus}</div>`;
+}
+function vShop() {
   const cards = UPS.filter(u => !u.area || S.unlocked[u.area]).map(u => {
     const l = () => S.up[u.id];
     if (u.once && S.up[u.id] >= 1) {
@@ -1282,7 +1375,7 @@ function vUp() {
     <p class="muted small">強化にレベルの上限はありません。マナさえあれば、どこまでも強くなれます。</p>
   </section>
   <div class="list">${cards}</div>
-  <p class="small muted">次の版で「賢者の石（周回）」を追加予定です。</p>`;
+  <p class="small muted">「賢者の石」で周回すると、ずっと残る強化を習得できます。</p>`;
 }
 
 /* ===================== 操作 ===================== */
@@ -1306,7 +1399,7 @@ main.addEventListener('click', e => {
     case 'dislist': dissolveIds(labIds()); break;
     case 'dis': { const c = inv(id); const g = dissolve(id, c); S.inv[id] = 0; if (g > 0) toast(`${ITEM[id].name}を${fmt(c)}個分解: +${fmt(g)} マナ`); break; }
     case 'force': { const c = unitMana(id) * 10; if (S.mana < c) break; if (!armed(b)) return; S.mana -= c; addItem(id, 1); toast(`強制錬成で${ITEM[id].name}が生まれた`); break; }
-    case 'unlockcraft': { const p = ITEM[id]; if (procOn(p)) break; if (canMake(p.in) < 1 && !fillMissing(p.in, 1)) break; if (craft(p, 1)) { toast(`${p.name}を解放しました。これからは自動で加工されます`, 4000); processAuto(); } break; }
+    case 'unlockcraft': { const p = ITEM[id]; if (procOn(p)) break; if (canMake(p.in) < 1 && !fillMissing(p.in, 1)) break; if (craft(p, 1)) { toast(`${p.name}を解放しました。これからは不足分を生成で作れます`, 4000); } break; }
     case 'bulkfuse': { const n = Number(id); if (n > 1 && !armed(b)) return; const r = bulkFuse(ui.fuse, n); const t = toolById(ui.fuse); if (r.n && t) toast(`${r.n}回強化合成しました: 品質 ${fmtQ(t.q)}、${traitText(t) || '特性なし'}`, 4000); break; }
     case 'craft': { const p = ITEM[id]; const g = craft(p, canMake(p.in)); if (g) toast(`${p.name}を${fmt(g)}個作りました`); break; }
     case 'refine': { const r = refine(id, 1); if (r.n) toast(perfect(id) ? `${ITEM[id].name}が完璧になりました（価値 ×2.50）` : `${ITEM[id].name}の品質が ${fmtQ(qOf(id))} になりました${r.spent > 0 ? '（' + fmt(r.spent) + ' マナで不足分を生成）' : ''}`); break; }
@@ -1321,13 +1414,16 @@ main.addEventListener('click', e => {
     case 'scrap': { if (!armed(b)) return; const u = Number(id); if (ui.fuse === u) ui.fuse = null; const g = scrapTool(u); toast(`道具を分解: +${fmt(g)} マナ`); break; }
     case 'misview': ui.misView = id; break;
     case 'misarea': ui.misArea = id; break;
-    case 'claim': { const m = MISS[id]; if (!m || S.done[id] || !ready(m)) break; if (m.deliver) S.inv[m.deliver] -= m.goal; complete(m); break; }
-    case 'claimfill': { const m = MISS[id]; if (!m || S.done[id]) break; fillMissing({ [m.deliver]: m.goal }, 1); break; }
-    case 'brute': { const m = MISS[id]; if (!m || S.done[id] || S.mana < m.brute) break; if (!armed(b)) return; S.mana -= m.brute; complete(m, 'マナで押し通した'); break; }
+    case 'claim': { const m = MISS[id]; if (!m || !misOpen(m) || !ready(m)) break; if (m.deliver) S.inv[m.deliver] -= m.goal; complete(m); break; }
+    case 'claimfill': { const m = MISS[id]; if (!m || !misOpen(m)) break; fillMissing({ [m.deliver]: m.goal }, 1); break; }
+    case 'brute': { const m = MISS[id]; if (!m || !misOpen(m) || S.mana < m.brute) break; if (!armed(b)) return; S.mana -= m.brute; complete(m, 'マナで押し通した'); break; }
     case 'req': deliverReq(Number(id)); break;
     case 'reqfill': { const r = S.reqs[Number(id)]; if (r && !r.wait && fillMissing({ [r.id]: r.n }, 1)) deliverReq(Number(id)); break; }
     case 'reqskip': S.reqs[Number(id)] = { wait: Date.now() + 30000 }; break;
     case 'buy': buy(id); break;
+    case 'upview': ui.upView = id; break;
+    case 'buypu': if (buyPu(id)) toast(`「${PU[id].name}」を習得しました`); break;
+    case 'prestige': { if (!armed(b)) return; const g = prestige(); if (g) { setTabs(); toast(`賢者の石を錬成しました（+${g}個）。${S.run}周目のはじまりです`, 5000); window.scrollTo(0, 0); } break; }
     case 'buymax': { let n = 0; while (n < 1000 && buy(id)) n++; if (n > 1) toast(`${UP[id].name}を${n}レベル上げました`); break; }
   }
   update();
