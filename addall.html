@@ -362,6 +362,13 @@ details.help[open] summary { margin-bottom: 4px; }
       <div class="acts"><button class="btn pri" type="button" id="saveNow">今すぐ保存</button></div>
     </div>
     <div class="panel">
+      <h3>数字の表記</h3>
+      <div class="seg full" role="group" aria-label="数字の表記" id="numSeg">
+        <button type="button" data-num="ja">日本語</button><button type="button" data-num="en">英語</button><button type="button" data-num="sci">指数</button><button type="button" data-num="full">すべての桁</button>
+      </div>
+      <p class="muted small" id="numSample">例: 1.23億</p>
+    </div>
+    <div class="panel">
       <h3>セーブデータの書き出し</h3>
       <p class="muted small">この文字列をメモ帳などに保存しておくと、あとで読み込んで復元できます。</p>
       <textarea id="exportBox" readonly aria-label="書き出したセーブデータ"></textarea>
@@ -672,7 +679,7 @@ function nextGoal() {
 /* ===================== 状態 ===================== */
 const fresh = () => ({
   v: 6, mana: 0, skill: 0, fame: 0,
-  run: 1, mc: {}, stones: 0, pu: {}, journal: {}, jread: {}, open: {}, newTab: {}, life: { totalMana: 0, prestiges: 0, bestStones: 0, mazeBest: 0 }, maze: null, mazeTeam: [],
+  run: 1, mc: {}, stones: 0, pu: {}, journal: {}, jread: {}, pref: { num: 'ja' }, open: {}, newTab: {}, life: { totalMana: 0, prestiges: 0, bestStones: 0, mazeBest: 0 }, maze: null, mazeTeam: [],
   area: 'a1', unlocked: { a1: true },
   inv: {}, reg: {}, col: {}, dis: {}, ref: {},
   homs: [], homSeq: 1,
@@ -803,12 +810,25 @@ const missionDoneIn = a => MIS.filter(m => m.area === a && S.done[m.id]).length;
 
 /* ===================== 数値の表記 ===================== */
 const UNITS = ['', '万', '億', '兆', '京', '垓', '𥝱', '穣', '溝', '澗', '正', '載', '極', '恒河沙', '阿僧祇', '那由他', '不可思議', '無量大数'];
+// 数字の表記: ja（万・億）/ en（K・M・B）/ sci（指数）/ full（すべての桁）
+const EN_UNITS = ['', 'K', 'M', 'B', 'T', 'Qa', 'Qi', 'Sx', 'Sp', 'Oc', 'No', 'Dc', 'Ud', 'Dd', 'Td', 'Qad', 'Qid', 'Sxd', 'Spd', 'Ocd', 'Nod', 'Vg'];
+const sig3 = m => m < 10 ? (Math.floor(m * 100) / 100).toFixed(2) : m < 100 ? (Math.floor(m * 10) / 10).toFixed(1) : String(Math.floor(m));
+const sci = n => { const e = Math.floor(Math.log10(n)); let m = n / 10 ** e; if (m >= 10) { m /= 10; } return (Math.floor(m * 100) / 100).toFixed(2) + 'e' + e; };
+const numMode = () => (S && S.pref && S.pref.num) || 'ja';
 function fmt(n) {
   if (!isFinite(n)) return '∞';
   if (n < 0) return '-' + fmt(-n);
+  const mode = numMode();
+  if (mode === 'full') return n < 1e21 ? Math.floor(n).toLocaleString('ja-JP') : sci(n);
+  if (mode === 'sci') return n < 1e4 ? Math.floor(n).toLocaleString('ja-JP') : sci(n);
+  if (mode === 'en') {
+    if (n < 1e3) return String(Math.floor(n));
+    const j = Math.floor(Math.log10(n) / 3);
+    return j >= EN_UNITS.length ? sci(n) : sig3(n / 10 ** (3 * j)) + EN_UNITS[j];
+  }
   if (n < 1e4) return Math.floor(n).toLocaleString('ja-JP');
   const i = Math.floor(Math.log10(n) / 4);
-  if (i >= UNITS.length) return n.toExponential(2).replace('e+', 'e');
+  if (i >= UNITS.length) return sci(n);
   const m = n / 10 ** (4 * i);
   const s = m < 10 ? (Math.floor(m * 100) / 100).toFixed(2) : m < 100 ? (Math.floor(m * 10) / 10).toFixed(1) : String(Math.floor(m));
   return s + UNITS[i];
@@ -1068,7 +1088,7 @@ function prestige() {
   const gain = stoneGain();
   const o = S, n = fresh();
   // 周回をまたいで残るもの
-  n.run = o.run + 1; n.mc = o.mc; n.journal = o.journal; n.jread = o.jread; n.mazeTeam = o.mazeTeam.filter(u => n.homs.some(h => h.u === u)); n.open = o.open; n.newTab = {}; n.stones = o.stones + gain; n.pu = o.pu;
+  n.run = o.run + 1; n.mc = o.mc; n.journal = o.journal; n.jread = o.jread; n.pref = o.pref; n.mazeTeam = o.mazeTeam.filter(u => n.homs.some(h => h.u === u)); n.open = o.open; n.newTab = {}; n.stones = o.stones + gain; n.pu = o.pu;
   n.life = { totalMana: o.life.totalMana, prestiges: o.life.prestiges + 1, bestStones: Math.max(o.life.bestStones, gain) };
   n.skill = o.skill * Math.min(1, 0.1 + 0.1 * pu('skillKeep'));
   n.homs = mergeByKind(o.homs);
@@ -2018,6 +2038,7 @@ async function cloudSave(force) {
 function migrateOpen() { if (S._migrateOpen) { delete S._migrateOpen; checkFeats(true); } }
 function adopt(obj, withOffline) {
   S = normalize(obj);
+  shownMana = S.mana; lastManaSeen = S.mana;
   migrateOpen();
   ui.gArea = S.area; ui.misArea = S.area; ui.fuse = null;
   if (withOffline && S.savedAt) { const sec = (Date.now() - S.savedAt) / 1000; if (sec > 10) offline(sec); }
@@ -2055,8 +2076,17 @@ async function cloudInit() {
 
 /* ===================== 設定シート ===================== */
 const sheetBg = document.getElementById('sheetBg');
-document.getElementById('gear').addEventListener('click', () => { sheetBg.hidden = false; document.getElementById('cloudStatus').textContent = cloudStatus; });
+document.getElementById('gear').addEventListener('click', () => { sheetBg.hidden = false; syncNumSeg(); document.getElementById('cloudStatus').textContent = cloudStatus; });
 document.getElementById('sheetClose').addEventListener('click', () => { sheetBg.hidden = true; });
+function syncNumSeg() {
+  document.querySelectorAll('#numSeg [data-num]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.num === numMode())));
+  document.getElementById('numSample').textContent = '例: ' + [12345, 123450000, 1.2345e15].map(fmt).join(' / ');
+}
+document.getElementById('numSeg').addEventListener('click', e => {
+  const b = e.target.closest('[data-num]'); if (!b) return;
+  S.pref = S.pref || {}; S.pref.num = b.dataset.num;
+  syncNumSeg(); shownMana = S.mana; render();
+});
 sheetBg.addEventListener('click', e => { if (e.target === sheetBg) sheetBg.hidden = true; });
 document.getElementById('saveNow').addEventListener('click', () => { saveLocal(); lastCloud = 0; cloudSave(true); toast('保存しました'); });
 document.getElementById('exportBtn').addEventListener('click', () => {
@@ -2117,6 +2147,7 @@ function start(data) {
   }
   bootSavedAt = S.savedAt || 0;
   fxQuiet = true; setTimeout(() => { fxQuiet = false; }, 1500);
+  shownMana = S.mana; lastManaSeen = S.mana;
   migrateOpen();
   setTabs();
   refreshReqs();
