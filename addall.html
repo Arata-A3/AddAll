@@ -187,6 +187,15 @@ p { margin: 0; }
 .card.unknown { background: var(--surface2); border-top-color: var(--line); }
 .card.unknown h3 { color: var(--muted); letter-spacing: .15em; }
 
+/* 師匠の手記 */
+.journal { display: flex; flex-direction: column; gap: 12px; }
+.page { background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--brass); border-radius: 12px; padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; }
+.page h3 { font-size: 19px; }
+.page p { font-family: var(--f-display); font-size: 15px; line-height: 1.9; max-width: 34em; }
+.page .no { font-size: 11px; color: var(--muted); letter-spacing: .1em; }
+.page.locked { background: var(--surface2); border-left-color: var(--line); padding-block: 10px; }
+.page.locked p { font-family: var(--f-body); font-size: 13px; }
+
 /* ミッション */
 .bonus { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 12px; font-size: 13px; }
 .bonus b { color: var(--brass); }
@@ -243,7 +252,7 @@ p { margin: 0; }
   <button type="button" role="tab" data-tab="lab" aria-selected="false"><span class="k">工</span>工房</button>
   <button type="button" role="tab" data-tab="tools" aria-selected="false"><span class="k">具</span>道具</button>
   <button type="button" role="tab" data-tab="mission" aria-selected="false"><span class="k">任</span>依頼<span class="badge" id="misBadge" hidden>0</span></button>
-  <button type="button" role="tab" data-tab="book" aria-selected="false"><span class="k">鑑</span>図鑑</button>
+  <button type="button" role="tab" data-tab="book" aria-selected="false"><span class="k">鑑</span>図鑑<span class="badge" id="bookBadge" hidden>新</span></button>
   <button type="button" role="tab" data-tab="up" aria-selected="false"><span class="k">強</span>強化</button>
 </nav>
 
@@ -461,10 +470,52 @@ const UPS = [
 ];
 const UP = Object.fromEntries(UPS.map(u => [u.id, u]));
 
+/* --- 師匠の手記（物語） --- */
+const JOURNAL = [
+  { id: 'j1', title: 'はじめに', hint: '最初から読める', cond: () => true,
+    text: 'この工房と、裏の山と、この手記をおまえに残す。わたしは少し遠くへ行く。\nマナのことは、石ころに聞け。分解すれば、すべてのものはマナに戻る。そしてマナからは、すべてのものが生まれる。' },
+  { id: 'j2', title: '価値について', hint: '何度か採取する', cond: () => S.st.manual >= 20,
+    text: 'ものの価値は、分解したときに流れ出るマナの量で決まる。小石は小石なりに、月光草は月光草なりに。\n一度手にしたものは、マナさえあればいつでも呼び戻せる。だから、まずは手に取ることだ。' },
+  { id: 'j3', title: '並べること', hint: '図鑑に10種類登録する', cond: () => regCount() >= 10,
+    text: '集めたものは、並べておけ。価値の低いものから高いものへ。\n並べてみて初めて、足りないものが見えてくる。わたしの棚には、いつもひとつ分の空きがあった。' },
+  { id: 'j4', title: '道具', hint: '道具を作る', cond: () => S.st.toolsMade >= 1,
+    text: '道具は手の延長だ。だが、作っただけの道具はまだ半分しか道具ではない。\n同じものを重ねて、少しずつ完璧に近づけていけ。' },
+  { id: 'j5', title: '霧の森', hint: '霧の森へ行く', cond: () => !!S.unlocked.a2,
+    text: '森の霧は、マナが濃すぎて目に見えるようになったものだ。あの森の木々は、ずっと昔に誰かが撒いたマナで育ったと聞く。\n妖精の粉に触れるときは、そっとな。' },
+  { id: 'j6', title: '因果の融合', hint: '道具を融合する', cond: () => S.st.fusions >= 1,
+    text: '二つのものを一つにすると、良いところが残る。悪いところは、なぜか消えていく。\nわたしはこれを因果の融合と呼んでいる。理由はまだわからない。' },
+  { id: 'j7', title: '完璧な小石', hint: '素材を完璧まで精錬する', cond: () => ITEMS.some(i => perfect(i.id)),
+    text: '完璧な小石を見たことがあるか。わたしはある。ただの石ころなのに、目が離せなかった。\n完璧とは、それ以上何も足さなくてよい状態のことだ。' },
+  { id: 'j8', title: '水晶の洞窟', hint: '水晶の洞窟へ行く', cond: () => !!S.unlocked.a3,
+    text: '洞窟の奥には、星の欠片が落ちている。空から落ちたのか、それとも洞窟が空へ続いているのか。\n賢者の砂を見つけたら、それがわたしの探していたものだ。' },
+  { id: 'j9', title: '原初の結晶', hint: '原初の結晶を見つける', cond: () => !!S.reg.primal,
+    text: 'すべての物質は、もとをたどればこの結晶に行き着く。ならば逆に、この結晶からすべてを作り直せるはずだ。\n世界のすべてを足し合わせたものが、ひとつの石に収まるのなら。' },
+  { id: 'j10', title: '賢者の石', hint: '賢者の触媒を作る', cond: () => !!S.reg.catalyst,
+    text: '触媒が三つ、精霊の結晶が三つ、原初の結晶がひとつ。わたしはついにここまで来た。\nだが錬成すれば、たぶん世界ははじまりに戻る。それでも、わたしはやるだろう。' },
+  { id: 'j11', title: '二度目の朝', hint: '周回する', cond: () => S.run >= 2,
+    text: '目が覚めると、工房はがらんとしていた。棚の素材も、裏山の道も、全部なくなっていた。\n手に残ったのは、使い慣れた道具と、この手記だけ。……この手記を、わたしは前にも読んだ気がする。' },
+  { id: 'j12', title: '筆跡', hint: '3周目に入る', cond: () => S.run >= 3,
+    text: '手記の文字を、もう一度よく見た。\nこれは師匠の字ではない。わたしの字だ。' },
+  { id: 'j13', title: '変わるもの', hint: '5周目に入る', cond: () => S.run >= 5,
+    text: '何度やり直しても、小石は小石の価値で、月光草は月光草の価値だ。\n変わるのはわたしのほうだけだ。少しずつ、完璧に近づいていく。' },
+  { id: 'j14', title: 'すべてを足す', hint: '図鑑をすべて埋める', cond: () => regCount() >= ITEMS.length,
+    text: 'この世界のすべてを記録した。棚にはもう空きがない。\n……いや、ひとつだけある。わたし自身の場所だ。' },
+  { id: 'j15', title: '次のわたしへ', hint: '10周目に入る', cond: () => S.run >= 10,
+    text: 'すべてを足し合わせても、終わりにはならなかった。足すたびに、次に足したいものが見つかる。それでいい。錬金術師とは、そういうものだ。\n次のわたしへ。小石から始めろ。' },
+];
+function checkJournal() {
+  for (const j of JOURNAL) {
+    if (S.journal[j.id] || !j.cond()) continue;
+    S.journal[j.id] = Date.now();
+    if (j.id !== 'j1') toast(`師匠の手記に新しいページ「${j.title}」（図鑑で読めます）`, 4500);
+  }
+}
+const unreadJournal = () => JOURNAL.filter(j => S.journal[j.id] && !S.jread[j.id]).length;
+
 /* ===================== 状態 ===================== */
 const fresh = () => ({
   v: 4, mana: 0, skill: 0, fame: 0,
-  run: 1, mc: {}, stones: 0, pu: {}, life: { totalMana: 0, prestiges: 0, bestStones: 0 },
+  run: 1, mc: {}, stones: 0, pu: {}, journal: {}, jread: {}, life: { totalMana: 0, prestiges: 0, bestStones: 0 },
   area: 'a1', unlocked: { a1: true },
   inv: {}, reg: {}, col: {}, dis: {}, ref: {},
   tools: [], eq: { hand: null, waist: null, neck: null }, toolSeq: 1,
@@ -802,7 +853,7 @@ function prestige() {
   const gain = stoneGain();
   const o = S, n = fresh();
   // 周回をまたいで残るもの
-  n.run = o.run + 1; n.mc = o.mc; n.stones = o.stones + gain; n.pu = o.pu;
+  n.run = o.run + 1; n.mc = o.mc; n.journal = o.journal; n.jread = o.jread; n.stones = o.stones + gain; n.pu = o.pu;
   n.life = { totalMana: o.life.totalMana, prestiges: o.life.prestiges + 1, bestStones: Math.max(o.life.bestStones, gain) };
   n.skill = o.skill * Math.min(1, 0.1 + 0.1 * pu('skillKeep'));
   n.tools = SLOTS.map(sl => o.tools.find(t => t.u === o.eq[sl.id])).filter(Boolean);
@@ -871,7 +922,7 @@ function structKey() {
     }
     case 'tools': return `t${ua}${ui.fuse}${ui.traitHelp ? 'h' : ''}|${S.tools.map(t => t.u).join(',')}|${SLOTS.map(s => S.eq[s.id]).join(',')}|${S.st.fusions}`;
     case 'mission': return `m${ui.misView}${ui.misArea}${ua}${S.run}:${MIS.filter(misOpen).length}|${S.reqs.map(r => r ? (r.wait ? 'w' : r.id) : '-').join(',')}`;
-    case 'book': return `b${regCount()}${ua}`;
+    case 'book': return `b${ui.bookView || 'items'}${regCount()}${ua}${Object.keys(S.journal).length}`;
     case 'up': return 'u' + (ui.upView || 'shop') + S.up.autodis + Object.keys(S.unlocked).join(',') + S.run + JSON.stringify(S.pu);
   }
   return ui.tab;
@@ -908,6 +959,8 @@ function update() {
     autoDisOn() ? `${AREA[S.area].name}　+${fmt(perSec())} /秒` : `${AREA[S.area].name}　使い魔 計${fmtD(r)} 回/秒`;
   const nReady = MIS.filter(m => misOpen(m) && S.unlocked[m.area] && ready(m)).length
     + S.reqs.filter(q => q && !q.wait && inv(q.id) >= q.n).length;
+  const jb = document.getElementById('bookBadge');
+  jb.hidden = unreadJournal() === 0;
   const bd = document.getElementById('misBadge');
   bd.hidden = nReady === 0; bd.textContent = nReady;
 }
@@ -1275,6 +1328,31 @@ function vReq() {
 
 /* --- 図鑑 --- */
 function vBook() {
+  const seg = [['items', '素材の記録'], ['journal', '師匠の手記']]
+    .map(([k, n]) => `<button type="button" data-act="bookview" data-id="${k}" aria-pressed="${(ui.bookView || 'items') === k}">${n}${k === 'journal' && unreadJournal() ? '（新）' : ''}</button>`).join('');
+  return `<div class="seg full" role="group" aria-label="図鑑の表示">${seg}</div>${ui.bookView === 'journal' ? vJournal() : vItems()}`;
+}
+function vJournal() {
+  const got = JOURNAL.filter(j => S.journal[j.id]).length;
+  const pages = JOURNAL.map((j, i) => {
+    if (!S.journal[j.id]) return `<div class="page locked"><span class="no">${i + 1}ページ</span><p class="muted small">まだ読めない（${esc(j.hint)}）</p></div>`;
+    const isNew = !S.jread[j.id];
+    return `<article class="page">
+      <div class="row-between"><span class="no">${i + 1}ページ</span>${isNew ? '<span class="tag">新しい</span>' : ''}</div>
+      <h3>${esc(j.title)}</h3>
+      ${j.text.split('\n').map(p => `<p>${esc(p)}</p>`).join('')}
+    </article>`;
+  }).join('');
+  // 開いたページは既読にする（印は次の描画で消える）
+  setTimeout(() => { for (const j of JOURNAL) if (S.journal[j.id]) S.jread[j.id] = true; }, 0);
+  return `
+  <section class="area-head">
+    <span class="eyebrow">師匠の手記 ${got} / ${JOURNAL.length}ページ</span>
+    <p class="muted small">工房に残されていた手記。錬金術師として進むほど、読めるページが増えていきます。周回しても失われません。</p>
+  </section>
+  <div class="journal">${pages}</div>`;
+}
+function vItems() {
   const n = regCount();
   const sections = AREAS.map((a, ai) => {
     if (!S.unlocked[a.id]) return `<h4>${esc(a.name)}（未解放）</h4>`;
@@ -1326,7 +1404,7 @@ function vStone() {
       ${maxed ? '' : `<div class="acts"><button class="btn pri" type="button" data-act="buypu" data-id="${p.id}" ${dz(() => S.stones < p.cost(l()))}>習得 <small>賢者の石 ${tx(() => fmt(p.cost(l())))}個</small></button></div>`}
     </div>`;
   }).join('');
-  const keep = ['ミッションの報酬（達成回数）', '装備中の道具3つ（品質と特性）', `熟練の${Math.round(Math.min(1, 0.1 + 0.1 * pu('skillKeep')) * 100)}%`, '賢者の石と、石で習得した強化']
+  const keep = ['師匠の手記', 'ミッションの報酬（達成回数）', '装備中の道具3つ（品質と特性）', `熟練の${Math.round(Math.min(1, 0.1 + 0.1 * pu('skillKeep')) * 100)}%`, '賢者の石と、石で習得した強化']
     .concat(pu('keepFame') ? ['名声'] : [], pu('keepBook') ? ['図鑑と加工の解放'] : [], pu('keepRef') ? ['精錬'] : [], pu('autodis') ? ['自動分解装置'] : []);
   return `
   <section class="area-head">
@@ -1422,8 +1500,9 @@ main.addEventListener('click', e => {
     case 'reqskip': S.reqs[Number(id)] = { wait: Date.now() + 30000 }; break;
     case 'buy': buy(id); break;
     case 'upview': ui.upView = id; break;
+    case 'bookview': ui.bookView = id; break;
     case 'buypu': if (buyPu(id)) toast(`「${PU[id].name}」を習得しました`); break;
-    case 'prestige': { if (!armed(b)) return; const g = prestige(); if (g) { setTabs(); toast(`賢者の石を錬成しました（+${g}個）。${S.run}周目のはじまりです`, 5000); window.scrollTo(0, 0); } break; }
+    case 'prestige': { if (!armed(b)) return; const g = prestige(); if (g) { setTabs(); checkJournal(); toast(`賢者の石を錬成しました（+${g}個）。${S.run}周目のはじまりです`, 5000); window.scrollTo(0, 0); } break; }
     case 'buymax': { let n = 0; while (n < 1000 && buy(id)) n++; if (n > 1) toast(`${UP[id].name}を${n}レベル上げました`); break; }
   }
   update();
@@ -1567,7 +1646,7 @@ function tick() {
     }
   }
   if (frame % 5 === 0 || dt > 5) processAuto();
-  if (frame % 10 === 0) refreshReqs();
+  if (frame % 10 === 0) { refreshReqs(); checkJournal(); }
   if (++frame % 2 === 0 || dt > 5) update();
 }
 
