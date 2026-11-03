@@ -143,6 +143,7 @@ details.help[open] summary { margin-bottom: 4px; }
 .chip { flex: none; border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 6px 14px; min-height: 36px; cursor: pointer; font-size: 13px; }
 .chip[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); font-weight: 700; }
 .chip.locked { color: var(--muted); border-style: dashed; }
+.chip.locked[aria-pressed="true"] { color: var(--bg); }
 .r0 { --rc: var(--r0); } .r1 { --rc: var(--r1); } .r2 { --rc: var(--r2); } .r3 { --rc: var(--r3); } .r4 { --rc: var(--r4); }
 .rc { color: var(--rc); }
 .prog { height: 8px; border-radius: 4px; background: var(--surface2); overflow: hidden; }
@@ -1225,7 +1226,7 @@ function structKey() {
       return base + regSig(labIds());
     }
     case 'tools': return `t${ua}|${S.homs.map(h => [h.u, h.lv, h.f, h.sk.map(k => k.id + k.r).join('')].join(':')).join(',')}|${ui.traitHelp ? 'h' : ''}`;
-    case 'mission': return `m${ui.misView}${ui.misArea}${ua}${S.run}:${MIS.filter(misOpen).length}|${S.reqs.map(r => r ? (r.wait ? 'w' : r.id) : '-').join(',')}`;
+    case 'mission': return `m${ui.misView}${ui.misView === 'req' ? S.reqs.map(r => r && !r.wait && inv(r.id) >= r.n ? 1 : 0).join('') : ''}${ui.misArea}${ua}${S.run}:${MIS.filter(misOpen).length}|${S.reqs.map(r => r ? (r.wait ? 'w' : r.id) : '-').join(',')}`;
     case 'maze': return `z${S.maze ? [S.maze.floor, S.maze.choices.map(c => c.t + (c.hide ? 'h' : '')).join(''), JSON.stringify(S.maze.hp), S.maze.log.join('')].join('|') : 'off' + S.mazeTeam.join(',') + S.homs.map(h => h.u + ':' + h.lv).join(',')}`;
     case 'book': return `b${ui.bookView || 'items'}${regCount()}${ua}${Object.keys(S.journal).length}`;
     case 'up': return 'u' + (ui.upView || 'shop') + S.up.autodis + Object.keys(S.unlocked).join(',') + S.run + JSON.stringify(S.pu);
@@ -1651,8 +1652,8 @@ function vReq() {
       <div class="pv">手持ち ${tx(() => fmt(inv(r.id)))} / ${fmt(r.n)}</div>
       <div class="acts">
         <button class="btn okb" type="button" data-act="req" data-id="${i}" ${dz(() => inv(r.id) < r.n)}>納品する</button>
-        <button class="btn mana" type="button" data-act="reqfill" data-id="${i}" ${dz(() => { const c = mc(); return inv(r.id) >= r.n || c === null || S.mana < c; })}>不足分を生成 <small>${tx(() => { const c = mc(); return c === null ? '-' : fmt(c); })}</small></button>
-        <button class="btn" type="button" data-act="reqskip" data-id="${i}">断る</button>
+        ${inv(r.id) >= r.n ? '' : `<button class="btn mana" type="button" data-act="reqfill" data-id="${i}" ${dz(() => { const c = mc(); return inv(r.id) >= r.n || c === null || S.mana < c; })}>不足分を生成 <small>${tx(() => { const c = mc(); return c === null ? '-' : fmt(c); })}</small></button>`}
+        <button class="btn sm" type="button" data-act="reqskip" data-id="${i}">断る</button>
       </div>
     </div>`;
   }).join('');
@@ -1696,8 +1697,8 @@ function vItems() {
     if (!S.unlocked[a.id]) return `<h4>${esc(a.name)}（未解放）</h4>`;
     const list = sortedArea(a.id);
     const got = list.filter(i => S.reg[i.id]).length;
-    const cards = list.map(m => {
-      const no = 'No.' + String(ITEMS.indexOf(m) + 1).padStart(3, '0');
+    const cards = list.map((m, idx) => {
+      const no = 'No.' + (AREAS.indexOf(a) + 1) + '-' + String(idx + 1).padStart(2, '0');
       const kind = m.kind === 'proc' ? '加工品' : RARITY[m.r];
       if (!S.reg[m.id]) {
         return `<article class="card unknown"><span class="no"><span>${no}</span><span>${m.kind === 'proc' ? '加工品' : ''}</span></span><h3>？？？</h3><p>${m.kind === 'proc' ? '工房で作れるらしい。' : esc(a.name) + 'で見つかるらしい。'}</p></article>`;
@@ -1737,10 +1738,9 @@ function vStone() {
   const pus = PUS.map(p => {
     const l = () => pu(p.id);
     const maxed = p.max !== undefined && pu(p.id) >= p.max;
-    return `<div class="up">
-      <div class="row-between"><h3>${esc(p.name)}</h3><span class="lv">${p.max === 1 ? (maxed ? '習得済み' : '') : 'Lv ' + tx(() => fmt(l())) + (p.max ? ' / ' + p.max : '')}</span></div>
-      <p class="small muted">${esc(p.info)}</p>
-      ${maxed ? '' : `<div class="acts"><button class="btn pri" type="button" data-act="buypu" data-id="${p.id}" ${dz(() => S.stones < p.cost(l()))}>習得 <small>賢者の石 ${tx(() => fmt(p.cost(l())))}個</small></button></div>`}
+    return `<div class="row1">
+      <div class="r1main"><span class="nm">${esc(p.name)} <span class="small muted">${p.max === 1 ? (maxed ? '習得済み' : '') : 'Lv' + tx(() => fmt(l())) + (p.max ? '/' + p.max : '')}</span></span><span class="meta">${esc(p.info)}</span></div>
+      ${maxed ? '' : `<button class="btn pri sm" type="button" data-act="buypu" data-id="${p.id}" ${dz(() => S.stones < p.cost(l()))}>習得 <small>石${tx(() => fmt(p.cost(l())))}</small></button>`}
     </div>`;
   }).join('');
   const keep = ['師匠の手記', '迷宮の最深到達階', 'ミッションの報酬（達成回数）', 'ホムンクルス（因果融合: 種類ごとに全員が1人にまとまり、能力値と技能はそれぞれ一番良いものが残る。上限+15、Lv1から育ち直す）', `熟練の${Math.round(Math.min(1, 0.1 + 0.1 * pu('skillKeep')) * 100)}%`, '賢者の石と、石で習得した強化']
@@ -1749,7 +1749,7 @@ function vStone() {
   <section class="area-head">
     <span class="eyebrow">${S.run}周目</span>
     <h2>賢者の石</h2>
-    <p class="muted small">師匠が探し続けた、完璧な物質。錬成すると世界がはじまりに戻り、錬金術師としての力の一部だけを持って、もう一度やり直します。</p>
+    ${help('stone', `<p>師匠が探し続けた、完璧な物質。錬成すると世界がはじまりに戻り、錬金術師としての力の一部だけを持って、もう一度やり直します。</p><p><b>残るもの</b>: ${keep.join('、')}</p><p><b>はじまりに戻るもの</b>: マナ、素材、採取地と探索、腕前・使い魔・分解炉などの強化、依頼${pu('keepFame') ? '' : '、名声'}${pu('keepBook') ? '' : '、図鑑と加工の解放'}${pu('keepRef') ? '' : '、精錬'}、ミッションの達成状況（報酬は残る）</p><p>習得した強化は、周回しても失われません。</p>`)}
   </section>
   <div class="panel">
     <div class="row-between"><span>持っている賢者の石</span><b class="q">${tx(() => fmt(S.stones))} 個</b></div>
@@ -1760,13 +1760,11 @@ function vStone() {
     ${insHtml(STONE_IN, 1)}
     <div class="row-between"><span class="small">手に入る賢者の石</span><b class="q">${tx(() => fmt(stoneGain()))} 個</b></div>
     <p class="small muted">この周で集めたマナが多いほど増えます（この周の累計 ${tx(() => fmt(S.st.totalMana))} マナ）。</p>
-    <p class="small"><b>残るもの</b>: ${keep.join('、')}</p>
-    <p class="small"><b>はじまりに戻るもの</b>: マナ、素材、採取地と探索、腕前・使い魔・分解炉などの強化、依頼${pu('keepFame') ? '' : '、名声'}${pu('keepBook') ? '' : '、図鑑と加工の解放'}${pu('keepRef') ? '' : '、精錬'}、ミッションの達成状況（報酬は残る）</p>
+    <p class="small">残るもの: ミッションの報酬、ホムンクルス（種類ごとに因果融合）、迷宮の記録、熟練の一部、手記（くわしくは上の「説明」）</p>
     <div class="acts">${confirmBtn('pri', `data-act="prestige" ${dz(() => { const c = mc(); return c === null || S.mana < c; })}`, `錬成して周回する <small>${tx(() => { const c = mc(); return c === null ? '未登録の材料あり' : c > 0 ? '不足分 ' + fmt(c) + ' マナ' : '手持ちで足ります'; })}</small>`, 'もう一度タップで周回')}</div>
   </div>
   <h3>賢者の石で習得する強化</h3>
-  <p class="small muted">習得した強化は、周回しても失われません。</p>
-  <div class="list">${pus}</div>`;
+  <div class="list tight">${pus}</div>`;
 }
 function vShop() {
   const cards = UPS.filter(u => !u.area || S.unlocked[u.area]).map(u => {
