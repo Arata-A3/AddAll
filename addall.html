@@ -105,6 +105,15 @@ p { margin: 0; }
 .tabs button[aria-selected="true"]::before { content: ""; position: absolute; top: 0; left: 22%; right: 22%; height: 3px; border-radius: 0 0 3px 3px; background: var(--brass); }
 .badge { position: absolute; top: 6px; right: calc(50% - 22px); min-width: 18px; height: 18px; border-radius: 9px; padding: 0 5px; background: var(--ok); color: var(--surface); font-size: 11px; font-weight: 700; line-height: 18px; }
 
+/* 説明の折りたたみ */
+details.help { font-size: 13px; color: var(--muted); }
+details.help summary { cursor: pointer; display: inline-flex; align-items: center; gap: 4px; list-style: none; font-size: 12px; color: var(--mana); padding: 2px 0; }
+details.help summary::-webkit-details-marker { display: none; }
+details.help summary::before { content: "？"; display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; background: var(--mana-soft); color: var(--mana); font-weight: 700; font-size: 11px; }
+details.help[open] summary { margin-bottom: 4px; }
+.help-body { display: flex; flex-direction: column; gap: 6px; background: var(--surface2); border-radius: 10px; padding: 10px 12px; line-height: 1.7; }
+.help-body p { color: var(--muted); }
+
 /* 共通部品 */
 .btn {
   border: 1px solid var(--line); background: var(--surface2); border-radius: 10px;
@@ -212,6 +221,15 @@ p { margin: 0; }
 .path.foe { border-left-color: var(--r2); } .path.elite { border-left-color: var(--r3); } .path.boss { border-left-color: var(--bad); }
 .path.chest { border-left-color: var(--r4); } .path.spring { border-left-color: var(--ok); } .path.altar { border-left-color: var(--mana); }
 
+/* 1行の一覧 */
+.row1 { display: flex; align-items: center; gap: 10px; background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--rc, var(--line)); border-radius: 10px; padding: 8px 10px; }
+.row1 .r1main { flex: 1; min-width: 0; display: flex; flex-direction: column; line-height: 1.35; }
+.row1 .nm { font-family: var(--f-display); font-weight: 600; font-size: 15px; }
+.row1 .meta { font-size: 12px; color: var(--muted); overflow-wrap: anywhere; }
+.row1.unknown .nm { color: var(--muted); letter-spacing: .1em; }
+.btn.sm { min-height: 36px; padding: 4px 10px; font-size: 13px; flex: none; }
+.list.tight { gap: 6px; }
+
 /* 道具 */
 .slots { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
 .slot { background: var(--surface); border: 1px solid var(--line); border-top: 4px solid var(--rc, var(--line)); border-radius: 12px; padding: 10px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
@@ -291,12 +309,12 @@ p { margin: 0; }
 
 <nav class="tabs gut" role="tablist" aria-label="画面の切り替え">
   <button type="button" role="tab" data-tab="gather" aria-selected="true"><span class="k">採</span>採取</button>
+  <button type="button" role="tab" data-tab="up" aria-selected="false"><span class="k">強</span>強化</button>
   <button type="button" role="tab" data-tab="lab" aria-selected="false"><span class="k">工</span>工房</button>
   <button type="button" role="tab" data-tab="tools" aria-selected="false"><span class="k">相</span>相棒</button>
   <button type="button" role="tab" data-tab="maze" aria-selected="false"><span class="k">迷</span>迷宮</button>
-  <button type="button" role="tab" data-tab="mission" aria-selected="false"><span class="k">任</span>依頼<span class="badge" id="misBadge" hidden>0</span></button>
+  <button type="button" role="tab" data-tab="mission" aria-selected="false"><span class="k">依</span>依頼<span class="badge" id="misBadge" hidden>0</span></button>
   <button type="button" role="tab" data-tab="book" aria-selected="false"><span class="k">鑑</span>図鑑<span class="badge" id="bookBadge" hidden>新</span></button>
-  <button type="button" role="tab" data-tab="up" aria-selected="false"><span class="k">強</span>強化</button>
 </nav>
 
 <div id="sheetBg" class="sheet-bg" hidden>
@@ -485,7 +503,7 @@ const MIS = [
   // 霧の森
   { id: 'f1', area: 'a2', name: '森の第一歩', text: '霧の森で100回採取する', prog: () => S.st.areaTaps.a2 || 0, goal: 100, rw: ['power', 1.3], brute: 1e6 },
   { id: 'f2', area: 'a2', name: '土を育てる', text: '腐葉土を50個納品する', deliver: 'humus', goal: 50, rw: ['mana', 1.2], brute: 3e6 },
-  { id: 'f3', area: 'a2', name: '兄弟', text: '同じ種類のホムンクルスを2人そろえる', prog: () => Math.max(0, ...KINDS.map(k => kindHoms(k.id).length)), goal: 2, goal: 1, rw: ['power', 1.3], brute: 5e6 },
+  { id: 'f3', area: 'a2', name: '兄弟', text: '同じ種類のホムンクルスを2人そろえる', prog: () => Math.max(0, ...KINDS.map(k => kindHoms(k.id).length)), goal: 2, rw: ['power', 1.3], brute: 5e6 },
   { id: 'f4', area: 'a2', name: '樹脂の納品', text: '樹脂を30個納品する', deliver: 'resin', goal: 30, rw: ['fam', 1.3], brute: 1e7 },
   { id: 'f5', area: 'a2', name: '育ち盛り', text: 'ホムンクルスをLv20まで育てる', prog: () => maxHomLv(), goal: 20, rw: ['skill', 1.5], brute: 3e7 },
   { id: 'f6', area: 'a2', name: '森の図鑑', text: '霧の森の素材10種類をすべて図鑑に登録する', prog: () => areaReg('a2'), goal: 10, rw: ['mana', 1.5], brute: 1e8 },
@@ -690,7 +708,7 @@ function normalize(o) {
   return f;
 }
 let S = fresh();
-const ui = { tab: 'gather', gArea: 'a1', labView: 'dg', labArea: 'a1', misView: 'mis', misArea: 'a1', fuse: null };
+const ui = { help: {}, tab: 'gather', gArea: 'a1', labView: 'dg', labArea: 'a1', misView: 'mis', misArea: 'a1', fuse: null };
 
 /* ===================== 数式 ===================== */
 const regCount = () => ITEMS.filter(i => S.reg[i.id]).length;
@@ -1185,6 +1203,7 @@ function deliverReq(i) {
 }
 
 /* ===================== 画面の部品（数字だけを更新するしくみ） ===================== */
+const help = (key, html) => `<details class="help" data-help="${key}"${ui.help[key] ? ' open' : ''}><summary>説明</summary><div class="help-body">${html}</div></details>`;
 let B = [];
 const tx = fn => { B.push({ k: 't', fn }); return `<span data-b="${B.length - 1}">${esc(fn())}</span>`; };
 const dz = fn => { B.push({ k: 'd', fn }); return `data-b="${B.length - 1}"${fn() ? ' disabled' : ''}`; };
@@ -1310,8 +1329,7 @@ function vGather() {
     ${S.up.autodis ? `<label class="switch"><input type="checkbox" id="autodis" ${S.autoDis ? 'checked' : ''}> 自動分解（素材と自動加工の加工品をマナにする。自動加工の材料は残す。道具や依頼の材料をためたいときはオフに）</label>`
       : `<p class="small muted">強化の「自動分解装置」を設置すると、採取した素材を自動でマナにできます。</p>`}
   </div>
-  <p class="small muted">採取するたびに、その採取地の探索が進みます（使い魔の分も含む）。珍しい素材は、探索が進むと出るようになります。</p>
-  <p class="small muted">タップするたびに熟練が増えます。熟練に上限はなく、増えるほど採取力が上がります。使い魔は採取地ごとに雇い（強化画面）、それぞれの採取地で同時に働きます。</p>`;
+  ${help('gather', `<p class="small muted">採取するたびに、その採取地の探索が進みます（使い魔の分も含む）。珍しい素材は、探索が進むと出るようになります。</p><p class="small muted">タップするたびに熟練が増えます。熟練に上限はなく、増えるほど採取力が上がります。使い魔は採取地ごとに雇い（強化画面）、それぞれの採取地で同時に働きます。</p>`)}`;
 }
 let tapHitTimer = 0;
 function bindTap() {
@@ -1375,28 +1393,24 @@ function vLabDG() {
   const rows = ids.map(id => {
     const m = ITEM[id];
     if (S.reg[id]) {
-      return `<div class="item r${m.r}">
-        <div class="top-row"><span class="nm">${esc(m.name)}</span><span class="own">所持 <b>${tx(() => fmt(inv(id)))}</b></span></div>
-        <div class="meta">価値 ${tx(() => fmt(unitMana(id)))} マナ　品質 ${tx(() => fmtQ(qOf(id)))}</div>
-        <div class="acts">
-          <button class="btn" type="button" data-act="dis" data-id="${id}" ${dz(() => inv(id) === 0)}>分解 <small>+${tx(() => fmt(inv(id) * unitMana(id)))}</small></button>
-        </div>
+      return `<div class="row1 r${m.r}">
+        <div class="r1main"><span class="nm">${esc(m.name)}</span><span class="meta">所持 <b>${tx(() => fmt(inv(id)))}</b>　1個 ${tx(() => fmt(unitMana(id)))}${tx(() => qOf(id) > 0 ? '　品質' + fmtQ(qOf(id)) : '')}</span></div>
+        <button class="btn sm" type="button" data-act="dis" data-id="${id}" ${dz(() => inv(id) === 0)}>分解 <small>+${tx(() => fmt(inv(id) * unitMana(id)))}</small></button>
       </div>`;
     }
     const fc = () => unitMana(id) * 10;
-    return `<div class="item unknown r${m.r}">
-      <div class="top-row"><span class="nm">？？？</span></div>
-      <div class="meta">${m.kind === 'proc' ? 'まだ作ったことのない加工品' : 'まだ見つけていない素材'}</div>
-      <div class="acts">${confirmBtn('', `data-act="force" data-id="${id}" ${dz(() => S.mana < fc())}`, `強制錬成 <small>${tx(() => fmt(fc()))}</small>`, 'もう一度タップで錬成')}</div>
+    return `<div class="row1 unknown">
+      <div class="r1main"><span class="nm">？？？</span><span class="meta">${m.kind === 'proc' ? '作ったことのない加工品' : '見つけていない素材'}</span></div>
+      ${confirmBtn('sm', `data-act="force" data-id="${id}" ${dz(() => S.mana < fc())}`, `強制錬成 <small>${tx(() => fmt(fc()))}</small>`, 'もう一度で錬成')}
     </div>`;
   }).join('');
   return `${labChips()}
-  <p class="muted small">分解するとマナになります。足りない材料は、加工・道具の作成・精錬・納品のときにマナで生成できます。「？？？」はまだ見つけていないもので、10倍のマナを払えば1つ強制錬成できます。</p>
+  ${help('dg', `<p class="muted small">分解するとマナになります。足りない材料は、加工・道具の作成・精錬・納品のときにマナで生成できます。「？？？」はまだ見つけていないもので、10倍のマナを払えば1つ強制錬成できます。</p>`)}
   <div class="row-between">
     <span class="small muted">表示中の手持ち ${tx(() => fmt(ids.reduce((s, id) => s + inv(id) * unitMana(id), 0)))} マナぶん</span>
     <button class="btn pri" type="button" data-act="dislist" ${dz(() => ids.every(id => inv(id) === 0))}>表示中を全部分解</button>
   </div>
-  <div class="list">${rows}</div>`;
+  <div class="list tight">${rows}</div>`;
 }
 function insHtml(ins, times = 1) {
   return `<div class="ins">${Object.entries(ins).map(([id, n]) =>
@@ -1427,7 +1441,7 @@ function vLabCraft() {
     return `<h4>${esc(a.name)}のレシピ</h4>${rows}`;
   }).join('');
   return `<div class="panel"><div class="row-between"><span>解放した加工品</span><b>${made} / ${avail.length}</b></div><div class="prog"><i style="width:${avail.length ? made / avail.length * 100 : 0}%"></i></div></div>
-  <p class="muted small">一度加工すると解放され、図鑑に載ります。解放した加工品は、道具の作成・精錬・納品で足りないときに「不足分を生成」でマナから作れるようになります。</p>
+  ${help('craft', `<p class="muted small">一度加工すると解放され、図鑑に載ります。解放した加工品は、道具の作成・精錬・納品で足りないときに「不足分を生成」でマナから作れるようになります。</p>`)}
   <div class="list">${groups}</div>`;
 }
 function vLabRefine() {
@@ -1453,7 +1467,7 @@ function vLabRefine() {
     </div>`;
   }).join('');
   return `${labChips()}
-  <p class="muted small">同じ素材をまとめて使い、その素材の品質を上げます。20段階あり、1段階ごとに品質が5%、価値も5%上がります。100%で「完璧」になり、価値が2.5倍になります。品質の高い素材で作った道具は、品質が高くなりやすくなります。手持ちが足りないときは、不足分をマナで生成して精錬します。</p>
+  ${help('refine', `<p class="muted small">同じ素材をまとめて使い、その素材の品質を上げます。20段階あり、1段階ごとに品質が5%、価値も5%上がります。100%で「完璧」になり、価値が2.5倍になります。品質の高い素材で作った道具は、品質が高くなりやすくなります。手持ちが足りないときは、不足分をマナで生成して精錬します。</p>`)}
   <div class="list">${rows || '<p class="muted small">図鑑に登録した素材だけ精錬できます。</p>'}</div>`;
 }
 
@@ -1470,6 +1484,16 @@ function statGrid(h, cmp) {
     return `<div class="sc${v >= c ? ' max' : ''}"><span class="sl">${st.name}</span><b>${up !== null ? `${v}<span class="arrow">→${up}</span>` : v}</b><span class="cap">/${c}</span><i style="width:${Math.min(100, v / c * 100)}%"></i></div>`;
   }).join('')}</div>`;
 }
+function homLine(h, acts) {
+  const k = KIND[h.k];
+  return `<div class="row1 r${k.r}">
+    <div class="r1main"><span class="nm">${esc(k.name)} <span class="small muted">Lv${h.lv}${h.f ? '・融合' + h.f : ''}</span></span>
+      <span class="meta">${STATS.map(st => `${st.name}${h.s[st.id]}`).join(' ')}</span>
+      <span class="meta">${h.sk.map(x => TRAITS[x.id].name + RANKS[x.r]).join('・') || '技能なし'}</span>
+      ${h.lv < LV_MAX ? `<span class="prog thin"><i style="width:${h.xp / expNeed(h.lv) * 100}%"></i></span>` : ''}</div>
+    ${acts}
+  </div>`;
+}
 function homCard(h, acts, opts = {}) {
   const k = KIND[h.k];
   const ult = isUltimate(h);
@@ -1482,22 +1506,21 @@ function homCard(h, acts, opts = {}) {
   </div>`;
 }
 function vTools() {
-  const effects = STATS.map(st => `<div class="row-between"><span>${st.name}（${st.fx}）</span><b>${tx(() => st.id === 'luk' ? '目利き +' + fmtD(statSum('luk') / 10) : fmtX(statMult(st.id)))}</b></div>`).join('');
+  const effects = STATS.map(st => `<div class="row-between"><span>${st.name} <span class="small muted">${st.fx}</span></span><b>${tx(() => st.id === 'luk' ? '目利き +' + fmtD(statSum('luk') / 10) : fmtX(statMult(st.id)))}</b></div>`).join('');
   const sk = TRAIT_IDS.filter(id => traitLv(id) > 0).map(id => `${TRAITS[id].name} ${TRAITS[id].now(traitLv(id))}`).join('、');
   const groups = KINDS.filter(k => kindHoms(k.id).length).map(k => {
     const hs = kindHoms(k.id).sort((a, b) => b.f - a.f || statTotal(b) - statTotal(a));
     const best = { k: k.id, f: Math.max(...hs.map(h => h.f)), s: {}, sk: [] };
     for (const st of STAT_IDS) best.s[st] = kindBest(k.id, st);
     best.sk = TRAIT_IDS.map(id => ({ id, r: kindRank(k.id, id) })).filter(x => x.r >= 0).sort((a, b) => b.r - a.r);
-    const cards = hs.map(h => homCard(h, confirmBtn('', `data-act="release" data-id="${h.u}"`, `別れる <small>+${tx(() => fmt(homValue(h)))}</small>`, 'もう一度タップで別れる'))).join('');
+    const cards = hs.map(h => homLine(h, confirmBtn('sm', `data-act="release" data-id="${h.u}"`, '別れる', 'もう一度で別れる'))).join('');
     return `<div class="panel kind r${k.r}">
-      <div class="row-between"><h3>${esc(k.name)}</h3><span class="small muted">${hs.length}人${best.f ? `　因果融合${best.f}回` : ''}</span></div>
-      <p class="small muted">${esc(k.d)}</p>
+      <div class="row-between"><h3>${esc(k.name)}</h3><span class="small muted">${best.f ? `因果融合${best.f}回` : ''}</span></div>
       <h4>いま効いている力（この種類で一番高いもの）</h4>
       ${statGrid(best)}
       <div class="tags">${best.sk.map(rankTag).join('') || '<span class="tag none">技能なし</span>'}</div>
-      ${hs.length > 1 || hs[0].lv < LV_MAX ? `<h4>この種類の子たち</h4>` : ''}
-      <div class="list">${cards}</div>
+      <h4>この種類の子たち（${hs.length}人）</h4>
+      <div class="list tight">${cards}</div>
     </div>`;
   }).join('');
   const kinds = unlockedAreas().map(a => {
@@ -1518,17 +1541,16 @@ function vTools() {
   }).join('');
   return `
   <section class="area-head"><span class="eyebrow">相棒</span><h2>ホムンクルス</h2>
-    <p class="muted small">生み出した子は全員、採取のたびに経験値を得て育ちます。レベルが上がると、その子の成長率に従って能力値が伸びます。種類ごとに、能力値と技能はそれぞれ一番高い子のものが効きます。</p>
-    <p class="muted small">周回すると「因果融合」が起き、種類ごとに全員が1人にまとまって、それぞれの一番良い能力値と技能が残ります。そのたびに能力の上限が15上がり、Lv1から育ち直します。</p></section>
+    ${help('tools', `<p class="muted small">生み出した子は全員、採取のたびに経験値を得て育ちます。レベルが上がると、その子の成長率に従って能力値が伸びます。種類ごとに、能力値と技能はそれぞれ一番高い子のものが効きます。</p><p class="muted small">周回すると「因果融合」が起き、種類ごとに全員が1人にまとまって、それぞれの一番良い能力値と技能が残ります。そのたびに能力の上限が15上がり、Lv1から育ち直します。</p>`)}</section>
   <div class="panel">
     <div class="small muted">ホムンクルスの効果（能力値1ごとに効果が2%ずつ掛け算で伸びます）</div>
-    <div class="bonus">${effects}</div>
+    <div class="list tight">${effects}</div>
     <div class="row-between"><p class="small muted">技能: ${sk || 'なし'}</p><button class="btn" type="button" data-act="traithelp" aria-expanded="${!!ui.traitHelp}">${ui.traitHelp ? '技能の説明を閉じる' : '技能の説明'}</button></div>
     ${ui.traitHelp ? `<p class="small muted">技能のランクは E・D・C・B・A・S・S+ の7段階で、強さはそれぞれ ${RANK_V.join('・')} です。種類ごとに一番高いランクが効き、種類どうしは足し合わせます。Lv10とLv20になったとき、どれか1つのランクが上がります。</p>${TRAIT_IDS.map(id => { const tr = TRAITS[id]; const l = traitLv(id); return `<div class="item"><div class="top-row"><span class="nm">${tr.name}</span><span class="own small">${l ? `<b class="q">強さ${l}（${tr.now(l)}）</b>` : '<span class="muted">なし</span>'}</span></div><div class="meta">${esc(tr.d)}強さ1ごとに${tr.per}。</div></div>`; }).join('')}` : ''}
   </div>
   ${groups || '<p class="small muted">まだホムンクルスがいません。下の「生み出す」で作ってみましょう。</p>'}
   <h3>生み出す（全部で ${S.homs.length} / ${MAX_HOMS}人）</h3>
-  <p class="small muted">同じ種類でも、育ち方は一人ひとり違います。何人か育てておくと、周回のときに良いところが集まります。</p>
+  ${help('make', `<p class="small muted">同じ種類でも、育ち方は一人ひとり違います。何人か育てておくと、周回のときに良いところが集まります。</p>`)}
   <div class="list">${kinds}</div>`;
 }
 
@@ -1536,7 +1558,7 @@ function vTools() {
 function vMaze() {
   const best = S.life.mazeBest || 0;
   const head = `<section class="area-head"><span class="eyebrow">ホムンクルスの迷宮　最深 地下${fmt(best)}階（マナ ${fmtX(mazeMult())}）</span><h2>迷宮</h2>
-    <p class="muted small">ホムンクルスを最大${MAZE_TEAM}人連れて、終わりのない迷宮を進みます。深いほど敵は強く、報酬も大きくなります。いつでも帰還して持ち帰れますが、全滅すると集めたものの半分を失います。最深到達階1つごとに、マナがずっと2%増えます。</p></section>`;
+    ${help('maze', `<p class="muted small">ホムンクルスを最大${MAZE_TEAM}人連れて、終わりのない迷宮を進みます。深いほど敵は強く、報酬も大きくなります。いつでも帰還して持ち帰れますが、全滅すると集めたものの半分を失います。最深到達階1つごとに、マナがずっと2%増えます。</p>`)}</section>`;
   const m = S.maze;
   if (!m) {
     const team = S.mazeTeam;
@@ -1553,7 +1575,7 @@ function vMaze() {
     const last = S.mazeLast ? `<div class="panel"><div class="small muted">前回の探索</div>${S.mazeLast.map(l => `<p class="small">${esc(l)}</p>`).join('')}</div>` : '';
     return `${head}${last}
     <div class="panel"><div class="row-between"><span>連れていく子 ${team.length} / ${MAZE_TEAM}</span><button class="btn pri" type="button" data-act="mzstart" ${team.length ? '' : 'disabled'}>迷宮に入る</button></div>
-    <p class="small muted">力と知恵が攻撃、力と器用がHP、速さが2回攻撃、運が会心、器用が回避に効きます。技能「豪腕」は攻撃、「修練」は経験値、「錬金」は報酬、「洞察」は分かれ道の先を見通す力になります。</p></div>
+    ${help('team', `<p class="small muted">力と知恵が攻撃、力と器用がHP、速さが2回攻撃、運が会心、器用が回避に効きます。技能「豪腕」は攻撃、「修練」は経験値、「錬金」は報酬、「洞察」は分かれ道の先を見通す力になります。</p>`)}</div>
     <div class="list">${cards || '<p class="small muted">ホムンクルスがいません。相棒の画面で生み出してください。</p>'}</div>`;
   }
   const team = mzTeam();
@@ -1610,7 +1632,7 @@ function vMis() {
   return `${areaChips(ui.misArea, 'misarea')}
   <section class="area-head">
     <span class="eyebrow">${esc(AREA[ui.misArea].name)}のミッション ${done.length} / ${list.length}</span>
-    <p class="muted small">達成すると、ずっと続く強化がもらえます。条件を満たせないときは、マナで押し通すこともできます。ミッションは周回のたびに最初からになり、報酬は周回ごとに重なります。前の周で達成しなかったものは、その分だけ続けて達成して取り返せます。</p>
+    ${help('mis', `<p class="muted small">達成すると、ずっと続く強化がもらえます。条件を満たせないときは、マナで押し通すこともできます。ミッションは周回のたびに最初からになり、報酬は周回ごとに重なります。前の周で達成しなかったものは、その分だけ続けて達成して取り返せます。</p>`)}
   </section>
   <div class="panel"><div class="small muted">ミッションで得た強化（すべての採取地の合計）</div><div class="bonus">${bonus}</div></div>
   ${open.map(card).join('')}
@@ -1636,7 +1658,7 @@ function vReq() {
   }).join('');
   return `<section class="area-head">
     <span class="eyebrow">依頼</span>
-    <p class="muted small">村の人たちから素材や加工品の注文が届きます。報酬は価値の2.5倍のマナと名声です。名声が1増えるごとに、マナがずっと3%増えます。依頼は図鑑に登録したものから選ばれます。</p>
+    ${help('req', `<p class="muted small">村の人たちから素材や加工品の注文が届きます。報酬は価値の2.5倍のマナと名声です。名声が1増えるごとに、マナがずっと3%増えます。依頼は図鑑に登録したものから選ばれます。</p>`)}
   </section>
   <div class="panel"><div class="row-between"><span>名声</span><b>${tx(() => fmt(S.fame))}</b></div><div class="row-between small"><span class="muted">名声によるマナ</span><b class="q">${tx(() => fmtX(fameMult()))}</b></div></div>
   ${cards}`;
@@ -1664,7 +1686,7 @@ function vJournal() {
   return `
   <section class="area-head">
     <span class="eyebrow">師匠の手記 ${got} / ${JOURNAL.length}ページ</span>
-    <p class="muted small">工房に残されていた手記。錬金術師として進むほど、読めるページが増えていきます。周回しても失われません。</p>
+    ${help('journal', `<p class="muted small">工房に残されていた手記。錬金術師として進むほど、読めるページが増えていきます。周回しても失われません。</p>`)}
   </section>
   <div class="journal">${pages}</div>`;
 }
@@ -1694,7 +1716,7 @@ function vItems() {
   <section class="area-head">
     <span class="eyebrow">図鑑</span>
     <h2>素材の記録</h2>
-    <p class="muted small">採取地ごとに、価値の低い順に並んでいます。一度手に入れたもの（採取・加工・強制錬成）は自動で記録されます。「？？？」はまだ見つけていないものです。</p>
+    ${help('book', `<p class="muted small">採取地ごとに、価値の低い順に並んでいます。一度手に入れたもの（採取・加工・強制錬成）は自動で記録されます。「？？？」はまだ見つけていないものです。</p>`)}
   </section>
   <div class="panel">
     <div class="row-between"><span>すべての記録</span><b>${n} / ${ITEMS.length}</b></div>
@@ -1754,7 +1776,6 @@ function vShop() {
     }
     return `<div class="up">
       <div class="row-between"><h3>${esc(u.name)}</h3><span class="lv">${u.once ? '' : 'Lv ' + tx(() => fmt(l()))}</span></div>
-      <p class="small muted">${esc(u.info)}</p>
       ${u.long ? `<p class="eff small">いま: ${tx(() => u.eff(l()))}</p><p class="eff small">次: <b>${tx(() => u.eff(l() + 1))}</b></p>`
         : `<p class="eff">${tx(() => u.eff(l()))} → <b>${tx(() => u.eff(l() + 1))}</b></p>`}
       <div class="acts">
@@ -1767,10 +1788,11 @@ function vShop() {
   <section class="area-head">
     <span class="eyebrow">強化</span>
     <h2>腕前と工房</h2>
-    <p class="muted small">強化にレベルの上限はありません。マナさえあれば、どこまでも強くなれます。</p>
+    ${help('shop', `<p>強化にレベルの上限はありません。マナさえあれば、どこまでも強くなれます。「賢者の石」で周回すると、ずっと残る強化も習得できます。</p>` + UPS.filter(u => !u.area || S.unlocked[u.area]).map(u => `<p><b>${esc(u.name)}</b>: ${esc(u.info)}</p>`).join(''))}
   </section>
+
   <div class="list">${cards}</div>
-  <p class="small muted">「賢者の石」で周回すると、ずっと残る強化を習得できます。</p>`;
+  `;
 }
 
 /* ===================== 操作 ===================== */
@@ -1780,6 +1802,7 @@ function armed(btn) {
   setTimeout(() => btn.classList.remove('armed'), 3000);
   return false;
 }
+main.addEventListener('toggle', e => { const d = e.target; if (d && d.dataset && d.dataset.help) ui.help[d.dataset.help] = d.open; }, true);
 main.addEventListener('click', e => {
   const b = e.target.closest('[data-act]');
   if (!b || b.disabled) return;
