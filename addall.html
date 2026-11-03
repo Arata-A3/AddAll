@@ -67,6 +67,15 @@ button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px
 .bal .lab { font-size: 11px; color: var(--muted); letter-spacing: .1em; }
 .bal b { font-size: 24px; font-weight: 700; color: var(--mana); white-space: nowrap; }
 .bal small { font-size: 12px; color: var(--muted); min-height: 1em; }
+.top { flex-wrap: wrap; row-gap: 8px; }
+.goal { order: 3; flex: 1 0 100%; display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto auto; column-gap: 8px; row-gap: 4px; align-items: center; text-align: left; background: var(--surface2); border: 1px solid var(--line); border-radius: 10px; padding: 6px 10px; cursor: pointer; }
+.goal .gl { font-size: 11px; font-weight: 700; color: var(--surface); background: var(--brass); border-radius: 6px; padding: 1px 6px; letter-spacing: .08em; }
+.goal .gt { font-size: 13px; line-height: 1.35; overflow-wrap: anywhere; }
+.goal .gb { grid-column: 1 / -1; height: 4px; border-radius: 2px; background: var(--line); overflow: hidden; }
+.goal .gb i { display: block; height: 100%; width: 0; background: var(--brass); transition: width .3s; }
+.goal.ok { border-color: var(--ok); }
+.goal.ok .gl { background: var(--ok); }
+.tabs button.new::after { content: ""; position: absolute; top: 8px; right: calc(50% - 16px); width: 8px; height: 8px; border-radius: 50%; background: var(--mana); }
 .icon-btn { width: 40px; height: 40px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface2); display: grid; place-items: center; cursor: pointer; flex: none; }
 .icon-btn svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; }
 
@@ -85,7 +94,7 @@ p { margin: 0; }
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 6;
   background: var(--surface); border-top: 1px solid var(--line);
   padding-bottom: env(safe-area-inset-bottom, 0px);
-  display: grid; grid-template-columns: repeat(6, minmax(0, 1fr));
+  display: grid; grid-template-columns: repeat(var(--ntabs, 6), minmax(0, 1fr));
 }
 .tabs button {
   height: var(--nav-h); border: 0; background: none; cursor: pointer; position: relative; min-width: 0;
@@ -171,6 +180,38 @@ p { margin: 0; }
 .item.sel { box-shadow: 0 0 0 2px var(--mana) inset; }
 .ins { display: flex; flex-wrap: wrap; gap: 2px 12px; font-size: 13px; }
 
+/* ホムンクルス */
+.hom { background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--rc, var(--line)); border-radius: 12px; padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; }
+.hom.sel { box-shadow: 0 0 0 2px var(--mana) inset; }
+.hom .nm { font-family: var(--f-display); font-weight: 600; font-size: 17px; }
+.hom .top-row { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.prog.thin { height: 5px; }
+.prog.thin i { background: var(--mana); }
+.sgrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.sc { position: relative; background: var(--surface2); border-radius: 8px; padding: 4px 8px 6px; display: flex; align-items: baseline; gap: 4px; overflow: hidden; min-width: 0; }
+.sc .sl { font-size: 11px; color: var(--muted); }
+.sc b { font-size: 15px; }
+.sc .cap { font-size: 11px; color: var(--muted); }
+.sc .arrow { color: var(--ok); margin-left: 2px; }
+.sc i { position: absolute; left: 0; bottom: 0; height: 3px; background: var(--brass); }
+.sc.max b { color: var(--brass); }
+.tag.top { background: var(--brass-soft); color: var(--brass); font-weight: 700; }
+.chips.wrap { flex-wrap: wrap; overflow: visible; }
+.panel.fuse { border-color: var(--mana); }
+
+/* 迷宮 */
+.mzst { display: flex; flex-wrap: wrap; gap: 2px 12px; color: var(--muted); }
+.mzst b { color: var(--ink); }
+.hpline { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr) auto; gap: 8px; align-items: center; font-size: 13px; }
+.hpbar { height: 8px; border-radius: 4px; background: var(--surface2); overflow: hidden; }
+.hpbar i { display: block; height: 100%; background: var(--ok); }
+.hpline.down { color: var(--muted); }
+.paths { display: flex; flex-direction: column; gap: 8px; }
+.path { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; text-align: left; border: 1px solid var(--line); background: var(--surface); border-left: 4px solid var(--line); border-radius: 12px; padding: 12px; cursor: pointer; }
+.path b { font-family: var(--f-display); font-size: 16px; }
+.path.foe { border-left-color: var(--r2); } .path.elite { border-left-color: var(--r3); } .path.boss { border-left-color: var(--bad); }
+.path.chest { border-left-color: var(--r4); } .path.spring { border-left-color: var(--ok); } .path.altar { border-left-color: var(--mana); }
+
 /* 道具 */
 .slots { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
 .slot { background: var(--surface); border: 1px solid var(--line); border-top: 4px solid var(--rc, var(--line)); border-radius: 12px; padding: 10px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
@@ -240,6 +281,7 @@ p { margin: 0; }
     <b id="hMana">0</b>
     <small id="hRate"></small>
   </div>
+  <button class="goal" id="goal" type="button"><span class="gl">目標</span><span class="gt" id="goalText">採取を続けよう</span><span class="gb"><i id="goalBar"></i></span></button>
   <button class="icon-btn" id="gear" type="button" aria-label="設定とセーブ">
     <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.2"></circle><path d="M12 2.8v2.6M12 18.6v2.6M2.8 12h2.6M18.6 12h2.6M5.5 5.5l1.8 1.8M16.7 16.7l1.8 1.8M5.5 18.5l1.8-1.8M16.7 7.3l1.8-1.8"></path></svg>
   </button>
@@ -250,7 +292,8 @@ p { margin: 0; }
 <nav class="tabs gut" role="tablist" aria-label="画面の切り替え">
   <button type="button" role="tab" data-tab="gather" aria-selected="true"><span class="k">採</span>採取</button>
   <button type="button" role="tab" data-tab="lab" aria-selected="false"><span class="k">工</span>工房</button>
-  <button type="button" role="tab" data-tab="tools" aria-selected="false"><span class="k">具</span>道具</button>
+  <button type="button" role="tab" data-tab="tools" aria-selected="false"><span class="k">相</span>相棒</button>
+  <button type="button" role="tab" data-tab="maze" aria-selected="false"><span class="k">迷</span>迷宮</button>
   <button type="button" role="tab" data-tab="mission" aria-selected="false"><span class="k">任</span>依頼<span class="badge" id="misBadge" hidden>0</span></button>
   <button type="button" role="tab" data-tab="book" aria-selected="false"><span class="k">鑑</span>図鑑<span class="badge" id="bookBadge" hidden>新</span></button>
   <button type="button" role="tab" data-tab="up" aria-selected="false"><span class="k">強</span>強化</button>
@@ -281,7 +324,7 @@ p { margin: 0; }
       <p class="muted small">すべての進行が消えます。元に戻せません。</p>
       <div class="acts"><button class="btn" type="button" id="resetBtn"><span class="lbl">データを消して最初から</span><span class="cf">もう一度タップで消去</span></button></div>
     </div>
-    <p class="muted small">AddAll 第3版</p>
+    <p class="muted small">AddAll 第4版</p>
   </div>
 </div>
 
@@ -378,37 +421,46 @@ const availOf = a => rawOf(a).filter(i => S.reg[i.id] || depthOf(a) >= i.depth);
 const nextDepth = a => { const d = depthOf(a); const n = rawOf(a).find(i => !S.reg[i.id] && i.depth > d); return n ? n.depth : null; };
 const sortedArea = a => ITEMS.filter(i => i.area === a).sort((x, y) => x.v - y.v);
 
-const SLOTS = [
-  { id: 'hand', name: '手', stat: '採取力' },
-  { id: 'waist', name: '腰', stat: '使い魔の速さ' },
-  { id: 'neck', name: '首', stat: 'マナ' },
+// ホムンクルス（相棒）
+const STATS = [
+  { id: 'str', name: '力', fx: '採取力' },
+  { id: 'spd', name: '速さ', fx: '使い魔の速さ' },
+  { id: 'luk', name: '運', fx: '目利き' },
+  { id: 'int', name: '知恵', fx: 'マナ' },
+  { id: 'exp', name: '探究', fx: '探索の進み' },
+  { id: 'dex', name: '器用', fx: '熟練の伸び' },
 ];
-const SLOT = Object.fromEntries(SLOTS.map(s => [s.id, s]));
-const TOOLR = [
-  { id: 'stonePick', name: '石のつるはし', slot: 'hand', area: 'a1', base: 1.5, r: 0, in: { stone: 30, twig: 10 } },
-  { id: 'cuPick', name: '銅のつるはし', slot: 'hand', area: 'a1', base: 2.5, r: 1, in: { cuIngot: 5, twig: 20 } },
-  { id: 'fePick', name: '鉄のつるはし', slot: 'hand', area: 'a2', base: 4, r: 2, in: { feIngot: 8, resin: 4 } },
-  { id: 'mPick', name: '魔鉄のつるはし', slot: 'hand', area: 'a3', base: 10, r: 3, in: { mIngot: 6, scalePlate: 2 } },
-  { id: 'grassFlute', name: '草笛', slot: 'waist', area: 'a1', base: 1.3, r: 0, in: { weed: 30, twig: 10 } },
-  { id: 'boneFlute', name: '骨の笛', slot: 'waist', area: 'a2', base: 2, r: 2, in: { boneMeal: 5, resin: 2 } },
-  { id: 'fairyBell', name: '妖精の鈴', slot: 'waist', area: 'a2', base: 3.5, r: 3, in: { fairyLamp: 3, agPowder: 3 } },
-  { id: 'dragonHorn', name: '竜鱗の角笛', slot: 'waist', area: 'a3', base: 7, r: 4, in: { scalePlate: 3, auIngot: 2 } },
-  { id: 'clayCharm', name: '粘土の護符', slot: 'neck', area: 'a1', base: 1.2, r: 0, in: { brick: 3, herb: 2 } },
-  { id: 'silverNeck', name: '銀の首飾り', slot: 'neck', area: 'a1', base: 1.8, r: 3, in: { agPowder: 4, cuIngot: 2 } },
-  { id: 'spiritNeck', name: '精霊の首飾り', slot: 'neck', area: 'a2', base: 3, r: 4, in: { spiritCrystal: 3, agPowder: 4 } },
-  { id: 'sageAmulet', name: '賢者のアミュレット', slot: 'neck', area: 'a3', base: 6, r: 4, in: { catalyst: 2, auIngot: 5 } },
+const STAT_IDS = STATS.map(x => x.id);
+const STAT = Object.fromEntries(STATS.map(x => [x.id, x]));
+const KINDS = [
+  { id: 'koro', name: 'コロ', area: 'a1', r: 1, d: '小石から生まれた、ころころ転がる元気な子。力仕事が得意。',
+    g: { str: 130, spd: 60, luk: 30, int: 40, exp: 50, dex: 70 }, sk: ['power', 'skill'], in: { stone: 60, clay: 10 } },
+  { id: 'happa', name: 'ハッパ', area: 'a1', r: 1, d: '草の汁から生まれたのんびり屋。なぜか運がいい。',
+    g: { str: 40, spd: 60, luk: 120, int: 50, exp: 60, dex: 90 }, sk: ['luck', 'skill'], in: { weed: 50, herb: 5 } },
+  { id: 'kiri', name: 'キリ', area: 'a2', r: 2, d: '霧の露から生まれた気まぐれな子。とにかく素早い。',
+    g: { str: 50, spd: 130, luk: 60, int: 50, exp: 100, dex: 40 }, sk: ['fam', 'craft'], in: { mist: 3, leaf: 40 } },
+  { id: 'morisu', name: 'モリス', area: 'a2', r: 3, d: '古木の芯から生まれた物知り。マナの扱いがうまい。',
+    g: { str: 60, spd: 40, luk: 50, int: 130, exp: 60, dex: 80 }, sk: ['mana', 'skill'], in: { heartwood: 2, sap: 10 } },
+  { id: 'ruru', name: 'ルル', area: 'a3', r: 3, d: '水晶から生まれた静かな子。洞窟の奥まで見通す。',
+    g: { str: 40, spd: 70, luk: 90, int: 70, exp: 130, dex: 50 }, sk: ['craft', 'luck'], in: { amethyst: 3, gravel: 30 } },
+  { id: 'draco', name: 'ドラコ', area: 'a3', r: 4, d: '竜の鱗から生まれた頼もしい子。何でもそつなくこなす。',
+    g: { str: 90, spd: 90, luk: 80, int: 90, exp: 80, dex: 80 }, sk: ['power', 'mana', 'fam'], in: { dragonscale: 2, mIngot: 2 } },
 ];
-const TOOL = Object.fromEntries(TOOLR.map(t => [t.id, t]));
+const KIND = Object.fromEntries(KINDS.map(k => [k.id, k]));
+const RANKS = ['E', 'D', 'C', 'B', 'A', 'S', 'S+'];
+const RANK_V = [1, 2, 3, 5, 8, 12, 20];
+const RANK_MAX = RANKS.length - 1;
+const MAX_HOMS = 30;
+const LV_MAX = 20;
 const TRAITS = {
-  power: { name: '豪腕', fx: '採取力 +10%', d: '1回の採取で手に入る素材の数が、1レベルごとに10%増えます。使い魔の採取にも効きます。', now: l => `採取力 +${l * 10}%` },
-  luck: { name: '幸運', fx: '目利き +1', d: '強化の「目利き」のレベルが、1レベルごとに1上がります。珍しい素材ほど、追加で多く手に入ります。', now: l => `目利き +${l}` },
-  skill: { name: '修練', fx: '熟練の伸び +15%', d: '採取のたびに増える熟練が、1レベルごとに15%多くなります。', now: l => `熟練の伸び +${l * 15}%` },
-  mana: { name: '錬金', fx: 'マナ +8%', d: '分解や依頼で得られるマナが、1レベルごとに8%増えます。素材の価値が上がるので、生成に必要なマナも同じだけ増えます。', now: l => `マナ +${l * 8}%` },
-  fam: { name: '使役', fx: '使い魔の速さ +10%', d: 'すべての採取地の使い魔が、1レベルごとに10%速く採取します。', now: l => `使い魔の速さ +${l * 10}%` },
-  craft: { name: '探究', fx: '探索の進み +10%', d: '採取地の探索が、1レベルごとに10%速く進みます。珍しい素材が早く見つかるようになります。', now: l => `探索の進み +${l * 10}%` },
+  power: { name: '豪腕', d: '1回の採取で手に入る素材の数が増えます。使い魔の採取にも効きます。', per: '採取力 +10%', now: l => `採取力 +${l * 10}%` },
+  luck: { name: '幸運', d: '「目利き」のレベルが上がります。珍しい素材ほど、追加で多く手に入ります。', per: '目利き +1', now: l => `目利き +${l}` },
+  skill: { name: '修練', d: '採取のたびに増える熟練が多くなります。', per: '熟練の伸び +15%', now: l => `熟練の伸び +${l * 15}%` },
+  mana: { name: '錬金', d: '分解や依頼で得られるマナが増えます。素材の価値が上がるので、生成に必要なマナも同じだけ増えます。', per: 'マナ +8%', now: l => `マナ +${l * 8}%` },
+  fam: { name: '使役', d: 'すべての採取地の使い魔が速く採取します。', per: '使い魔の速さ +10%', now: l => `使い魔の速さ +${l * 10}%` },
+  craft: { name: '洞察', d: '採取地の探索が速く進みます。珍しい素材が早く見つかるようになります。', per: '探索の進み +10%', now: l => `探索の進み +${l * 10}%` },
 };
 const TRAIT_IDS = Object.keys(TRAITS);
-const MAX_TOOLS = 40;
 
 const RW_NAME = { power: '採取力', mana: 'マナ', fam: '使い魔の速さ', skill: '熟練の伸び' };
 const inv = id => S.inv[id] || 0;
@@ -420,7 +472,7 @@ const MIS = [
   { id: 'm3', area: 'a1', name: 'マナの目覚め', text: 'マナを累計500集める', prog: () => S.st.totalMana, goal: 500, rw: ['power', 1.25], brute: 2000 },
   { id: 'm4', area: 'a1', name: '図鑑の1ページ目', text: '図鑑に5種類登録する', prog: () => regCount(), goal: 5, rw: ['fam', 1.25], brute: 5000 },
   { id: 'm5', area: 'a1', name: '煉瓦を焼く', text: '煉瓦を20個納品する', deliver: 'brick', goal: 20, rw: ['skill', 1.5], brute: 3000 },
-  { id: 'm6', area: 'a1', name: '最初の道具', text: '道具を1つ作る', prog: () => S.st.toolsMade, goal: 1, rw: ['power', 1.3], brute: 5000 },
+  { id: 'm6', area: 'a1', name: '最初の相棒', text: 'ホムンクルスを1体生み出す', prog: () => S.st.homsMade, goal: 1, rw: ['power', 1.3], brute: 5000 },
   { id: 'm7', area: 'a1', name: '慣れた手つき', text: '熟練を300にする', prog: () => S.skill, goal: 300, rw: ['power', 1.3], brute: 1e4 },
   { id: 'm8', area: 'a1', name: '銅の納品', text: '銅のインゴットを30個納品する', deliver: 'cuIngot', goal: 30, rw: ['mana', 1.2], brute: 3e4 },
   { id: 'm9', area: 'a1', name: '依頼に応える', text: '依頼を3回達成する', prog: () => S.st.reqDone, goal: 3, rw: ['mana', 1.2], brute: 3e4 },
@@ -433,9 +485,9 @@ const MIS = [
   // 霧の森
   { id: 'f1', area: 'a2', name: '森の第一歩', text: '霧の森で100回採取する', prog: () => S.st.areaTaps.a2 || 0, goal: 100, rw: ['power', 1.3], brute: 1e6 },
   { id: 'f2', area: 'a2', name: '土を育てる', text: '腐葉土を50個納品する', deliver: 'humus', goal: 50, rw: ['mana', 1.2], brute: 3e6 },
-  { id: 'f3', area: 'a2', name: 'はじめての融合', text: '道具を1回融合する', prog: () => S.st.fusions, goal: 1, rw: ['power', 1.3], brute: 5e6 },
+  { id: 'f3', area: 'a2', name: '兄弟', text: '同じ種類のホムンクルスを2人そろえる', prog: () => Math.max(0, ...KINDS.map(k => kindHoms(k.id).length)), goal: 2, goal: 1, rw: ['power', 1.3], brute: 5e6 },
   { id: 'f4', area: 'a2', name: '樹脂の納品', text: '樹脂を30個納品する', deliver: 'resin', goal: 30, rw: ['fam', 1.3], brute: 1e7 },
-  { id: 'f5', area: 'a2', name: '良い道具', text: '品質50%以上の道具を持つ', prog: () => maxToolQ() * 100, goal: 50, rw: ['skill', 1.5], brute: 3e7 },
+  { id: 'f5', area: 'a2', name: '育ち盛り', text: 'ホムンクルスをLv20まで育てる', prog: () => maxHomLv(), goal: 20, rw: ['skill', 1.5], brute: 3e7 },
   { id: 'f6', area: 'a2', name: '森の図鑑', text: '霧の森の素材10種類をすべて図鑑に登録する', prog: () => areaReg('a2'), goal: 10, rw: ['mana', 1.5], brute: 1e8 },
   { id: 'f7', area: 'a2', name: '頼れる錬金術師', text: '依頼を15回達成する', prog: () => S.st.reqDone, goal: 15, rw: ['mana', 1.3], brute: 3e8 },
   { id: 'f8', area: 'a2', name: '妖精の灯の納品', text: '妖精の灯を20個納品する', deliver: 'fairyLamp', goal: 20, rw: ['fam', 1.5], brute: 1e9 },
@@ -445,8 +497,8 @@ const MIS = [
   { id: 'c1', area: 'a3', name: '洞窟の入口', text: '水晶の洞窟で500回採取する', prog: () => S.st.areaTaps.a3 || 0, goal: 500, rw: ['power', 1.5], brute: 1e12 },
   { id: 'c2', area: 'a3', name: '本物の金', text: '金のインゴットを100個納品する', deliver: 'auIngot', goal: 100, rw: ['mana', 1.3], brute: 3e12 },
   { id: 'c3', area: 'a3', name: '火薬の納品', text: '火薬を50個納品する', deliver: 'gunpowder', goal: 50, rw: ['power', 1.5], brute: 1e13 },
-  { id: 'c4', area: 'a3', name: '完璧に近づく', text: '品質90%以上の道具を持つ', prog: () => maxToolQ() * 100, goal: 90, rw: ['skill', 2], brute: 3e13 },
-  { id: 'c5', area: 'a3', name: '特性の継承', text: '特性レベルの合計が6以上の道具を持つ', prog: () => maxTraitSum(), goal: 6, rw: ['fam', 2], brute: 1e14 },
+  { id: 'c4', area: 'a3', name: '頂を目指して', text: '技能をSランクにする', prog: () => maxRank(), goal: 5, rw: ['skill', 2], brute: 3e13 },
+  { id: 'c5', area: 'a3', name: '能力の極み', text: '能力値の合計が400以上のホムンクルスを育てる', prog: () => maxStatTotal(), goal: 400, rw: ['fam', 2], brute: 1e14 },
   { id: 'c6', area: 'a3', name: '洞窟の図鑑', text: '水晶の洞窟の素材10種類をすべて図鑑に登録する', prog: () => areaReg('a3'), goal: 10, rw: ['mana', 1.5], brute: 3e14 },
   { id: 'c7', area: 'a3', name: '名高い錬金術師', text: '名声を50にする', prog: () => S.fame, goal: 50, rw: ['mana', 1.5], brute: 1e15 },
   { id: 'c8', area: 'a3', name: '竜鱗の納品', text: '竜鱗の板を20個納品する', deliver: 'scalePlate', goal: 20, rw: ['fam', 1.5], brute: 3e15 },
@@ -478,12 +530,12 @@ const JOURNAL = [
     text: 'ものの価値は、分解したときに流れ出るマナの量で決まる。小石は小石なりに、月光草は月光草なりに。\n一度手にしたものは、マナさえあればいつでも呼び戻せる。だから、まずは手に取ることだ。' },
   { id: 'j3', title: '並べること', hint: '図鑑に10種類登録する', cond: () => regCount() >= 10,
     text: '集めたものは、並べておけ。価値の低いものから高いものへ。\n並べてみて初めて、足りないものが見えてくる。わたしの棚には、いつもひとつ分の空きがあった。' },
-  { id: 'j4', title: '道具', hint: '道具を作る', cond: () => S.st.toolsMade >= 1,
-    text: '道具は手の延長だ。だが、作っただけの道具はまだ半分しか道具ではない。\n同じものを重ねて、少しずつ完璧に近づけていけ。' },
+  { id: 'j4', title: '相棒', hint: 'ホムンクルスを生み出す', cond: () => S.st.homsMade >= 1,
+    text: '錬金術師は、ひとりでは何もできない。土と水とマナから、手伝いの子を生み出せ。\n生まれたばかりの子は弱い。だが、どう育つかは、その子が教えてくれる。' },
   { id: 'j5', title: '霧の森', hint: '霧の森へ行く', cond: () => !!S.unlocked.a2,
     text: '森の霧は、マナが濃すぎて目に見えるようになったものだ。あの森の木々は、ずっと昔に誰かが撒いたマナで育ったと聞く。\n妖精の粉に触れるときは、そっとな。' },
-  { id: 'j6', title: '因果の融合', hint: '道具を融合する', cond: () => S.st.fusions >= 1,
-    text: '二つのものを一つにすると、良いところが残る。悪いところは、なぜか消えていく。\nわたしはこれを因果の融合と呼んでいる。理由はまだわからない。' },
+  { id: 'j6', title: '因果の融合', hint: '同じ種類の子を2人そろえる', cond: () => KINDS.some(k => kindHoms(k.id).length >= 2),
+    text: '同じ土から生まれた子でも、育ち方はそれぞれ違う。\n世界がはじまりに戻るとき、子たちは一つになり、それぞれの良いところだけが残る。わたしはこれを因果の融合と呼んでいる。' },
   { id: 'j7', title: '完璧な小石', hint: '素材を完璧まで精錬する', cond: () => ITEMS.some(i => perfect(i.id)),
     text: '完璧な小石を見たことがあるか。わたしはある。ただの石ころなのに、目が離せなかった。\n完璧とは、それ以上何も足さなくてよい状態のことだ。' },
   { id: 'j8', title: '水晶の洞窟', hint: '水晶の洞窟へ行く', cond: () => !!S.unlocked.a3,
@@ -512,15 +564,66 @@ function checkJournal() {
 }
 const unreadJournal = () => JOURNAL.filter(j => S.journal[j.id] && !S.jread[j.id]).length;
 
+/* --- 少しずつ開く機能 --- */
+const FEATS = [
+  { id: 'up', name: '強化', tab: 'up', hint: 'マナを累計10集める', p: () => [S.life.totalMana, 10], d: 'マナを使って、採取の腕前や使い魔を強化できます。' },
+  { id: 'mission', name: 'ミッション', tab: 'mission', hint: '25回採取する', p: () => [S.st.manual + S.st.auto, 25], d: '達成すると、ずっと続く強化がもらえます。' },
+  { id: 'book', name: '図鑑', tab: 'book', hint: '素材を5種類見つける', p: () => [regCount(), 5], d: '見つけたものが価値の順に並びます。師匠の手記もここで読めます。' },
+  { id: 'lab', name: '工房', tab: 'lab', hint: 'マナを累計300集める', p: () => [S.life.totalMana, 300], d: '素材の分解と、加工品の解放ができます。' },
+  { id: 'tools', name: '相棒', tab: 'tools', hint: 'マナを累計3,000集める', p: () => [S.life.totalMana, 3000], d: 'ホムンクルスを生み出して育てます。' },
+  { id: 'maze', name: '迷宮', tab: 'maze', hint: 'ホムンクルスを2人生み出す', p: () => [Math.max(S.homs.length, S.st.homsMade), 2], d: 'ホムンクルスを連れて、終わりのない迷宮を進めます。' },
+  { id: 'refine', name: '精錬', sub: 'lab', hint: 'マナを累計2万集める', p: () => [S.life.totalMana, 2e4], d: '工房で、同じ素材を使って品質を上げられます。' },
+  { id: 'req', name: '依頼', sub: 'mission', hint: 'ミッションを3つ達成する', p: () => [Object.values(S.mc).reduce((a, b) => a + b, 0), 3], d: 'ミッションの画面で、村の人からの納品の依頼を受けられます。' },
+  { id: 'stone', name: '賢者の石', sub: 'up', hint: '水晶の洞窟へ行く', p: () => [S.unlocked.a3 || S.run > 1 ? 1 : 0, 1], d: '強化の画面で、賢者の石を錬成して周回できます。' },
+];
+const featOpen = id => !!S.open[id];
+const tabOpen = t => t === 'gather' || FEATS.some(x => x.tab === t && S.open[x.id]);
+function checkFeats(silent) {
+  for (const x of FEATS) {
+    if (S.open[x.id]) continue;
+    const [a, b] = x.p();
+    if (a < b) continue;
+    S.open[x.id] = true;
+    if (silent) continue;
+    S.newTab[x.tab || x.sub] = true;
+    toast(`新しく開きました「${x.name}」　${x.d}`, 5000);
+    setTabs();
+  }
+}
+// いま一番近い目標
+function nextGoal() {
+  if (featOpen('mission')) {
+    const rd = MIS.find(m => misOpen(m) && S.unlocked[m.area] && ready(m));
+    if (rd) return { text: `ミッション「${rd.name}」を受け取れます`, r: 1, tab: 'mission', ok: true };
+  }
+  const x = FEATS.find(q => !S.open[q.id]);
+  if (x && x.id !== 'stone') { const [a, b] = x.p(); return { text: `次に開く「${x.name}」: ${x.hint}`, r: a / b, tab: 'gather' }; }
+  const na = AREAS.find(a => !S.unlocked[a.id]);
+  if (na && featOpen('mission')) {
+    const u = na.unlock, d = missionDoneIn(u.area);
+    if (d >= u.n) return { text: `「${na.name}」へ行けます（採取の画面で解放）`, r: 1, tab: 'gather', ok: true };
+    const rest = MIS.filter(m => m.area === u.area && misOpen(m) && S.unlocked[m.area])
+      .map(m => ({ m, r: Math.min(1, (m.deliver ? inv(m.deliver) : m.prog()) / m.goal) })).sort((p, q) => q.r - p.r)[0];
+    return { text: `「${na.name}」まで ミッションあと${u.n - d}個${rest ? `（近いもの: ${rest.m.name}）` : ''}`, r: d / u.n, tab: 'mission' };
+  }
+  if (featOpen('mission')) {
+    const best = MIS.filter(m => misOpen(m) && S.unlocked[m.area])
+      .map(m => ({ m, r: Math.min(1, (m.deliver ? inv(m.deliver) : m.prog()) / m.goal) })).sort((p, q) => q.r - p.r)[0];
+    if (best && (S.unlocked.a3 ? best.r > 0.3 : true)) return { text: `ミッション「${best.m.name}」: ${best.m.text}`, r: best.r, tab: 'mission' };
+  }
+  if (featOpen('stone')) return { text: '賢者の石を錬成して周回する（強化 → 賢者の石）', r: Math.min(1, stoneGain() / 10), tab: 'up' };
+  return { text: '採取を続けよう', r: 0, tab: 'gather' };
+}
+
 /* ===================== 状態 ===================== */
 const fresh = () => ({
-  v: 4, mana: 0, skill: 0, fame: 0,
-  run: 1, mc: {}, stones: 0, pu: {}, journal: {}, jread: {}, life: { totalMana: 0, prestiges: 0, bestStones: 0 },
+  v: 6, mana: 0, skill: 0, fame: 0,
+  run: 1, mc: {}, stones: 0, pu: {}, journal: {}, jread: {}, open: {}, newTab: {}, life: { totalMana: 0, prestiges: 0, bestStones: 0, mazeBest: 0 }, maze: null, mazeTeam: [],
   area: 'a1', unlocked: { a1: true },
   inv: {}, reg: {}, col: {}, dis: {}, ref: {},
-  tools: [], eq: { hand: null, waist: null, neck: null }, toolSeq: 1,
+  homs: [], homSeq: 1,
   reqs: [],
-  st: { manual: 0, auto: 0, totalMana: 0, areaTaps: {}, crafted: {}, toolsMade: 0, fusions: 0, reqDone: 0 },
+  st: { manual: 0, auto: 0, totalMana: 0, areaTaps: {}, crafted: {}, homsMade: 0, fusions: 0, reqDone: 0 },
   up: { tool: 0, fam_a1: 0, fam_a2: 0, fam_a3: 0, furnace: 0, eye: 0, autodis: 0 },
   autoDis: false, done: {}, savedAt: 0, created: Date.now(),
 });
@@ -536,8 +639,27 @@ function normalize(o) {
   }
   if (!AREA[f.area] || !f.unlocked[f.area]) f.area = 'a1';
   if (!Array.isArray(f.tools)) f.tools = [];
-  f.tools = f.tools.filter(t => t && TOOL[t.b]);
-  for (const s of SLOTS) if (f.eq[s.id] && !f.tools.some(t => t.u === f.eq[s.id])) f.eq[s.id] = null;
+  if (!Array.isArray(f.homs)) f.homs = [];
+  f.homs = f.homs.filter(h => h && KIND[h.k]);
+  delete f.party;
+  if (!Array.isArray(f.mazeTeam)) f.mazeTeam = [];
+  f.mazeTeam = f.mazeTeam.filter(u => f.homs.some(h => h.u === u)).slice(0, 3);
+  if (f.maze && (!Array.isArray(f.maze.team) || !f.maze.team.some(u => f.homs.some(h => h.u === u)))) f.maze = null;
+  // 道具だった頃のセーブ: 装備していた道具を、同じ枠の役目のホムンクルスに変えて引き継ぐ
+  if ((o.v || 1) < 5 && Array.isArray(o.tools) && o.eq) {
+    const byTool = { hand: 'koro', waist: 'happa', neck: 'happa' };
+    const slotOf = b => /Pick$/.test(b) ? 'hand' : /Flute$|Bell$|Horn$/.test(b) ? 'waist' : 'neck';
+    for (const slot of ['hand', 'waist', 'neck']) {
+      const t = o.tools.find(x => x && x.u === o.eq[slot]);
+      if (!t) continue;
+      const k = KIND[byTool[slotOf(t.b)]];
+      const h = { u: f.homSeq++, k: k.id, lv: 1, xp: 0, f: 0, s: {}, sk: [] };
+      for (const st of STAT_IDS) h.s[st] = Math.round(capOf(h, st) * (0.2 + 0.5 * (t.q || 0)));
+      h.sk = Object.entries(t.t || {}).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([id, lv]) => ({ id, r: Math.min(RANK_MAX, Math.floor(Math.log2(lv + 1))) }));
+      f.homs.push(h);
+    }
+    f.st.homsMade = Math.max(f.st.homsMade || 0, o.st && o.st.toolsMade ? 1 : 0);
+  }
   // 使い魔が1種類だった頃のセーブは、そのレベルを裏山の使い魔に引き継ぐ
   if (f.up.familiar !== undefined) { if (!f.up.fam_a1) f.up.fam_a1 = f.up.familiar; delete f.up.familiar; }
   // 探索の回数を記録していなかった頃のセーブは、裏山の探索を累計の採取回数で補う
@@ -561,7 +683,10 @@ function normalize(o) {
     f.life.totalMana = Math.max(f.life.totalMana, f.st.totalMana || 0);
     delete f.autoCraft;
   }
-  f.v = 4;
+  delete f.tools; delete f.eq; delete f.toolSeq;
+  // 少しずつ開く仕組みがなかった頃のセーブは、条件を満たしている機能を黙って開く
+  if ((o.v || 1) < 6) f._migrateOpen = true;
+  f.v = 6;
   return f;
 }
 let S = fresh();
@@ -573,19 +698,33 @@ function mult(type) { let x = 1; for (const m of MIS) if (m.rw[0] === type && S.
 const misOpen = m => (S.mc[m.id] || 0) < S.run;
 const misBehind = m => S.run - (S.mc[m.id] || 0);
 const pu = id => S.pu[id] || 0;
-const toolById = u => S.tools.find(t => t.u === u);
-const toolEff = t => 1 + (TOOL[t.b].base - 1) * (0.6 + 0.8 * t.q);
-const eqMult = slot => { const t = toolById(S.eq[slot]); return t ? toolEff(t) : 1; };
-function traitLv(id) { let s = 0; for (const sl of SLOTS) { const t = toolById(S.eq[sl.id]); if (t && t.t[id]) s += t.t[id]; } return s; }
-const fameMult = () => 1 + 0.03 * S.fame;
+const homById = u => S.homs.find(h => h.u === u);
+const kindHoms = k => S.homs.filter(h => h.k === k);
+// 種類ごとに、能力値と技能はそれぞれ「その種類で一番高い子」のものが効く
+const kindBest = (k, st) => kindHoms(k).reduce((a, h) => Math.max(a, h.s[st]), 0);
+const statSum = st => KINDS.reduce((a, k) => a + kindBest(k.id, st), 0);
+// 能力値1ポイントごとに効果が2%ずつ掛け算で伸びる
+const statMult = st => 1.02 ** statSum(st);
+function kindRank(k, id) { let r = -1; for (const h of kindHoms(k)) for (const x of h.sk) if (x.id === id && x.r > r) r = x.r; return r; }
+function traitLv(id) { let s = 0; for (const k of KINDS) { const r = kindRank(k.id, id); if (r >= 0) s += RANK_V[r]; } return s; }
+function capOf(h, st) { return Math.round(KIND[h.k].g[st] * 0.6) + 20 + 15 * h.f; }
+const expNeed = lv => Math.round(30 * 1.3 ** (lv - 1));
+const slotsOf = h => 3 + (h.f >= 3 ? 1 : 0) + (h.f >= 6 ? 1 : 0);
+const statTotal = h => STAT_IDS.reduce((a, st) => a + h.s[st], 0);
+const isUltimate = h => STAT_IDS.every(st => h.s[st] >= capOf(h, st)) && h.sk.length >= slotsOf(h) && h.sk.every(k => k.r >= RANK_MAX);
+const maxHomLv = () => S.homs.reduce((a, h) => Math.max(a, h.lv), 0);
+const maxRank = () => S.homs.reduce((a, h) => Math.max(a, ...h.sk.map(k => k.r), 0), 0);
+const maxStatTotal = () => S.homs.reduce((a, h) => Math.max(a, statTotal(h)), 0);
+const fameMult = () => (1 + 0.03 * S.fame) * mazeMult();
+const mazeMult = () => 1 + 0.02 * (S.life.mazeBest || 0);
 const skillMult = () => 1 + S.skill * 0.004;
-const skillGain = () => mult('skill') * (1 + 0.15 * traitLv('skill'));
-const power = () => (1 + S.up.tool) * skillMult() * mult('power') * 1.5 ** pu('power') * eqMult('hand') * (1 + 0.1 * traitLv('power'));
+const skillGain = () => mult('skill') * (1 + 0.15 * traitLv('skill')) * statMult('dex');
+const power = () => (1 + S.up.tool) * skillMult() * mult('power') * 1.5 ** pu('power') * statMult('str') * (1 + 0.1 * traitLv('power'));
 const famLv = a => S.up['fam_' + a] || 0;
-const famMulti = () => mult('fam') * 1.5 ** pu('fam') * eqMult('waist') * (1 + 0.1 * traitLv('fam'));
+const famMulti = () => mult('fam') * 1.5 ** pu('fam') * statMult('spd') * (1 + 0.1 * traitLv('fam'));
 const famRate = (a = S.area) => famLv(a) * 0.5 * famMulti();
 const famTotal = () => unlockedAreas().reduce((s, a) => s + famRate(a.id), 0);
-const manaMult = () => 1.1 ** S.up.furnace * mult('mana') * 1.5 ** pu('mana') * eqMult('neck') * (1 + 0.08 * traitLv('mana')) * fameMult();
+const manaMult = () => 1.1 ** S.up.furnace * mult('mana') * 1.5 ** pu('mana') * statMult('int') * (1 + 0.08 * traitLv('mana')) * fameMult();
 // 精錬は20段階。1段階ごとに品質+5%、100%で「完璧」（価値2.5倍）
 const REF_MAX = 20;
 const refSteps = id => Math.min(REF_MAX, S.ref[id] || 0);
@@ -594,14 +733,12 @@ const perfect = id => refSteps(id) >= REF_MAX;
 const valMult = id => perfect(id) ? 2.5 : 1 + qOf(id);
 const baseVal = id => ITEM[id].v * valMult(id);
 const unitMana = id => baseVal(id) * manaMult();
-const eyeF = (eye = S.up.eye + traitLv('luck')) => 1 + 0.1 * eye;
+const eyeF = (eye = S.up.eye + traitLv('luck') + statSum('luk') / 10) => 1 + 0.1 * eye;
 const autoDisOn = () => S.up.autodis > 0 && S.autoDis;
-const maxToolQ = () => S.tools.reduce((a, t) => Math.max(a, t.q), 0);
-const traitSum = t => Object.values(t.t).reduce((a, b) => a + b, 0);
-const maxTraitSum = () => S.tools.reduce((a, t) => Math.max(a, traitSum(t)), 0);
+
 const refineCost = id => Math.ceil(10 * 1.3 ** refSteps(id));
 const procOn = p => (S.st.crafted[p.id] || 0) > 0 && S.unlocked[p.area];
-const exploreMult = () => (1 + 0.1 * traitLv('craft')) * 2 ** pu('explore');
+const exploreMult = () => (1 + 0.1 * traitLv('craft')) * 2 ** pu('explore') * statMult('exp');
 function avgValue(a = S.area) {
   const f = eyeF(); const raws = availOf(a);
   const tot = raws.reduce((s, i) => s + i.w, 0);
@@ -692,6 +829,7 @@ function autoTaps(k, a) {
   S.st.auto += k;
   S.st.areaTaps[a] = (S.st.areaTaps[a] || 0) + k * exploreMult();
   S.skill += 0.1 * k * skillGain();
+  gainExp(0.25 * k, k > 50);
   return gather(power() * k, a);
 }
 function offline(sec) {
@@ -751,60 +889,79 @@ function refine(id, maxTimes) {
   }
   return { n, spent };
 }
-function makeTool(tr) {
-  if (S.tools.length >= MAX_TOOLS || canMake(tr.in) < 1) return null;
-  const ids = Object.keys(tr.in);
-  const avgQ = ids.reduce((a, id) => a + qOf(id), 0) / ids.length;
-  for (const [id, n] of Object.entries(tr.in)) S.inv[id] -= n;
-  const q = Math.min(0.99, avgQ * 0.7 + Math.random() * 0.3);
-  const t = {};
-  const k = Math.random() < 0.7 ? 1 : 2;
-  const pool = TRAIT_IDS.slice();
-  for (let i = 0; i < k; i++) { const j = Math.floor(Math.random() * pool.length); t[pool.splice(j, 1)[0]] = 1; }
-  const tool = { u: S.toolSeq++, b: tr.id, q, t };
-  S.tools.push(tool);
-  S.st.toolsMade++;
-  if (!S.eq[tr.slot]) S.eq[tr.slot] = tool.u;
-  return tool;
+const rnd = n => Math.floor(Math.random() * n);
+function makeHom(kind) {
+  if (S.homs.length >= MAX_HOMS || canMake(kind.in) < 1) return null;
+  for (const [id, n] of Object.entries(kind.in)) S.inv[id] -= n;
+  const h = { u: S.homSeq++, k: kind.id, lv: 1, xp: 0, f: 0, s: {}, sk: [] };
+  for (const st of STAT_IDS) h.s[st] = Math.min(capOf(h, st), Math.round(kind.g[st] / 12) + rnd(5));
+  h.sk.push({ id: kind.sk[0], r: Math.random() < 0.3 ? 1 : 0 });
+  if (Math.random() < 0.6) { const pool = kind.sk.slice(1).concat(TRAIT_IDS).filter(id => !h.sk.some(k => k.id === id)); h.sk.push({ id: pool[rnd(Math.min(pool.length, kind.sk.length + 1))], r: 0 }); }
+  S.homs.push(h);
+  S.st.homsMade++;
+  return h;
 }
-function fuseResult(a, b) {
-  const same = a.b === b.b;
-  const hi = Math.max(a.q, b.q), lo = Math.min(a.q, b.q);
-  // 同じ種類のときだけ品質が上がる。100%に近づくほど上がり幅は小さいが、最低でも+5%なので必ず100%に届く
-  const q = same ? Math.min(1, hi + Math.max(0.05, (1 - hi) * (0.15 + 0.35 * lo))) : a.q;
-  const t = {};
-  for (const id of new Set([...Object.keys(a.t), ...Object.keys(b.t)])) t[id] = (a.t[id] || 0) + (b.t[id] || 0);
-  const keep = Object.entries(t).sort((p, r) => r[1] - p[1]);
-  return { q, t: Object.fromEntries(keep) };
-}
-function fuse(au, bu) {
-  const a = toolById(au), b = toolById(bu);
-  if (!a || !b || a === b || TOOL[a.b].slot !== TOOL[b.b].slot) return false;
-  const r = fuseResult(a, b);
-  a.q = r.q; a.t = r.t;
-  S.tools = S.tools.filter(t => t !== b);
-  for (const s of SLOTS) if (S.eq[s.id] === b.u) S.eq[s.id] = null;
-  S.st.fusions++;
-  return true;
-}
-function bulkFuse(au, times) {
-  const a = toolById(au); if (!a) return { n: 0, spent: 0 };
-  const tr = TOOL[a.b];
-  let n = 0; const before = S.mana;
-  while (n < times && S.tools.length < MAX_TOOLS) {
-    if (!fillMissing(tr.in, 1)) break;
-    const t = makeTool(tr); if (!t) break;
-    fuse(a.u, t.u); n++;
+// レベルアップ: 成長率（%）に従って能力が伸びる。100%を超える分は確定で+1
+function levelUp(h) {
+  const g = KIND[h.k].g, got = {};
+  for (const st of STAT_IDS) {
+    const n = Math.floor(g[st] / 100) + (Math.random() < (g[st] % 100) / 100 ? 1 : 0);
+    const add = Math.min(n, capOf(h, st) - h.s[st]);
+    if (add > 0) { h.s[st] += add; got[st] = add; }
   }
-  return { n, spent: before - S.mana };
+  h.lv++;
+  let sk = null;
+  if (h.lv === 10 || h.lv === LV_MAX) {
+    const up = h.sk.filter(k => k.r < RANK_MAX);
+    if (up.length) { sk = up[rnd(up.length)]; sk.r++; }
+  }
+  return { got, sk };
 }
-const toolValue = t => Object.entries(TOOL[t.b].in).reduce((a, [id, n]) => a + n * unitMana(id), 0) * (1 + t.q);
-function scrapTool(u) {
-  const t = toolById(u); if (!t) return 0;
-  const g = toolValue(t);
-  addMana(g);
-  S.tools = S.tools.filter(x => x !== t);
-  for (const s of SLOTS) if (S.eq[s.id] === u) S.eq[s.id] = null;
+const homName = h => KIND[h.k].name + (h.f ? `（融合${h.f}）` : '');
+function gainExp(x, quiet) {
+  const msgs = [];
+  for (const h of S.homs) {
+    if (h.lv >= LV_MAX) continue;
+    h.xp += x;
+    const from = h.lv; let last = null;
+    while (h.lv < LV_MAX && h.xp >= expNeed(h.lv)) { h.xp -= expNeed(h.lv); last = levelUp(h); }
+    if (h.lv >= LV_MAX) h.xp = 0;
+    if (!last) continue;
+    if (quiet || h.lv - from > 1) msgs.push(`${KIND[h.k].name} Lv${from}→Lv${h.lv}`);
+    else msgs.push(`${KIND[h.k].name}がLv${h.lv}になった！ ${Object.entries(last.got).map(([st, n]) => STAT[st].name + '+' + n).join(' ') || '（伸びなかった）'}${last.sk ? `　${TRAITS[last.sk.id].name}が${RANKS[last.sk.r]}に` : ''}`);
+  }
+  if (msgs.length) toast(msgs.slice(0, 3).join('　') + (msgs.length > 3 ? `　ほか${msgs.length - 3}体` : ''), 3500);
+}
+// 周回のとき（因果融合）: 種類ごとに全員を1人にまとめる
+function mergeByKind(homs) {
+  // 融合回数が1増え、能力の上限が+15される
+  const out = [];
+  for (const k of KINDS) {
+    const g = homs.filter(h => h.k === k.id);
+    if (!g.length) continue;
+    g.sort((a, b) => b.f - a.f || statTotal(b) - statTotal(a));
+    const base = JSON.parse(JSON.stringify(g[0]));
+    for (const st of STAT_IDS) base.s[st] = Math.min(capOf(base, st), Math.max(...g.map(h => h.s[st])));
+    const best = {};
+    for (const h of g) for (const sk of h.sk) best[sk.id] = Math.max(best[sk.id] ?? -1, sk.r);
+    const sk = base.sk.map(x => ({ id: x.id, r: best[x.id] }));
+    const rest = Object.entries(best).filter(([id]) => !sk.some(x => x.id === id)).sort((a, b) => b[1] - a[1]);
+    for (const [id, r] of rest) { if (sk.length >= slotsOf(base)) break; sk.push({ id, r }); }
+    base.sk = sk;
+    // レベルは1に戻り、上がった上限に向かってまた育つ
+    base.lv = 1; base.xp = 0;
+    base.f += 1;
+    out.push(base);
+  }
+  return out;
+}
+const homValue = h => Object.entries(KIND[h.k].in).reduce((a, [id, n]) => a + n * unitMana(id), 0) * (1 + h.lv / 10);
+function releaseHom(u) {
+  const h = homById(u); if (!h) return 0;
+  const g = homValue(h); addMana(g);
+  S.homs = S.homs.filter(x => x !== h);
+  S.mazeTeam = S.mazeTeam.filter(x => x !== u);
+  if (S.maze && S.maze.team.includes(u)) { S.maze.team = S.maze.team.filter(x => x !== u); if (!S.maze.team.length) mzReturn(false); }
   return g;
 }
 function ready(m) { return m.deliver ? inv(m.deliver) >= m.goal : m.prog() >= m.goal; }
@@ -853,12 +1010,12 @@ function prestige() {
   const gain = stoneGain();
   const o = S, n = fresh();
   // 周回をまたいで残るもの
-  n.run = o.run + 1; n.mc = o.mc; n.journal = o.journal; n.jread = o.jread; n.stones = o.stones + gain; n.pu = o.pu;
+  n.run = o.run + 1; n.mc = o.mc; n.journal = o.journal; n.jread = o.jread; n.mazeTeam = o.mazeTeam.filter(u => n.homs.some(h => h.u === u)); n.open = o.open; n.newTab = {}; n.stones = o.stones + gain; n.pu = o.pu;
   n.life = { totalMana: o.life.totalMana, prestiges: o.life.prestiges + 1, bestStones: Math.max(o.life.bestStones, gain) };
   n.skill = o.skill * Math.min(1, 0.1 + 0.1 * pu('skillKeep'));
-  n.tools = SLOTS.map(sl => o.tools.find(t => t.u === o.eq[sl.id])).filter(Boolean);
-  for (const t of n.tools) n.eq[TOOL[t.b].slot] = t.u;
-  n.toolSeq = o.toolSeq;
+  n.homs = mergeByKind(o.homs);
+  n.st.fusions = n.homs.length;
+  n.homSeq = o.homSeq;
   if (pu('keepFame')) n.fame = o.fame;
   if (pu('keepBook')) { n.reg = Object.assign({}, o.reg); n.st.crafted = Object.assign({}, o.st.crafted); }
   if (pu('keepRef')) n.ref = Object.assign({}, o.ref);
@@ -869,6 +1026,134 @@ function prestige() {
   ui.gArea = 'a1'; ui.misArea = 'a1'; ui.fuse = null; ui.tab = 'gather'; ui.upView = 'shop';
   refreshReqs();
   return gain;
+}
+
+/* --- ホムンクルスの迷宮 --- */
+const MAZE_TEAM = 3;
+const FOES = ['泥人形', '石の番兵', '霧の獣', '水晶蜘蛛', '影の錬金術師', '鉄の巨像', '星喰い', '原初の影'];
+const foeName = fl => FOES[Math.min(FOES.length - 1, Math.floor((fl - 1) / 10))];
+const PATHS = {
+  foe: { name: '敵', d: '戦って勝つと、マナと経験値' },
+  elite: { name: '強敵', d: '手ごわいが、報酬は3倍' },
+  chest: { name: '宝箱', d: 'マナと素材が手に入る' },
+  spring: { name: '泉', d: 'HPが4割回復する' },
+  altar: { name: '祭壇', d: 'この探索の間、攻撃力+15%' },
+  boss: { name: '番人', d: '10階ごとの番人。倒すと大きな報酬' },
+};
+function teamTrait(team, id) { let s = 0; for (const h of team) for (const k of h.sk) if (k.id === id) s += RANK_V[k.r]; return s; }
+function cstat(h, team, buff) {
+  const st = h.s;
+  return {
+    maxhp: Math.round(20 + 4 * st.str + 2 * st.dex + 2 * h.lv),
+    atk: (3 + 0.8 * st.str + 0.6 * st.int) * (1 + 0.05 * teamTrait(team, 'power')) * (1 + 0.15 * buff),
+    dbl: Math.min(0.75, st.spd / 120 + 0.01 * teamTrait(team, 'fam')),
+    crit: Math.min(0.6, st.luk / 150 + 0.01 * teamTrait(team, 'luck')),
+    dodge: Math.min(0.5, st.dex / 250),
+  };
+}
+const foeStats = (fl, kind) => {
+  const m = kind === 'boss' ? 6 : kind === 'elite' ? 2.5 : 1;
+  return { name: (kind === 'boss' ? '番人・' : kind === 'elite' ? '強い' : '') + foeName(fl), hp: Math.round(30 * 1.18 ** fl * m), atk: 4 * 1.15 ** fl * (kind === 'boss' ? 2 : kind === 'elite' ? 1.5 : 1) };
+};
+const mzReward = (fl, kind) => 20 * 1.25 ** fl * (kind === 'boss' ? 10 : kind === 'elite' ? 3 : 1) * manaMult() * (1 + 0.05 * teamTrait(mzTeam(), 'mana'));
+const mzTeam = () => (S.maze ? S.maze.team : S.mazeTeam).map(homById).filter(Boolean);
+const seeAll = () => teamTrait(mzTeam(), 'craft') >= 5 || mzTeam().reduce((a, h) => a + h.s.exp, 0) >= 120;
+function genChoices(fl) {
+  if (fl % 10 === 0) return [{ t: 'boss' }];
+  const pick = () => { const r = Math.random(); return r < 0.45 ? 'foe' : r < 0.6 ? 'elite' : r < 0.75 ? 'chest' : r < 0.88 ? 'spring' : 'altar'; };
+  const c = [pick(), pick(), pick()].map(t => ({ t }));
+  if (!seeAll()) c[Math.floor(Math.random() * 3)].hide = true;
+  return c;
+}
+function mzStart() {
+  const team = S.mazeTeam.map(homById).filter(Boolean);
+  if (!team.length) return false;
+  const hp = {}; for (const h of team) hp[h.u] = cstat(h, team, 0).maxhp;
+  S.maze = { floor: 1, team: team.map(h => h.u), hp, buff: 0, bag: { mana: 0, items: {}, stones: 0 }, choices: genChoices(1), log: ['迷宮に入った。'] };
+  return true;
+}
+function mzFight(kind) {
+  const m = S.maze, team = mzTeam(), fl = m.floor;
+  const foe = foeStats(fl, kind);
+  const cs = Object.fromEntries(team.map(h => [h.u, cstat(h, team, m.buff)]));
+  let fhp = foe.hp, hits = 0, crits = 0, taken = 0, rounds = 0;
+  const alive = () => team.filter(h => m.hp[h.u] > 0);
+  while (fhp > 0 && alive().length && rounds < 40) {
+    rounds++;
+    for (const h of alive()) {
+      const c = cs[h.u];
+      const n = 1 + (Math.random() < c.dbl ? 1 : 0);
+      for (let i = 0; i < n && fhp > 0; i++) { const cr = Math.random() < c.crit; fhp -= c.atk * (cr ? 2 : 1) * (0.85 + Math.random() * 0.3); hits++; if (cr) crits++; }
+    }
+    if (fhp <= 0) break;
+    const tg = alive(); const t = tg[Math.floor(Math.random() * tg.length)];
+    if (Math.random() < cs[t.u].dodge) continue;
+    const d = Math.round(foe.atk * (0.85 + Math.random() * 0.3));
+    m.hp[t.u] = Math.max(0, m.hp[t.u] - d); taken += d;
+  }
+  const down = team.filter(h => m.hp[h.u] <= 0).map(h => KIND[h.k].name);
+  if (fhp > 0) {
+    // 全滅（または決着がつかない）: 集めた報酬の半分を失って戻る
+    const lost = m.bag.mana / 2;
+    m.bag.mana -= lost;
+    for (const id in m.bag.items) m.bag.items[id] = Math.floor(m.bag.items[id] / 2);
+    m.bag.stones = Math.floor(m.bag.stones / 2);
+    m.log = [`${foe.name}に敗れた……（${rounds}ターン）。持ち物の半分を落として逃げ帰った。`];
+    return mzReturn(true);
+  }
+  const gain = mzReward(fl, kind);
+  m.bag.mana += gain;
+  let extra = '';
+  if (kind === 'boss' && fl >= 30) { m.bag.stones++; extra = '　賢者の石を1個見つけた！'; }
+  const xp = 3 * fl * (kind === 'boss' ? 4 : kind === 'elite' ? 2 : 1) * (1 + 0.1 * teamTrait(team, 'skill'));
+  for (const h of team) if (m.hp[h.u] > 0) giveExp(h, xp);
+  m.log = [`${foe.name}を倒した！（${rounds}ターン、攻撃${hits}回${crits ? `・会心${crits}回` : ''}）　受けたダメージ ${fmt(taken)}${down.length ? `　${down.join('・')}が倒れた` : ''}`, `+${fmt(gain)} マナ　経験値 +${fmt(xp)}${extra}`];
+  return true;
+}
+function giveExp(h, x) {
+  if (h.lv >= LV_MAX) return;
+  h.xp += x;
+  const from = h.lv; let last = null;
+  while (h.lv < LV_MAX && h.xp >= expNeed(h.lv)) { h.xp -= expNeed(h.lv); last = levelUp(h); }
+  if (h.lv >= LV_MAX) h.xp = 0;
+  if (last) toast(`${KIND[h.k].name}がLv${h.lv}になった！${h.lv - from > 1 ? '' : ' ' + (Object.entries(last.got).map(([st, n]) => STAT[st].name + '+' + n).join(' ') || '（伸びなかった）')}`, 3000);
+}
+function mzChest() {
+  const m = S.maze, fl = m.floor;
+  const gain = mzReward(fl, 'foe') * 1.5;
+  m.bag.mana += gain;
+  const pool = ITEMS.filter(i => i.kind === 'raw' && S.unlocked[i.area] && S.reg[i.id]).sort((a, b) => b.v - a.v);
+  let got = '';
+  if (pool.length) {
+    const it = pool[Math.floor(Math.random() * Math.ceil(pool.length / 2))];
+    const n = Math.ceil(10 * 1.15 ** fl);
+    m.bag.items[it.id] = (m.bag.items[it.id] || 0) + n;
+    got = `、${it.name} ×${fmt(n)}`;
+  }
+  m.log = [`宝箱を開けた。+${fmt(gain)} マナ${got}`];
+}
+function mzGo(i) {
+  const m = S.maze; if (!m) return;
+  const c = m.choices[i]; if (!c) return;
+  let t = c.t;
+  if (t === 'foe' || t === 'elite' || t === 'boss') { if (!mzFight(t)) return; if (!S.maze) return; }
+  else if (t === 'chest') mzChest();
+  else if (t === 'spring') { for (const h of mzTeam()) { const mx = cstat(h, mzTeam(), m.buff).maxhp; if (m.hp[h.u] > 0) m.hp[h.u] = Math.min(mx, m.hp[h.u] + Math.round(mx * 0.4)); } m.log = ['泉の水を飲んだ。HPが回復した。']; }
+  else if (t === 'altar') { m.buff++; m.log = [`祭壇に祈った。攻撃力 +15%（この探索の間 合計+${m.buff * 15}%）`]; }
+  m.floor++;
+  if (m.floor - 1 > (S.life.mazeBest || 0)) S.life.mazeBest = m.floor - 1;
+  m.choices = genChoices(m.floor);
+}
+function mzReturn(lost) {
+  const m = S.maze; if (!m) return false;
+  addMana(m.bag.mana);
+  for (const id in m.bag.items) if (m.bag.items[id] > 0) addItem(id, m.bag.items[id]);
+  S.stones += m.bag.stones;
+  const items = Object.entries(m.bag.items).filter(([, n]) => n > 0).map(([id, n]) => `${ITEM[id].name}×${fmt(n)}`).join('、');
+  toast(`${lost ? '命からがら' : '無事に'}帰還した（地下${m.floor}階）: +${fmt(m.bag.mana)} マナ${items ? '、' + items : ''}${m.bag.stones ? `、賢者の石 +${m.bag.stones}` : ''}`, 6000);
+  S.mazeLast = m.log;
+  S.maze = null;
+  return false;
 }
 
 /* --- 依頼 --- */
@@ -911,7 +1196,7 @@ const regSig = ids => ids.map(id => S.reg[id] ? 2 : inv(id) > 0 ? 1 : 0).join(''
 const confirmBtn = (cls, attrs, label, cf) => `<button class="btn ${cls}" type="button" ${attrs}><span class="lbl">${label}</span><span class="cf">${cf}</span></button>`;
 
 function structKey() {
-  const ua = Object.keys(S.unlocked).join(',');
+  const ua = Object.keys(S.unlocked).join(',') + '/' + Object.keys(S.open).join(',');
   switch (ui.tab) {
     case 'gather': return `g${ui.gArea}${ua}${S.up.autodis}`;
     case 'lab': {
@@ -920,8 +1205,9 @@ function structKey() {
       if (ui.labView === 'refine') return base + regSig(labIds()) + labIds().map(id => perfect(id) ? 1 : 0).join('');
       return base + regSig(labIds());
     }
-    case 'tools': return `t${ua}${ui.fuse}${ui.traitHelp ? 'h' : ''}|${S.tools.map(t => t.u).join(',')}|${SLOTS.map(s => S.eq[s.id]).join(',')}|${S.st.fusions}`;
+    case 'tools': return `t${ua}|${S.homs.map(h => [h.u, h.lv, h.f, h.sk.map(k => k.id + k.r).join('')].join(':')).join(',')}|${ui.traitHelp ? 'h' : ''}`;
     case 'mission': return `m${ui.misView}${ui.misArea}${ua}${S.run}:${MIS.filter(misOpen).length}|${S.reqs.map(r => r ? (r.wait ? 'w' : r.id) : '-').join(',')}`;
+    case 'maze': return `z${S.maze ? [S.maze.floor, S.maze.choices.map(c => c.t + (c.hide ? 'h' : '')).join(''), JSON.stringify(S.maze.hp), S.maze.log.join('')].join('|') : 'off' + S.mazeTeam.join(',') + S.homs.map(h => h.u + ':' + h.lv).join(',')}`;
     case 'book': return `b${ui.bookView || 'items'}${regCount()}${ua}${Object.keys(S.journal).length}`;
     case 'up': return 'u' + (ui.upView || 'shop') + S.up.autodis + Object.keys(S.unlocked).join(',') + S.run + JSON.stringify(S.pu);
   }
@@ -929,7 +1215,7 @@ function structKey() {
 }
 function render() {
   B = [];
-  const fn = { gather: vGather, lab: vLab, tools: vTools, mission: vMission, book: vBook, up: vUp }[ui.tab];
+  const fn = { maze: vMaze, gather: vGather, lab: vLab, tools: vTools, mission: vMission, book: vBook, up: vUp }[ui.tab];
   main.innerHTML = fn();
   B.forEach((b, i) => { b.el = main.querySelector(`[data-b="${i}"]`); b.last = undefined; });
   lastKey = structKey();
@@ -959,6 +1245,12 @@ function update() {
     autoDisOn() ? `${AREA[S.area].name}　+${fmt(perSec())} /秒` : `${AREA[S.area].name}　使い魔 計${fmtD(r)} 回/秒`;
   const nReady = MIS.filter(m => misOpen(m) && S.unlocked[m.area] && ready(m)).length
     + S.reqs.filter(q => q && !q.wait && inv(q.id) >= q.n).length;
+  const g = nextGoal();
+  const ge = document.getElementById('goal');
+  document.getElementById('goalText').textContent = g.text;
+  document.getElementById('goalBar').style.width = Math.max(0, Math.min(1, g.r)) * 100 + '%';
+  ge.classList.toggle('ok', !!g.ok);
+  ge.dataset.tab = g.tab;
   const jb = document.getElementById('bookBadge');
   jb.hidden = unreadJournal() === 0;
   const bd = document.getElementById('misBadge');
@@ -1031,6 +1323,7 @@ function bindTap() {
     S.st.manual++;
     S.st.areaTaps[S.area] = (S.st.areaTaps[S.area] || 0) + exploreMult();
     S.skill += skillGain();
+    gainExp(1);
     const got = gather(power());
     t.classList.add('hit');
     clearTimeout(tapHitTimer);
@@ -1064,7 +1357,8 @@ function labIds() {
   return rawOf(ui.labArea).map(i => i.id);
 }
 function vLab() {
-  const seg = [['dg', '分解'], ['craft', '加工'], ['refine', '精錬']]
+  if (ui.labView === 'refine' && !featOpen('refine')) ui.labView = 'dg';
+  const seg = [['dg', '分解'], ['craft', '加工'], ['refine', '精錬']].filter(([k]) => k !== 'refine' || featOpen('refine'))
     .map(([k, n]) => `<button type="button" data-act="labview" data-id="${k}" aria-pressed="${ui.labView === k}">${n}</button>`).join('');
   let body = '';
   if (ui.labView === 'dg') body = vLabDG();
@@ -1164,109 +1458,131 @@ function vLabRefine() {
 }
 
 /* --- 道具 --- */
-const traitTags = t => {
-  const e = Object.entries(t.t);
-  return `<div class="tags">${e.length ? e.map(([id, lv]) => `<span class="tag">${TRAITS[id].name} Lv${lv}</span>`).join('') : '<span class="tag none">特性なし</span>'}</div>`;
+const rankTag = k => `<span class="tag${k.r >= 5 ? ' top' : ''}">${TRAITS[k.id].name} ${RANKS[k.r]}</span>`;
+const skillTags = h => {
+  const free = slotsOf(h) - h.sk.length;
+  return `<div class="tags">${h.sk.map(rankTag).join('')}${'<span class="tag none">空き</span>'.repeat(Math.max(0, free))}</div>`;
 };
-const traitText = t => Object.entries(t.t).map(([id, lv]) => `${TRAITS[id].name} Lv${lv}（${TRAITS[id].fx}×${lv}）`).join('、');
+function statGrid(h, cmp) {
+  return `<div class="sgrid">${STATS.map(st => {
+    const v = h.s[st.id], c = capOf(h, st.id);
+    const up = cmp && cmp[st.id] > v ? cmp[st.id] : null;
+    return `<div class="sc${v >= c ? ' max' : ''}"><span class="sl">${st.name}</span><b>${up !== null ? `${v}<span class="arrow">→${up}</span>` : v}</b><span class="cap">/${c}</span><i style="width:${Math.min(100, v / c * 100)}%"></i></div>`;
+  }).join('')}</div>`;
+}
+function homCard(h, acts, opts = {}) {
+  const k = KIND[h.k];
+  const ult = isUltimate(h);
+  return `<div class="hom r${k.r}${opts.sel ? ' sel' : ''}">
+    <div class="top-row"><span class="nm">${esc(k.name)}${ult ? ' <span class="tag top">究極</span>' : ''}</span><span class="own small">Lv <b>${tx(() => h.lv)}</b> / ${LV_MAX}${h.f ? `　融合${h.f}回` : ''}</span></div>
+    ${h.lv < LV_MAX ? `<div class="prog thin"><i ${wd(() => h.lv >= LV_MAX ? 100 : h.xp / expNeed(h.lv) * 100)}></i></div>` : '<p class="small q">Lv上限。因果融合でさらに強くなれます</p>'}
+    ${opts.compact ? '' : statGrid(h, opts.cmp)}
+    ${skillTags(h)}
+    ${acts ? `<div class="acts">${acts}</div>` : ''}
+  </div>`;
+}
 function vTools() {
-  const slots = SLOTS.map(s => {
-    const t = toolById(S.eq[s.id]);
-    if (!t) return `<div class="slot"><span class="lab">${s.name}（${s.stat}）</span><b class="muted">なし</b></div>`;
-    const tr = TOOL[t.b];
-    return `<div class="slot r${tr.r}"><span class="lab">${s.name}（${s.stat}）</span><b>${esc(tr.name)}</b><span class="eff">${fmtX(toolEff(t))}</span><span class="q">品質 ${fmtQ(t.q)}</span></div>`;
-  }).join('');
-  const tl = TRAIT_IDS.filter(id => traitLv(id) > 0).map(id => `${TRAITS[id].name} Lv${traitLv(id)}`).join('、');
-
-  let fusePanel = '';
-  const fa = ui.fuse != null ? toolById(ui.fuse) : null;
-  if (ui.fuse != null && !fa) ui.fuse = null;
-  if (fa) {
-    const slot = TOOL[fa.b].slot;
-    const cands = S.tools.filter(t => t !== fa && TOOL[t.b].slot === slot && S.eq[slot] !== t.u)
-      .sort((x, y) => (y.b === fa.b) - (x.b === fa.b) || traitSum(y) - traitSum(x));
-    const bc = () => missingCost(TOOL[fa.b].in, 10);
-    const rows = cands.map(c => {
-      const r = fuseResult(fa, c);
-      const tags = Object.entries(r.t).map(([id, lv]) => `<span class="tag">${TRAITS[id].name} Lv${lv}</span>`).join('') || '<span class="tag none">特性なし</span>';
-      return `<div class="item r${TOOL[c.b].r}">
-        <div class="top-row"><span class="nm">${esc(TOOL[c.b].name)}</span><span class="own small muted">${c.b === fa.b ? '同じ種類' : '特性だけ受け継ぐ'}</span></div>
-        <div class="meta">品質 ${fmtQ(c.q)}</div>
-        ${traitTags(c)}
-        <div class="meta">融合すると → 品質 <b class="q">${fmtQ(r.q)}</b>、効果 ${fmtX(toolEff({ b: fa.b, q: r.q }))}、特性は次のとおり</div>
-        <div class="tags">${tags}</div>
-        <div class="acts">${confirmBtn('pri', `data-act="fuse" data-id="${c.u}"`, 'この道具と融合する', 'もう一度タップで融合')}</div>
-      </div>`;
-    }).join('');
-    fusePanel = `<div class="panel" style="border-color:var(--mana)">
-      <div class="row-between"><h3>融合: ${esc(TOOL[fa.b].name)}</h3><button class="btn" type="button" data-act="fusecancel">やめる</button></div>
-      <p class="small">いまの品質 <b class="q">${fmtQ(fa.q)}</b>、効果 ${fmtX(toolEff(fa))}</p>
-      ${traitTags(fa)}
-      <p class="small muted">同じ枠の道具を1つ消費して、特性を受け継ぎます。両方にある特性はレベルを足し合わせ、上限はありません。同じ種類の道具なら品質も上がります。特性は全${TRAIT_IDS.length}種類すべて持て、融合で消えることはありません。装備中の道具は素材にできません。</p>
-      <div class="acts">
-        <button class="btn mana" type="button" data-act="bulkfuse" data-id="1" ${dz(() => { const c = missingCost(TOOL[fa.b].in, 1); return c === null || S.mana < c || S.tools.length >= MAX_TOOLS; })}>強化合成 ×1 <small>${tx(() => { const c = missingCost(TOOL[fa.b].in, 1); return c === null ? '未登録の材料あり' : fmt(c); })}</small></button>
-        ${confirmBtn('mana', `data-act="bulkfuse" data-id="10" ${dz(() => { const c = bc(); return c === null || S.mana < c || S.tools.length >= MAX_TOOLS; })}`, `まとめて強化合成 ×10 <small>${tx(() => { const c = bc(); return c === null ? '未登録の材料あり' : '約' + fmt(c); })}</small>`, 'もう一度タップで実行')}
-      </div>
-      <p class="small muted">強化合成: 同じ種類の道具を作って（足りない材料はマナで生成）すぐ融合します。</p>
-      <h4>持っている道具から選ぶ</h4>
-      <div class="list">${rows || '<p class="small muted">同じ枠の道具がほかにありません。強化合成を使うか、下の「作成」で作ってください。</p>'}</div>
+  const effects = STATS.map(st => `<div class="row-between"><span>${st.name}（${st.fx}）</span><b>${tx(() => st.id === 'luk' ? '目利き +' + fmtD(statSum('luk') / 10) : fmtX(statMult(st.id)))}</b></div>`).join('');
+  const sk = TRAIT_IDS.filter(id => traitLv(id) > 0).map(id => `${TRAITS[id].name} ${TRAITS[id].now(traitLv(id))}`).join('、');
+  const groups = KINDS.filter(k => kindHoms(k.id).length).map(k => {
+    const hs = kindHoms(k.id).sort((a, b) => b.f - a.f || statTotal(b) - statTotal(a));
+    const best = { k: k.id, f: Math.max(...hs.map(h => h.f)), s: {}, sk: [] };
+    for (const st of STAT_IDS) best.s[st] = kindBest(k.id, st);
+    best.sk = TRAIT_IDS.map(id => ({ id, r: kindRank(k.id, id) })).filter(x => x.r >= 0).sort((a, b) => b.r - a.r);
+    const cards = hs.map(h => homCard(h, confirmBtn('', `data-act="release" data-id="${h.u}"`, `別れる <small>+${tx(() => fmt(homValue(h)))}</small>`, 'もう一度タップで別れる'))).join('');
+    return `<div class="panel kind r${k.r}">
+      <div class="row-between"><h3>${esc(k.name)}</h3><span class="small muted">${hs.length}人${best.f ? `　因果融合${best.f}回` : ''}</span></div>
+      <p class="small muted">${esc(k.d)}</p>
+      <h4>いま効いている力（この種類で一番高いもの）</h4>
+      ${statGrid(best)}
+      <div class="tags">${best.sk.map(rankTag).join('') || '<span class="tag none">技能なし</span>'}</div>
+      ${hs.length > 1 || hs[0].lv < LV_MAX ? `<h4>この種類の子たち</h4>` : ''}
+      <div class="list">${cards}</div>
     </div>`;
-  }
-
-  const recipes = unlockedAreas().map(a => {
-    const rows = TOOLR.filter(r => r.area === a.id).map(r => {
-      const mc = () => missingCost(r.in, 1);
-      return `<div class="item r${r.r}">
-        <div class="top-row"><span class="nm">${esc(r.name)}</span><span class="own small muted">${SLOT[r.slot].name}・${SLOT[r.slot].stat} 基本${fmtX(r.base)}</span></div>
-        ${insHtml(r.in, 1)}
+  }).join('');
+  const kinds = unlockedAreas().map(a => {
+    const rows = KINDS.filter(k => k.area === a.id).map(k => {
+      const mc = () => missingCost(k.in, 1);
+      const bestSt = STAT_IDS.slice().sort((x, y) => k.g[y] - k.g[x]).slice(0, 2).map(st => STAT[st].name).join('・');
+      return `<div class="item r${k.r}">
+        <div class="top-row"><span class="nm">${esc(k.name)}</span><span class="own small muted">得意: ${bestSt}　いま${kindHoms(k.id).length}人</span></div>
+        <p class="small muted">${esc(k.d)}</p>
+        ${insHtml(k.in, 1)}
         <div class="acts">
-          <button class="btn pri" type="button" data-act="mktool" data-id="${r.id}" ${dz(() => canMake(r.in) < 1 || S.tools.length >= MAX_TOOLS)}>作成</button>
-          <button class="btn mana" type="button" data-act="mktoolfill" data-id="${r.id}" ${dz(() => { const c = mc(); return c === null || c === 0 || S.mana < c || S.tools.length >= MAX_TOOLS; })}>不足分を生成して作成 <small>${tx(() => { const c = mc(); return c === null ? '未登録の材料あり' : fmt(c); })}</small></button>
+          <button class="btn pri" type="button" data-act="mkhom" data-id="${k.id}" ${dz(() => canMake(k.in) < 1 || S.homs.length >= MAX_HOMS)}>生み出す</button>
+          <button class="btn mana" type="button" data-act="mkhomfill" data-id="${k.id}" ${dz(() => { const c = mc(); return c === null || c === 0 || S.mana < c || S.homs.length >= MAX_HOMS; })}>不足分を生成して生み出す <small>${tx(() => { const c = mc(); return c === null ? '未登録の材料あり' : fmt(c); })}</small></button>
         </div>
       </div>`;
     }).join('');
-    return `<h4>${esc(a.name)}の道具</h4>${rows}`;
+    return `<h4>${esc(a.name)}で生まれる子</h4>${rows}`;
   }).join('');
-
-  const owned = S.tools.slice().sort((x, y) => SLOTS.findIndex(s => s.id === TOOL[x.b].slot) - SLOTS.findIndex(s => s.id === TOOL[y.b].slot) || TOOL[y.b].base - TOOL[x.b].base || y.q - x.q);
-  const ownedRows = owned.map(t => {
-    const tr = TOOL[t.b];
-    const isEq = S.eq[tr.slot] === t.u;
-    const same = true;
-    return `<div class="item r${tr.r}${ui.fuse === t.u ? ' sel' : ''}">
-      <div class="top-row"><span class="nm">${esc(tr.name)}</span><span class="own small">${isEq ? '<b class="q">装備中</b>' : ''}</span></div>
-      <div class="meta">${SLOT[tr.slot].stat} <b>${fmtX(toolEff(t))}</b>　品質 <b class="q">${fmtQ(t.q)}</b></div>
-      ${traitTags(t)}
-      <div class="acts">
-        <button class="btn" type="button" data-act="equip" data-id="${t.u}" ${isEq ? 'disabled' : ''}>${isEq ? '装備中' : '装備する'}</button>
-        <button class="btn mana" type="button" data-act="fusesel" data-id="${t.u}" ${same ? '' : 'disabled'}>融合</button>
-        ${confirmBtn('', `data-act="scrap" data-id="${t.u}"`, `分解 <small>+${tx(() => fmt(toolValue(t)))}</small>`, 'もう一度タップで分解')}
-      </div>
-    </div>`;
-  }).join('');
-
   return `
-  <section class="area-head"><span class="eyebrow">道具</span><h2>装備と融合</h2></section>
-  <div class="slots">${slots}</div>
-  <div class="row-between"><p class="small muted">装備中の特性: ${tl || 'なし'}</p><button class="btn" type="button" data-act="traithelp" aria-expanded="${!!ui.traitHelp}">${ui.traitHelp ? '特性の説明を閉じる' : '特性の説明'}</button></div>
-  ${ui.traitHelp ? `<div class="panel">
-    <h3>特性の説明</h3>
-    <p class="small muted">特性は装備中の道具の分だけ効きます。3つの枠のレベルは足し合わせます。レベルに上限はありません。</p>
-    ${TRAIT_IDS.map(id => { const tr = TRAITS[id]; const l = traitLv(id); return `<div class="item"><div class="top-row"><span class="nm">${tr.name}</span><span class="own small">${l ? `<b class="q">Lv${l}（${tr.now(l)}）</b>` : '<span class="muted">装備なし</span>'}</span></div><div class="meta">${esc(tr.d)}</div></div>`; }).join('')}
-  </div>` : ''}
-  ${fusePanel}
-  <h3>持っている道具 ${S.tools.length} / ${MAX_TOOLS}</h3>
-  <div class="list">${ownedRows || '<p class="small muted">まだ道具がありません。下の「作成」で作ってみましょう。作ると、空いている枠に自動で装備します。</p>'}</div>
-  <h3>作成</h3>
-  <p class="small muted">道具の品質は、材料の品質（精錬）が高いほど高くなりやすくなります。特性は作るたびにランダムで0〜2個つきます。</p>
-  <div class="list">${recipes}</div>`;
+  <section class="area-head"><span class="eyebrow">相棒</span><h2>ホムンクルス</h2>
+    <p class="muted small">生み出した子は全員、採取のたびに経験値を得て育ちます。レベルが上がると、その子の成長率に従って能力値が伸びます。種類ごとに、能力値と技能はそれぞれ一番高い子のものが効きます。</p>
+    <p class="muted small">周回すると「因果融合」が起き、種類ごとに全員が1人にまとまって、それぞれの一番良い能力値と技能が残ります。そのたびに能力の上限が15上がり、Lv1から育ち直します。</p></section>
+  <div class="panel">
+    <div class="small muted">ホムンクルスの効果（能力値1ごとに効果が2%ずつ掛け算で伸びます）</div>
+    <div class="bonus">${effects}</div>
+    <div class="row-between"><p class="small muted">技能: ${sk || 'なし'}</p><button class="btn" type="button" data-act="traithelp" aria-expanded="${!!ui.traitHelp}">${ui.traitHelp ? '技能の説明を閉じる' : '技能の説明'}</button></div>
+    ${ui.traitHelp ? `<p class="small muted">技能のランクは E・D・C・B・A・S・S+ の7段階で、強さはそれぞれ ${RANK_V.join('・')} です。種類ごとに一番高いランクが効き、種類どうしは足し合わせます。Lv10とLv20になったとき、どれか1つのランクが上がります。</p>${TRAIT_IDS.map(id => { const tr = TRAITS[id]; const l = traitLv(id); return `<div class="item"><div class="top-row"><span class="nm">${tr.name}</span><span class="own small">${l ? `<b class="q">強さ${l}（${tr.now(l)}）</b>` : '<span class="muted">なし</span>'}</span></div><div class="meta">${esc(tr.d)}強さ1ごとに${tr.per}。</div></div>`; }).join('')}` : ''}
+  </div>
+  ${groups || '<p class="small muted">まだホムンクルスがいません。下の「生み出す」で作ってみましょう。</p>'}
+  <h3>生み出す（全部で ${S.homs.length} / ${MAX_HOMS}人）</h3>
+  <p class="small muted">同じ種類でも、育ち方は一人ひとり違います。何人か育てておくと、周回のときに良いところが集まります。</p>
+  <div class="list">${kinds}</div>`;
+}
+
+/* --- 迷宮 --- */
+function vMaze() {
+  const best = S.life.mazeBest || 0;
+  const head = `<section class="area-head"><span class="eyebrow">ホムンクルスの迷宮　最深 地下${fmt(best)}階（マナ ${fmtX(mazeMult())}）</span><h2>迷宮</h2>
+    <p class="muted small">ホムンクルスを最大${MAZE_TEAM}人連れて、終わりのない迷宮を進みます。深いほど敵は強く、報酬も大きくなります。いつでも帰還して持ち帰れますが、全滅すると集めたものの半分を失います。最深到達階1つごとに、マナがずっと2%増えます。</p></section>`;
+  const m = S.maze;
+  if (!m) {
+    const team = S.mazeTeam;
+    const cards = S.homs.slice().sort((a, b) => statTotal(b) - statTotal(a)).map(h => {
+      const on = team.includes(h.u);
+      const c = cstat(h, S.homs.filter(x => team.includes(x.u)), 0);
+      return `<div class="hom r${KIND[h.k].r}${on ? ' sel' : ''}">
+        <div class="top-row"><span class="nm">${esc(KIND[h.k].name)}</span><span class="own small">Lv ${h.lv}${h.f ? `　融合${h.f}回` : ''}</span></div>
+        <div class="mzst small"><span>HP <b>${fmt(c.maxhp)}</b></span><span>攻撃 <b>${fmt(c.atk)}</b></span><span>2回攻撃 ${Math.round(c.dbl * 100)}%</span><span>会心 ${Math.round(c.crit * 100)}%</span><span>回避 ${Math.round(c.dodge * 100)}%</span></div>
+        ${skillTags(h)}
+        <div class="acts"><button class="btn ${on ? 'okb' : ''}" type="button" data-act="mzpick" data-id="${h.u}" ${!on && team.length >= MAZE_TEAM ? 'disabled' : ''}>${on ? '連れていく（外す）' : team.length >= MAZE_TEAM ? 'もう連れていけない' : '連れていく'}</button></div>
+      </div>`;
+    }).join('');
+    const last = S.mazeLast ? `<div class="panel"><div class="small muted">前回の探索</div>${S.mazeLast.map(l => `<p class="small">${esc(l)}</p>`).join('')}</div>` : '';
+    return `${head}${last}
+    <div class="panel"><div class="row-between"><span>連れていく子 ${team.length} / ${MAZE_TEAM}</span><button class="btn pri" type="button" data-act="mzstart" ${team.length ? '' : 'disabled'}>迷宮に入る</button></div>
+    <p class="small muted">力と知恵が攻撃、力と器用がHP、速さが2回攻撃、運が会心、器用が回避に効きます。技能「豪腕」は攻撃、「修練」は経験値、「錬金」は報酬、「洞察」は分かれ道の先を見通す力になります。</p></div>
+    <div class="list">${cards || '<p class="small muted">ホムンクルスがいません。相棒の画面で生み出してください。</p>'}</div>`;
+  }
+  const team = mzTeam();
+  const bars = team.map(h => { const mx = cstat(h, team, m.buff).maxhp, hp = m.hp[h.u]; return `<div class="hpline${hp <= 0 ? ' down' : ''}"><span>${esc(KIND[h.k].name)} Lv${h.lv}</span><span class="hpbar"><i style="width:${Math.max(0, hp / mx * 100)}%"></i></span><span class="small">${hp <= 0 ? '戦闘不能' : fmt(hp) + '/' + fmt(mx)}</span></div>`; }).join('');
+  const bagItems = Object.entries(m.bag.items).filter(([, n]) => n > 0).map(([id, n]) => `${ITEM[id].name}×${fmt(n)}`).join('、');
+  const choices = m.choices.map((c, i) => {
+    const p = PATHS[c.t];
+    if (c.hide) return `<button class="path" type="button" data-act="mzgo" data-id="${i}"><b>？</b><span class="small muted">行ってみないとわからない</span></button>`;
+    const foe = (c.t === 'foe' || c.t === 'elite' || c.t === 'boss') ? foeStats(m.floor, c.t) : null;
+    return `<button class="path ${c.t}" type="button" data-act="mzgo" data-id="${i}"><b>${p.name}${foe ? '：' + esc(foe.name) : ''}</b><span class="small muted">${p.d}${foe ? `（HP ${fmt(foe.hp)}・攻撃 ${fmt(foe.atk)}）` : ''}</span></button>`;
+  }).join('');
+  return `${head}
+  <div class="panel mz">
+    <div class="row-between"><h3>地下${fmt(m.floor)}階</h3><span class="small muted">${m.buff ? `祭壇の加護 攻撃+${m.buff * 15}%` : ''}</span></div>
+    ${bars}
+    <div class="small">持ち物: <b class="q">${fmt(m.bag.mana)} マナ</b>${bagItems ? '、' + bagItems : ''}${m.bag.stones ? `、賢者の石 ${m.bag.stones}個` : ''}</div>
+  </div>
+  <div class="panel">${m.log.map(l => `<p class="small">${esc(l)}</p>`).join('')}</div>
+  <h3>分かれ道</h3>
+  <div class="paths">${choices}</div>
+  <div class="acts">${confirmBtn('', 'data-act="mzback"', '帰還する（持ち物を持ち帰る）', 'もう一度タップで帰還')}</div>`;
 }
 
 /* --- ミッションと依頼 --- */
 function vMission() {
+  if (!featOpen('req')) ui.misView = 'mis';
   const seg = [['mis', 'ミッション'], ['req', '依頼']]
     .map(([k, n]) => `<button type="button" data-act="misview" data-id="${k}" aria-pressed="${ui.misView === k}">${n}</button>`).join('');
-  return `<div class="seg full" role="group" aria-label="表示の切り替え">${seg}</div>${ui.misView === 'req' ? vReq() : vMis()}`;
+  return `${featOpen('req') ? `<div class="seg full" role="group" aria-label="表示の切り替え">${seg}</div>` : ''}${ui.misView === 'req' ? vReq() : vMis()}`;
 }
 function vMis() {
   if (!S.unlocked[ui.misArea]) ui.misArea = 'a1';
@@ -1389,9 +1705,10 @@ function vItems() {
 
 /* --- 強化 --- */
 function vUp() {
+  if (!featOpen('stone')) ui.upView = 'shop';
   const seg = [['shop', '工房の強化'], ['stone', '賢者の石']]
     .map(([k, n]) => `<button type="button" data-act="upview" data-id="${k}" aria-pressed="${(ui.upView || 'shop') === k}">${n}</button>`).join('');
-  return `<div class="seg full" role="group" aria-label="強化の種類">${seg}</div>${ui.upView === 'stone' ? vStone() : vShop()}`;
+  return `${featOpen('stone') ? `<div class="seg full" role="group" aria-label="強化の種類">${seg}</div>` : ''}${ui.upView === 'stone' ? vStone() : vShop()}`;
 }
 function vStone() {
   const mc = () => missingCost(STONE_IN, 1);
@@ -1404,7 +1721,7 @@ function vStone() {
       ${maxed ? '' : `<div class="acts"><button class="btn pri" type="button" data-act="buypu" data-id="${p.id}" ${dz(() => S.stones < p.cost(l()))}>習得 <small>賢者の石 ${tx(() => fmt(p.cost(l())))}個</small></button></div>`}
     </div>`;
   }).join('');
-  const keep = ['師匠の手記', 'ミッションの報酬（達成回数）', '装備中の道具3つ（品質と特性）', `熟練の${Math.round(Math.min(1, 0.1 + 0.1 * pu('skillKeep')) * 100)}%`, '賢者の石と、石で習得した強化']
+  const keep = ['師匠の手記', '迷宮の最深到達階', 'ミッションの報酬（達成回数）', 'ホムンクルス（因果融合: 種類ごとに全員が1人にまとまり、能力値と技能はそれぞれ一番良いものが残る。上限+15、Lv1から育ち直す）', `熟練の${Math.round(Math.min(1, 0.1 + 0.1 * pu('skillKeep')) * 100)}%`, '賢者の石と、石で習得した強化']
     .concat(pu('keepFame') ? ['名声'] : [], pu('keepBook') ? ['図鑑と加工の解放'] : [], pu('keepRef') ? ['精錬'] : [], pu('autodis') ? ['自動分解装置'] : []);
   return `
   <section class="area-head">
@@ -1422,7 +1739,7 @@ function vStone() {
     <div class="row-between"><span class="small">手に入る賢者の石</span><b class="q">${tx(() => fmt(stoneGain()))} 個</b></div>
     <p class="small muted">この周で集めたマナが多いほど増えます（この周の累計 ${tx(() => fmt(S.st.totalMana))} マナ）。</p>
     <p class="small"><b>残るもの</b>: ${keep.join('、')}</p>
-    <p class="small"><b>はじまりに戻るもの</b>: マナ、素材、採取地と探索、腕前・使い魔・分解炉などの強化、そのほかの道具、依頼${pu('keepFame') ? '' : '、名声'}${pu('keepBook') ? '' : '、図鑑と加工の解放'}${pu('keepRef') ? '' : '、精錬'}、ミッションの達成状況（報酬は残る）</p>
+    <p class="small"><b>はじまりに戻るもの</b>: マナ、素材、採取地と探索、腕前・使い魔・分解炉などの強化、依頼${pu('keepFame') ? '' : '、名声'}${pu('keepBook') ? '' : '、図鑑と加工の解放'}${pu('keepRef') ? '' : '、精錬'}、ミッションの達成状況（報酬は残る）</p>
     <div class="acts">${confirmBtn('pri', `data-act="prestige" ${dz(() => { const c = mc(); return c === null || S.mana < c; })}`, `錬成して周回する <small>${tx(() => { const c = mc(); return c === null ? '未登録の材料あり' : c > 0 ? '不足分 ' + fmt(c) + ' マナ' : '手持ちで足ります'; })}</small>`, 'もう一度タップで周回')}</div>
   </div>
   <h3>賢者の石で習得する強化</h3>
@@ -1478,18 +1795,14 @@ main.addEventListener('click', e => {
     case 'dis': { const c = inv(id); const g = dissolve(id, c); S.inv[id] = 0; if (g > 0) toast(`${ITEM[id].name}を${fmt(c)}個分解: +${fmt(g)} マナ`); break; }
     case 'force': { const c = unitMana(id) * 10; if (S.mana < c) break; if (!armed(b)) return; S.mana -= c; addItem(id, 1); toast(`強制錬成で${ITEM[id].name}が生まれた`); break; }
     case 'unlockcraft': { const p = ITEM[id]; if (procOn(p)) break; if (canMake(p.in) < 1 && !fillMissing(p.in, 1)) break; if (craft(p, 1)) { toast(`${p.name}を解放しました。これからは不足分を生成で作れます`, 4000); } break; }
-    case 'bulkfuse': { const n = Number(id); if (n > 1 && !armed(b)) return; const r = bulkFuse(ui.fuse, n); const t = toolById(ui.fuse); if (r.n && t) toast(`${r.n}回強化合成しました: 品質 ${fmtQ(t.q)}、${traitText(t) || '特性なし'}`, 4000); break; }
-    case 'craft': { const p = ITEM[id]; const g = craft(p, canMake(p.in)); if (g) toast(`${p.name}を${fmt(g)}個作りました`); break; }
-    case 'refine': { const r = refine(id, 1); if (r.n) toast(perfect(id) ? `${ITEM[id].name}が完璧になりました（価値 ×2.50）` : `${ITEM[id].name}の品質が ${fmtQ(qOf(id))} になりました${r.spent > 0 ? '（' + fmt(r.spent) + ' マナで不足分を生成）' : ''}`); break; }
-    case 'refinemax': { if (!armed(b)) return; const r = refine(id, REF_MAX); if (r.n) toast(`${ITEM[id].name}を${r.n}回精錬: ${perfect(id) ? '完璧になりました' : '品質 ' + fmtQ(qOf(id))}${r.spent > 0 ? '（' + fmt(r.spent) + ' マナ使用）' : ''}`); break; }
-    case 'mktool': { const t = makeTool(TOOL[id]); if (t) toolToast(t); break; }
-    case 'mktoolfill': { if (S.tools.length >= MAX_TOOLS) break; if (fillMissing(TOOL[id].in, 1)) { const t = makeTool(TOOL[id]); if (t) toolToast(t); } break; }
-    case 'equip': { const t = toolById(Number(id)); if (t) S.eq[TOOL[t.b].slot] = t.u; break; }
-    case 'fusesel': ui.fuse = Number(id); window.scrollTo({ top: 0, behavior: 'smooth' }); break;
-    case 'fusecancel': ui.fuse = null; break;
+    case 'mkhom': { const h = makeHom(KIND[id]); if (h) homToast(h); break; }
+    case 'mkhomfill': { if (S.homs.length >= MAX_HOMS) break; if (fillMissing(KIND[id].in, 1)) { const h = makeHom(KIND[id]); if (h) homToast(h); } break; }
+    case 'release': { if (!armed(b)) return; const u = Number(id); const g = releaseHom(u); toast(`ホムンクルスと別れました: +${fmt(g)} マナ`); break; }
     case 'traithelp': ui.traitHelp = !ui.traitHelp; break;
-    case 'fuse': { if (!armed(b)) return; if (fuse(ui.fuse, Number(id))) { const t = toolById(ui.fuse); toast(`融合しました: 品質 ${fmtQ(t.q)}、${traitText(t) || '特性なし'}`, 4000); } break; }
-    case 'scrap': { if (!armed(b)) return; const u = Number(id); if (ui.fuse === u) ui.fuse = null; const g = scrapTool(u); toast(`道具を分解: +${fmt(g)} マナ`); break; }
+    case 'mzpick': { const u = Number(id); if (S.mazeTeam.includes(u)) S.mazeTeam = S.mazeTeam.filter(x => x !== u); else if (S.mazeTeam.length < MAZE_TEAM) S.mazeTeam.push(u); break; }
+    case 'mzstart': mzStart(); break;
+    case 'mzgo': mzGo(Number(id)); break;
+    case 'mzback': if (!armed(b)) return; mzReturn(false); break;
     case 'misview': ui.misView = id; break;
     case 'misarea': ui.misArea = id; break;
     case 'claim': { const m = MISS[id]; if (!m || !misOpen(m) || !ready(m)) break; if (m.deliver) S.inv[m.deliver] -= m.goal; complete(m); break; }
@@ -1507,22 +1820,34 @@ main.addEventListener('click', e => {
   }
   update();
 });
-function toolToast(t) {
-  const tr = TOOL[t.b];
-  const tt = traitText(t);
-  toast(`${tr.name}を作りました: 品質 ${fmtQ(t.q)}${tt ? '、' + tt : ''}`, 4000);
+function homToast(h) {
+  toast(`${KIND[h.k].name}が生まれました: ${h.sk.map(k => TRAITS[k.id].name + ' ' + RANKS[k.r]).join('、')}`, 4000);
 }
 document.querySelector('.tabs').addEventListener('click', e => {
   const b = e.target.closest('[data-tab]');
   if (!b) return;
-  ui.tab = b.dataset.tab;
-  if (ui.tab === 'gather') ui.gArea = S.area;
-  if (ui.tab === 'mission' && ui.misView === 'mis') ui.misArea = S.area;
-  setTabs();
-  render();
-  window.scrollTo(0, 0);
+  goTab(b.dataset.tab);
 });
-const setTabs = () => document.querySelectorAll('.tabs [data-tab]').forEach(x => x.setAttribute('aria-selected', String(x.dataset.tab === ui.tab)));
+function setTabs() {
+  if (!tabOpen(ui.tab)) ui.tab = 'gather';
+  let n = 0;
+  document.querySelectorAll('.tabs [data-tab]').forEach(x => {
+    const t = x.dataset.tab, open = tabOpen(t);
+    x.hidden = !open; if (open) n++;
+    x.setAttribute('aria-selected', String(t === ui.tab));
+    x.classList.toggle('new', !!S.newTab[t] && t !== ui.tab);
+  });
+  document.querySelector('.tabs').style.setProperty('--ntabs', n);
+}
+function goTab(t) {
+  if (!tabOpen(t)) return;
+  ui.tab = t;
+  delete S.newTab[t];
+  if (t === 'gather') ui.gArea = S.area;
+  if (t === 'mission' && ui.misView === 'mis') ui.misArea = S.area;
+  setTabs(); render(); window.scrollTo(0, 0);
+}
+document.getElementById('goal').addEventListener('click', e => goTab(e.currentTarget.dataset.tab || 'gather'));
 
 /* ===================== 通知 ===================== */
 function toast(msg, ms = 2600) {
@@ -1563,12 +1888,15 @@ async function cloudSave(force) {
   }
   cloudBusy = false;
 }
+function migrateOpen() { if (S._migrateOpen) { delete S._migrateOpen; checkFeats(true); } }
 function adopt(obj, withOffline) {
   S = normalize(obj);
+  migrateOpen();
   ui.gArea = S.area; ui.misArea = S.area; ui.fuse = null;
   if (withOffline && S.savedAt) { const sec = (Date.now() - S.savedAt) / 1000; if (sec > 10) offline(sec); }
   lastTick = Date.now();
   refreshReqs();
+  setTabs();
   render();
 }
 async function cloudInit() {
@@ -1647,6 +1975,7 @@ function tick() {
   }
   if (frame % 5 === 0 || dt > 5) processAuto();
   if (frame % 10 === 0) { refreshReqs(); checkJournal(); }
+  if (frame % 3 === 0) checkFeats(false);
   if (++frame % 2 === 0 || dt > 5) update();
 }
 
@@ -1660,6 +1989,7 @@ function start(data) {
     ui.gArea = S.area; ui.misArea = S.area;
   }
   bootSavedAt = S.savedAt || 0;
+  migrateOpen();
   setTabs();
   refreshReqs();
   render();
