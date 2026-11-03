@@ -164,6 +164,7 @@ details.help[open] summary { margin-bottom: 4px; }
   box-shadow: inset 0 0 0 9px var(--surface), inset 0 0 0 10px var(--line);
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
   transition: transform .07s ease-out;
+  position: relative; overflow: visible;
 }
 .tap b { font-family: var(--f-display); font-size: 26px; font-weight: 800; }
 .tap small { font-size: 12px; color: var(--muted); letter-spacing: .1em; }
@@ -286,9 +287,42 @@ details.help[open] summary { margin-bottom: 4px; }
 .toast { background: var(--ink); color: var(--bg); border-radius: 10px; padding: 8px 14px; font-size: 13px; max-width: calc(100% - 32px); box-shadow: 0 4px 16px rgb(0 0 0 / .2); animation: tin .2s ease-out; }
 @keyframes tin { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 
+/* 演出 */
+.fx-layer { position: fixed; inset: 0; z-index: 30; pointer-events: none; overflow: hidden; }
+.cele { position: absolute; left: 50%; top: 34%; transform: translate(-50%, -50%); min-width: min(300px, calc(100% - 48px)); max-width: calc(100% - 32px);
+  background: var(--surface); border: 2px solid var(--cc, var(--brass)); border-radius: 18px; padding: 18px 22px; text-align: center;
+  box-shadow: 0 0 0 6px color-mix(in srgb, var(--cc, var(--brass)) 18%, transparent), 0 0 70px 24px color-mix(in srgb, var(--cc, var(--brass)) 30%, transparent), 0 18px 50px rgb(0 0 0 / .35);
+  animation: celeIn .55s cubic-bezier(.2, 1.6, .4, 1) both, celeOut .35s ease-in 1.9s forwards; }
+.cele .ck { font-size: 12px; font-weight: 700; letter-spacing: .2em; color: var(--cc, var(--brass)); }
+.cele .ct { font-family: var(--f-display); font-weight: 800; font-size: 26px; line-height: 1.3; margin-top: 4px; color: var(--ink); }
+.cele .cs { font-size: 13px; color: var(--muted); margin-top: 6px; line-height: 1.5; }
+@keyframes celeIn { from { opacity: 0; transform: translate(-50%, -50%) scale(.6); } to { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
+@keyframes celeOut { to { opacity: 0; transform: translate(-50%, -60%) scale(.96); } }
+@keyframes glow { from { opacity: 0; transform: scale(.4); } 40% { opacity: 1; } to { opacity: .6; transform: scale(1.1); } }
+.banner { position: absolute; left: 50%; top: calc(env(safe-area-inset-top, 0px) + 128px); transform: translateX(-50%); max-width: calc(100% - 32px);
+  background: var(--mana); color: var(--surface); font-weight: 700; font-size: 14px; border-radius: 999px; padding: 8px 18px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  box-shadow: 0 6px 20px rgb(0 0 0 / .25); animation: banIn .35s cubic-bezier(.2, 1.5, .4, 1) both, banOut .3s ease-in 1.6s forwards; }
+.banner.okc { background: var(--ok); }
+@keyframes banIn { from { opacity: 0; transform: translate(-50%, -14px) scale(.9); } to { opacity: 1; transform: translate(-50%, 0) scale(1); } }
+@keyframes banOut { to { opacity: 0; transform: translate(-50%, -10px); } }
+.spark { position: absolute; width: 8px; height: 8px; border-radius: 2px; background: var(--sc, var(--brass)); animation: spark .8s cubic-bezier(.1, .8, .3, 1) forwards; }
+@keyframes spark { from { opacity: 1; transform: translate(0, 0) rotate(0) scale(1); } to { opacity: 0; transform: translate(var(--dx), var(--dy)) rotate(var(--rot)) scale(.4); } }
+.ripple { position: absolute; left: 50%; top: 50%; width: 100%; aspect-ratio: 1; border-radius: 50%; border: 2px solid var(--brass); transform: translate(-50%, -50%) scale(.6); opacity: .8; pointer-events: none; animation: ripple .55s ease-out forwards; }
+@keyframes ripple { to { transform: translate(-50%, -50%) scale(1.25); opacity: 0; } }
+.pt.big { font-size: 20px; font-family: var(--f-display); font-weight: 800; animation-duration: 1.4s; text-shadow: 0 0 12px color-mix(in srgb, var(--rc) 60%, transparent), 0 1px 0 var(--bg); }
+.bal b.pulse { animation: pulse .5s ease-out; }
+@keyframes pulse { 0% { transform: scale(1); } 35% { transform: scale(1.18); text-shadow: 0 0 14px var(--mana); } 100% { transform: scale(1); } }
+.mis.ready { animation: readyGlow 1.8s ease-in-out infinite; }
+@keyframes readyGlow { 50% { box-shadow: 0 0 0 1px var(--ok) inset, 0 0 16px color-mix(in srgb, var(--ok) 45%, transparent); } }
+.bal b { display: inline-block; transform-origin: right center; }
+
 @media (prefers-reduced-motion: reduce) {
+  .cele, .banner { animation-duration: .01s, .01s; animation-delay: 0s, 1.6s; }
+  .spark, .ripple { display: none; }
+  .mis.ready, .bal b.pulse { animation: none; }
   .pt { animation-duration: .01s; }
   .tap { transition: none; }
+  .pt.big { animation-duration: .01s; }
   .toast { animation: none; }
 }
 </style>
@@ -348,6 +382,7 @@ details.help[open] summary { margin-bottom: 4px; }
 </div>
 
 <div class="toasts" id="toasts" aria-live="polite"></div>
+<div class="fx-layer" id="fx" aria-hidden="true"></div>
 
 <script>
 (() => {
@@ -605,7 +640,7 @@ function checkFeats(silent) {
     S.open[x.id] = true;
     if (silent) continue;
     S.newTab[x.tab || x.sub] = true;
-    toast(`新しく開きました「${x.name}」　${x.d}`, 5000);
+    celebrate('新しく開きました', x.name, x.d, 'var(--mana)');
     setTabs();
   }
 }
@@ -787,7 +822,7 @@ const nameOf = id => S.reg[id] || inv(id) > 0 || (S.col[id] || 0) > 0 ? ITEM[id]
 /* ===================== ゲーム処理 ===================== */
 function addMana(x) { S.mana += x; S.st.totalMana += x; S.life.totalMana += x; }
 // 一度手に入れたものは自動で図鑑に登録する
-function register(id) { if (!S.reg[id]) { S.reg[id] = true; toast(`図鑑に登録: ${ITEM[id].name}`); } }
+function register(id) { if (!S.reg[id]) { S.reg[id] = true; const m = ITEM[id]; celebrate('新発見', m.name, `${m.kind === 'proc' ? '加工品' : RARITY[m.r]}・図鑑に登録しました`, RC(m.r)); } }
 function addItem(id, c) { S.inv[id] = inv(id) + c; if (c > 0) register(id); }
 function dissolve(id, c) {
   if (c <= 0) return 0;
@@ -852,6 +887,10 @@ function autoTaps(k, a) {
   return gather(power() * k, a);
 }
 function offline(sec) {
+  const q = fxQuiet; fxQuiet = true;
+  try { offlineRun(sec); } finally { fxQuiet = q; }
+}
+function offlineRun(sec) {
   sec = Math.min(sec, 8 * 3600);
   const before = S.mana;
   let taps = 0;
@@ -949,7 +988,7 @@ function gainExp(x, quiet) {
     if (quiet || h.lv - from > 1) msgs.push(`${KIND[h.k].name} Lv${from}→Lv${h.lv}`);
     else msgs.push(`${KIND[h.k].name}がLv${h.lv}になった！ ${Object.entries(last.got).map(([st, n]) => STAT[st].name + '+' + n).join(' ') || '（伸びなかった）'}${last.sk ? `　${TRAITS[last.sk.id].name}が${RANKS[last.sk.r]}に` : ''}`);
   }
-  if (msgs.length) toast(msgs.slice(0, 3).join('　') + (msgs.length > 3 ? `　ほか${msgs.length - 3}体` : ''), 3500);
+  if (msgs.length) { if (quiet) toast(msgs.slice(0, 3).join('　') + (msgs.length > 3 ? `　ほか${msgs.length - 3}体` : ''), 3500); else banner('レベルアップ！ ' + msgs[0] + (msgs.length > 1 ? `　ほか${msgs.length - 1}体` : '')); }
 }
 // 周回のとき（因果融合）: 種類ごとに全員を1人にまとめる
 function mergeByKind(homs) {
@@ -987,7 +1026,7 @@ function ready(m) { return m.deliver ? inv(m.deliver) >= m.goal : m.prog() >= m.
 function complete(m, how) {
   S.done[m.id] = true;
   S.mc[m.id] = (S.mc[m.id] || 0) + 1;
-  toast(`ミッション達成「${m.name}」 ${RW_NAME[m.rw[0]]} ${fmtX(m.rw[1])}${how ? '（' + how + '）' : ''}`, 4000);
+  celebrate('ミッション達成', m.name, `${RW_NAME[m.rw[0]]} ${fmtX(m.rw[1])}${how ? '（' + how + '）' : ''}`, 'var(--ok)');
 }
 function buy(id) {
   const u = UP[id], l = S.up[id];
@@ -999,7 +1038,7 @@ function buy(id) {
   return true;
 }
 function canUnlock(a) { const u = AREA[a].unlock; return !!u && missionDoneIn(u.area) >= u.n; }
-function unlock(a) { S.unlocked[a] = true; S.area = a; ui.gArea = a; toast(`新しい採取地「${AREA[a].name}」へ行けるようになりました`, 4000); }
+function unlock(a) { S.unlocked[a] = true; S.area = a; ui.gArea = a; celebrate('新しい採取地', AREA[a].name, AREA[a].desc, 'var(--r4)'); }
 
 /* --- 賢者の石（周回） --- */
 const STONE_IN = { catalyst: 3, spiritCrystal: 3, primal: 1 };
@@ -1126,6 +1165,7 @@ function mzFight(kind) {
   if (kind === 'boss' && fl >= 30) { m.bag.stones++; extra = '　賢者の石を1個見つけた！'; }
   const xp = 3 * fl * (kind === 'boss' ? 4 : kind === 'elite' ? 2 : 1) * (1 + 0.1 * teamTrait(team, 'skill'));
   for (const h of team) if (m.hp[h.u] > 0) giveExp(h, xp);
+  if (kind === 'boss') celebrate('番人を倒した', foe.name, `地下${fl}階　+${fmt(gain)} マナ${extra}`, 'var(--bad)'); else banner(`${foe.name}を倒した！ +${fmt(gain)} マナ`, true);
   m.log = [`${foe.name}を倒した！（${rounds}ターン、攻撃${hits}回${crits ? `・会心${crits}回` : ''}）　受けたダメージ ${fmt(taken)}${down.length ? `　${down.join('・')}が倒れた` : ''}`, `+${fmt(gain)} マナ　経験値 +${fmt(xp)}${extra}`];
   return true;
 }
@@ -1135,7 +1175,7 @@ function giveExp(h, x) {
   const from = h.lv; let last = null;
   while (h.lv < LV_MAX && h.xp >= expNeed(h.lv)) { h.xp -= expNeed(h.lv); last = levelUp(h); }
   if (h.lv >= LV_MAX) h.xp = 0;
-  if (last) toast(`${KIND[h.k].name}がLv${h.lv}になった！${h.lv - from > 1 ? '' : ' ' + (Object.entries(last.got).map(([st, n]) => STAT[st].name + '+' + n).join(' ') || '（伸びなかった）')}`, 3000);
+  if (last) banner(`レベルアップ！ ${KIND[h.k].name} Lv${h.lv}${h.lv - from > 1 ? '' : ' ' + (Object.entries(last.got).map(([st, n]) => STAT[st].name + '+' + n).join(' ') || '')}`);
 }
 function mzChest() {
   const m = S.maze, fl = m.floor;
@@ -1212,6 +1252,7 @@ const wd = fn => { B.push({ k: 'w', fn }); return `data-b="${B.length - 1}" styl
 const cl = (fn, c) => { B.push({ k: 'c', fn, c }); return `data-b="${B.length - 1}"`; };
 const main = document.getElementById('main');
 let lastKey = '';
+let shownMana = 0, lastManaSeen = 0, lastPulse = 0;
 const regSig = ids => ids.map(id => S.reg[id] ? 2 : inv(id) > 0 ? 1 : 0).join('');
 const confirmBtn = (cls, attrs, label, cf) => `<button class="btn ${cls}" type="button" ${attrs}><span class="lbl">${label}</span><span class="cf">${cf}</span></button>`;
 
@@ -1258,7 +1299,12 @@ function update() {
     else if (b.k === 'w') b.el.style.width = v + '%';
     else if (b.k === 'c') b.el.classList.toggle(b.c, !!v);
   }
-  document.getElementById('hMana').textContent = fmt(S.mana);
+  const hm = document.getElementById('hMana');
+  if (!isFinite(shownMana) || reduceMotion || Math.abs(S.mana - shownMana) < 1 || S.mana < shownMana) shownMana = S.mana;
+  else shownMana += (S.mana - shownMana) * 0.35;
+  hm.textContent = fmt(shownMana);
+  if (S.mana > lastManaSeen * 1.05 + 10 && Date.now() - lastPulse > 600) { lastPulse = Date.now(); hm.classList.remove('pulse'); void hm.offsetWidth; hm.classList.add('pulse'); }
+  lastManaSeen = S.mana;
   const r = famTotal();
   const perSec = () => unlockedAreas().reduce((s, a) => s + famRate(a.id) * avgValue(a.id), 0) * power() * manaMult();
   document.getElementById('hRate').textContent = r <= 0 ? AREA[S.area].name :
@@ -1345,6 +1391,7 @@ function bindTap() {
     gainExp(1);
     const got = gather(power());
     t.classList.add('hit');
+    if (!reduceMotion && z.querySelectorAll('.ripple').length < 4) { const rp = document.createElement('span'); rp.className = 'ripple'; t.appendChild(rp); setTimeout(() => rp.remove(), 600); }
     clearTimeout(tapHitTimer);
     tapHitTimer = setTimeout(() => t.classList.remove('hit'), 70);
     const zr = z.getBoundingClientRect();
@@ -1353,12 +1400,13 @@ function bindTap() {
       if (z.querySelectorAll('.pt').length > 10) return;
       const p = document.createElement('div');
       const m = ITEM[id];
-      p.className = 'pt r' + m.r;
+      p.className = 'pt r' + m.r + (m.r >= 3 ? ' big' : '');
+      if (m.r >= 3 && k === 0) sparks(x, y, RC(m.r), m.r >= 4 ? 22 : 12, m.r >= 4 ? 120 : 80);
       p.textContent = `+${fmt(got[id])} ${m.name}`;
       p.style.left = Math.min(Math.max(x - zr.left + (Math.random() * 40 - 20), 70), zr.width - 70) + 'px';
       p.style.top = (y - zr.top - 24 - k * 22) + 'px';
       z.appendChild(p);
-      setTimeout(() => p.remove(), 1000);
+      setTimeout(() => p.remove(), m.r >= 3 ? 1450 : 1000);
     });
     update();
   };
@@ -1836,7 +1884,7 @@ main.addEventListener('click', e => {
     case 'upview': ui.upView = id; break;
     case 'bookview': ui.bookView = id; break;
     case 'buypu': if (buyPu(id)) toast(`「${PU[id].name}」を習得しました`); break;
-    case 'prestige': { if (!armed(b)) return; const g = prestige(); if (g) { setTabs(); checkJournal(); toast(`賢者の石を錬成しました（+${g}個）。${S.run}周目のはじまりです`, 5000); window.scrollTo(0, 0); } break; }
+    case 'prestige': { if (!armed(b)) return; const g = prestige(); if (g) { setTabs(); checkJournal(); celebrate('賢者の石', `${S.run}周目のはじまり`, `賢者の石 +${g}個。ホムンクルスたちは因果融合して、ひとつになった。`, 'var(--r4)'); window.scrollTo(0, 0); } break; }
     case 'buymax': { let n = 0; while (n < 1000 && buy(id)) n++; if (n > 1) toast(`${UP[id].name}を${n}レベル上げました`); break; }
   }
   update();
@@ -1869,6 +1917,64 @@ function goTab(t) {
   setTabs(); render(); window.scrollTo(0, 0);
 }
 document.getElementById('goal').addEventListener('click', e => goTab(e.currentTarget.dataset.tab || 'gather'));
+
+/* ===================== 演出 ===================== */
+const fxLayer = document.getElementById('fx');
+const reduceMotion = (() => { try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch { return false; } })();
+const RC = r => `var(--r${r})`;
+let celeQ = [], celeBusy = false, fxQuiet = false;
+// 大きな瞬間: 中央のカード＋火花
+function celebrate(kicker, title, sub, color) {
+  if (fxQuiet) return;
+  if (celeQ.length >= 3) celeQ.shift();
+  celeQ.push({ kicker, title, sub, color });
+  if (!celeBusy) nextCele();
+}
+function nextCele() {
+  const c = celeQ.shift();
+  if (!c) { celeBusy = false; return; }
+  celeBusy = true;
+  const el = document.createElement('div');
+  el.className = 'cele';
+  if (c.color) el.style.setProperty('--cc', c.color);
+  const k = document.createElement('div'); k.className = 'ck'; k.textContent = c.kicker;
+  const t = document.createElement('div'); t.className = 'ct'; t.textContent = c.title;
+  el.append(k, t);
+  if (c.sub) { const x = document.createElement('div'); x.className = 'cs'; x.textContent = c.sub; el.append(x); }
+  fxLayer.appendChild(el);
+  const r = el.getBoundingClientRect();
+  sparks(r.left + r.width / 2, r.top + r.height / 2, c.color, 26, 160);
+  setTimeout(() => { el.remove(); nextCele(); }, 2300);
+}
+// 小さな瞬間: 上部の帯
+let banBusyUntil = 0;
+function banner(text, ok) {
+  if (fxQuiet) return;
+  const now = Date.now();
+  if (now < banBusyUntil) return;
+  banBusyUntil = now + 900;
+  const el = document.createElement('div');
+  el.className = 'banner' + (ok ? ' okc' : '');
+  el.textContent = text;
+  fxLayer.appendChild(el);
+  setTimeout(() => el.remove(), 2000);
+}
+function sparks(x, y, color, n = 14, dist = 90) {
+  if (reduceMotion || fxQuiet) return;
+  if (fxLayer.querySelectorAll('.spark').length > 120) return;
+  for (let i = 0; i < n; i++) {
+    const sp = document.createElement('span');
+    sp.className = 'spark';
+    const a = Math.random() * Math.PI * 2, d = dist * (0.4 + Math.random() * 0.8);
+    sp.style.left = x + 'px'; sp.style.top = y + 'px';
+    sp.style.setProperty('--dx', Math.cos(a) * d + 'px');
+    sp.style.setProperty('--dy', Math.sin(a) * d + 'px');
+    sp.style.setProperty('--rot', (Math.random() * 720 - 360) + 'deg');
+    if (color) sp.style.setProperty('--sc', color);
+    fxLayer.appendChild(sp);
+    setTimeout(() => sp.remove(), 850);
+  }
+}
 
 /* ===================== 通知 ===================== */
 function toast(msg, ms = 2600) {
@@ -2010,6 +2116,7 @@ function start(data) {
     ui.gArea = S.area; ui.misArea = S.area;
   }
   bootSavedAt = S.savedAt || 0;
+  fxQuiet = true; setTimeout(() => { fxQuiet = false; }, 1500);
   migrateOpen();
   setTabs();
   refreshReqs();
