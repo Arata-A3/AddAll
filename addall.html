@@ -1,0 +1,1508 @@
+<title>AddAll</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@600;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
+<style>
+/* 工房の帳面: 上に残高（マナ）、中央に作業台、下にタブ。片手の親指で全部届く縦長レイアウト。 */
+:root {
+  --bg: #edf1ef;
+  --surface: #ffffff;
+  --surface2: #e2e8e5;
+  --ink: #1c2725;
+  --muted: #5b6a66;
+  --line: #cfd8d4;
+  --brass: #8a5d17;
+  --brass-soft: #f2e4c9;
+  --mana: #3d4fc4;
+  --mana-soft: #dde2fa;
+  --ok: #26754d;
+  --ok-soft: #d6eee0;
+  --bad: #b0402c;
+  --r0: #77827f;
+  --r1: #4c7c37;
+  --r2: #2c70a4;
+  --r3: #7a4cbd;
+  --r4: #a8740a;
+  --f-display: "Shippori Mincho B1", "Hiragino Mincho ProN", "Yu Mincho", serif;
+  --f-body: "Zen Kaku Gothic New", "Hiragino Sans", "Yu Gothic", "Meiryo", system-ui, sans-serif;
+  --nav-h: 62px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111918; --surface: #1a2422; --surface2: #23302d; --ink: #e5ece9; --muted: #95a5a1; --line: #2f3d3a;
+    --brass: #d9a94f; --brass-soft: #3a2f1a; --mana: #9eabff; --mana-soft: #262c52; --ok: #6fcf9b; --ok-soft: #1c3a2a; --bad: #ff8f78;
+    --r0: #9aa6a3; --r1: #8cc46f; --r2: #6fb5ea; --r3: #b893f2; --r4: #f0bf4c;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111918; --surface: #1a2422; --surface2: #23302d; --ink: #e5ece9; --muted: #95a5a1; --line: #2f3d3a;
+  --brass: #d9a94f; --brass-soft: #3a2f1a; --mana: #9eabff; --mana-soft: #262c52; --ok: #6fcf9b; --ok-soft: #1c3a2a; --bad: #ff8f78;
+  --r0: #9aa6a3; --r1: #8cc46f; --r2: #6fb5ea; --r3: #b893f2; --r4: #f0bf4c;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink);
+  font-family: var(--f-body); font-size: 15px; line-height: 1.6;
+  touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+  font-variant-numeric: tabular-nums;
+}
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--surface); }
+button { font: inherit; color: inherit; }
+button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--mana); outline-offset: 2px; }
+
+.gut { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+
+/* 上部: 残高 */
+.top {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5;
+  background: var(--surface); border-bottom: 1px solid var(--line);
+  display: flex; align-items: center; gap: 12px; padding-block: 10px;
+}
+.brand { font-family: var(--f-display); font-weight: 800; font-size: 15px; letter-spacing: .04em; color: var(--brass); }
+.bal { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: flex-end; line-height: 1.2; }
+.bal .lab { font-size: 11px; color: var(--muted); letter-spacing: .1em; }
+.bal b { font-size: 24px; font-weight: 700; color: var(--mana); white-space: nowrap; }
+.bal small { font-size: 12px; color: var(--muted); min-height: 1em; }
+.icon-btn { width: 40px; height: 40px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface2); display: grid; place-items: center; cursor: pointer; flex: none; }
+.icon-btn svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; }
+
+main { padding-block: 16px calc(var(--nav-h) + env(safe-area-inset-bottom, 0px) + 24px); max-width: 640px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; }
+
+h2 { font-family: var(--f-display); font-weight: 800; font-size: 22px; margin: 0; text-wrap: balance; }
+h3 { font-family: var(--f-display); font-weight: 600; font-size: 17px; margin: 0; }
+h4 { font-size: 13px; font-weight: 700; color: var(--muted); letter-spacing: .08em; margin: 6px 0 0; }
+p { margin: 0; }
+.muted { color: var(--muted); }
+.small { font-size: 13px; }
+.lack { color: var(--bad); }
+
+/* 下部: タブ */
+.tabs {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 6;
+  background: var(--surface); border-top: 1px solid var(--line);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  display: grid; grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+.tabs button {
+  height: var(--nav-h); border: 0; background: none; cursor: pointer; position: relative; min-width: 0;
+  font-size: 11px; font-weight: 500; color: var(--muted); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; white-space: nowrap;
+}
+.tabs button .k { font-family: var(--f-display); font-size: 19px; font-weight: 800; line-height: 1; }
+.tabs button[aria-selected="true"] { color: var(--brass); }
+.tabs button[aria-selected="true"]::before { content: ""; position: absolute; top: 0; left: 22%; right: 22%; height: 3px; border-radius: 0 0 3px 3px; background: var(--brass); }
+.badge { position: absolute; top: 6px; right: calc(50% - 22px); min-width: 18px; height: 18px; border-radius: 9px; padding: 0 5px; background: var(--ok); color: var(--surface); font-size: 11px; font-weight: 700; line-height: 18px; }
+
+/* 共通部品 */
+.btn {
+  border: 1px solid var(--line); background: var(--surface2); border-radius: 10px;
+  min-height: 40px; padding: 6px 12px; cursor: pointer; font-weight: 500; font-size: 14px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px; line-height: 1.25; text-align: center;
+}
+.btn.pri { background: var(--brass); border-color: var(--brass); color: var(--surface); font-weight: 700; }
+.btn.mana { background: var(--mana-soft); border-color: transparent; color: var(--mana); font-weight: 700; }
+.btn.okb { background: var(--ok); border-color: var(--ok); color: var(--surface); font-weight: 700; }
+.btn:disabled { opacity: .42; cursor: default; }
+.btn small { font-weight: 400; font-size: 12px; opacity: .9; }
+.btn .cf { display: none; }
+.btn.armed .lbl { display: none; }
+.btn.armed .cf { display: inline; }
+.btn.armed { background: var(--brass-soft); color: var(--brass); border-color: var(--brass); }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 8px; }
+.row-between { display: flex; justify-content: space-between; align-items: center; gap: 8px 12px; flex-wrap: wrap; }
+.acts { display: flex; gap: 8px; flex-wrap: wrap; }
+.acts .btn { flex: 1 1 120px; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; max-width: 100%; }
+.seg button { border: 0; background: var(--surface); padding: 6px 12px; min-height: 36px; cursor: pointer; font-size: 13px; }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button[aria-pressed="true"] { background: var(--brass-soft); color: var(--brass); font-weight: 700; }
+.seg.full { display: flex; width: 100%; }
+.seg.full button { flex: 1; }
+.chips { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; }
+.chip { flex: none; border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 6px 14px; min-height: 36px; cursor: pointer; font-size: 13px; }
+.chip[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); font-weight: 700; }
+.chip.locked { color: var(--muted); border-style: dashed; }
+.r0 { --rc: var(--r0); } .r1 { --rc: var(--r1); } .r2 { --rc: var(--r2); } .r3 { --rc: var(--r3); } .r4 { --rc: var(--r4); }
+.rc { color: var(--rc); }
+.prog { height: 8px; border-radius: 4px; background: var(--surface2); overflow: hidden; }
+.prog i { display: block; height: 100%; background: var(--brass); border-radius: 4px; transition: width .2s; }
+.q { font-size: 12px; font-weight: 700; color: var(--brass); }
+.tags { display: flex; flex-wrap: wrap; gap: 4px; }
+.tag { font-size: 12px; border-radius: 6px; padding: 1px 8px; background: var(--mana-soft); color: var(--mana); white-space: nowrap; }
+.tag.none { background: var(--surface2); color: var(--muted); }
+
+/* 採取 */
+.area-head { display: flex; flex-direction: column; gap: 4px; }
+.eyebrow { font-size: 12px; letter-spacing: .12em; color: var(--muted); }
+.tapzone { position: relative; display: grid; place-items: center; padding-block: 8px; overflow: hidden; border-radius: 16px; }
+.tap {
+  width: min(62vw, 230px); max-width: 100%; aspect-ratio: 1; border-radius: 50%;
+  border: 2px solid var(--brass); cursor: pointer; user-select: none; -webkit-user-select: none;
+  background: radial-gradient(circle at 50% 38%, var(--mana-soft) 0%, var(--surface) 68%);
+  box-shadow: inset 0 0 0 9px var(--surface), inset 0 0 0 10px var(--line);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  transition: transform .07s ease-out;
+}
+.tap b { font-family: var(--f-display); font-size: 26px; font-weight: 800; }
+.tap small { font-size: 12px; color: var(--muted); letter-spacing: .1em; }
+.tap.hit { transform: scale(.955); }
+.pt { position: absolute; pointer-events: none; font-weight: 700; font-size: 14px; white-space: nowrap; color: var(--rc); text-shadow: 0 1px 0 var(--bg); animation: rise .95s ease-out forwards; }
+@keyframes rise { from { opacity: 1; transform: translate(-50%, 0); } to { opacity: 0; transform: translate(-50%, -64px); } }
+.stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.stat { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 10px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.stat .lab { font-size: 12px; color: var(--muted); }
+.stat b { font-size: 18px; overflow-wrap: anywhere; line-height: 1.25; }
+.stat small { font-size: 11px; color: var(--muted); }
+.switch { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+.switch input { width: 20px; height: 20px; accent-color: var(--brass); flex: none; }
+
+/* 一覧の行（素材・レシピ・道具） */
+.list { display: flex; flex-direction: column; gap: 8px; }
+.item { background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--rc, var(--line)); border-radius: 12px; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; }
+.item .top-row { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.item .nm { font-family: var(--f-display); font-weight: 600; font-size: 16px; }
+.item .meta { font-size: 12px; color: var(--muted); }
+.item .own { font-size: 13px; white-space: nowrap; }
+.item .own b { font-size: 16px; }
+.item.unknown .nm { color: var(--muted); letter-spacing: .1em; }
+.item.sel { box-shadow: 0 0 0 2px var(--mana) inset; }
+.ins { display: flex; flex-wrap: wrap; gap: 2px 12px; font-size: 13px; }
+
+/* 道具 */
+.slots { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.slot { background: var(--surface); border: 1px solid var(--line); border-top: 4px solid var(--rc, var(--line)); border-radius: 12px; padding: 10px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.slot .lab { font-size: 11px; color: var(--muted); letter-spacing: .08em; }
+.slot b { font-family: var(--f-display); font-size: 14px; line-height: 1.3; overflow-wrap: anywhere; }
+.slot .eff { font-size: 13px; color: var(--brass); font-weight: 700; }
+
+/* 図鑑 */
+.book { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-top: 4px solid var(--rc); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.card .no { font-size: 11px; color: var(--muted); letter-spacing: .1em; display: flex; justify-content: space-between; gap: 6px; }
+.card p { font-size: 13px; color: var(--muted); line-height: 1.6; }
+.card .num { font-size: 12px; color: var(--muted); margin-top: auto; }
+.card.unknown { background: var(--surface2); border-top-color: var(--line); }
+.card.unknown h3 { color: var(--muted); letter-spacing: .15em; }
+
+/* ミッション */
+.bonus { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 12px; font-size: 13px; }
+.bonus b { color: var(--brass); }
+.mis { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+.mis .hd { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+.rw { font-size: 12px; font-weight: 700; color: var(--brass); background: var(--brass-soft); border-radius: 6px; padding: 2px 8px; white-space: nowrap; }
+.mis .tx { font-size: 14px; color: var(--muted); }
+.mis .pv { font-size: 12px; color: var(--muted); text-align: right; }
+.mis.ready { border-color: var(--ok); box-shadow: 0 0 0 1px var(--ok) inset; }
+.mis.done { background: var(--surface2); padding-block: 8px; flex-direction: row; justify-content: space-between; align-items: center; gap: 8px; }
+.mis.done .nm { color: var(--muted); }
+.mis.done .ck { color: var(--ok); font-weight: 700; font-size: 13px; white-space: nowrap; }
+
+/* 強化 */
+.up { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 6px; }
+.up .lv { font-size: 13px; color: var(--muted); }
+.up .eff { font-size: 14px; }
+.up .eff b { color: var(--brass); }
+.up .acts .btn:first-child { flex: 2 1 160px; }
+
+/* 設定シート */
+.sheet-bg { position: fixed; inset: 0; z-index: 20; background: rgb(0 0 0 / .45); display: flex; align-items: flex-end; justify-content: center; }
+.sheet { background: var(--bg); width: 100%; max-width: 640px; max-height: 88%; overflow-y: auto; border-radius: 18px 18px 0 0; padding-block: 18px calc(18px + env(safe-area-inset-bottom, 0px)); display: flex; flex-direction: column; gap: 14px; }
+.sheet textarea { width: 100%; min-height: 84px; resize: vertical; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--ink); padding: 8px; font: 12px/1.4 ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace; word-break: break-all; }
+
+/* 通知 */
+.toasts { position: fixed; left: 0; right: 0; bottom: calc(var(--nav-h) + env(safe-area-inset-bottom, 0px) + 10px); z-index: 15; display: flex; flex-direction: column; align-items: center; gap: 6px; pointer-events: none; }
+.toast { background: var(--ink); color: var(--bg); border-radius: 10px; padding: 8px 14px; font-size: 13px; max-width: calc(100% - 32px); box-shadow: 0 4px 16px rgb(0 0 0 / .2); animation: tin .2s ease-out; }
+@keyframes tin { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .pt { animation-duration: .01s; }
+  .tap { transition: none; }
+  .toast { animation: none; }
+}
+</style>
+
+<header class="top gut">
+  <div class="brand">AddAll</div>
+  <div class="bal" aria-live="off">
+    <span class="lab">マナ</span>
+    <b id="hMana">0</b>
+    <small id="hRate"></small>
+  </div>
+  <button class="icon-btn" id="gear" type="button" aria-label="設定とセーブ">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.2"></circle><path d="M12 2.8v2.6M12 18.6v2.6M2.8 12h2.6M18.6 12h2.6M5.5 5.5l1.8 1.8M16.7 16.7l1.8 1.8M5.5 18.5l1.8-1.8M16.7 7.3l1.8-1.8"></path></svg>
+  </button>
+</header>
+
+<main id="main" class="gut"></main>
+
+<nav class="tabs gut" role="tablist" aria-label="画面の切り替え">
+  <button type="button" role="tab" data-tab="gather" aria-selected="true"><span class="k">採</span>採取</button>
+  <button type="button" role="tab" data-tab="lab" aria-selected="false"><span class="k">工</span>工房</button>
+  <button type="button" role="tab" data-tab="tools" aria-selected="false"><span class="k">具</span>道具</button>
+  <button type="button" role="tab" data-tab="mission" aria-selected="false"><span class="k">任</span>依頼<span class="badge" id="misBadge" hidden>0</span></button>
+  <button type="button" role="tab" data-tab="book" aria-selected="false"><span class="k">鑑</span>図鑑</button>
+  <button type="button" role="tab" data-tab="up" aria-selected="false"><span class="k">強</span>強化</button>
+</nav>
+
+<div id="sheetBg" class="sheet-bg" hidden>
+  <div class="sheet gut" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+    <div class="row-between"><h2 id="sheetTitle">設定とセーブ</h2><button class="btn" type="button" id="sheetClose">閉じる</button></div>
+    <div class="panel">
+      <div class="row-between"><span>ブラウザ内</span><span class="muted small" id="lsStatus">-</span></div>
+      <div class="row-between"><span>claude.ai（自分専用）</span><span class="muted small" id="cloudStatus">確認中</span></div>
+      <p class="muted small">5秒ごとにブラウザ内へ、30秒ごとにclaude.aiへ自動で保存します。</p>
+      <div class="acts"><button class="btn pri" type="button" id="saveNow">今すぐ保存</button></div>
+    </div>
+    <div class="panel">
+      <h3>セーブデータの書き出し</h3>
+      <p class="muted small">この文字列をメモ帳などに保存しておくと、あとで読み込んで復元できます。</p>
+      <textarea id="exportBox" readonly aria-label="書き出したセーブデータ"></textarea>
+      <div class="acts"><button class="btn" type="button" id="exportBtn">書き出してコピー</button></div>
+    </div>
+    <div class="panel">
+      <h3>セーブデータの読み込み</h3>
+      <textarea id="importBox" aria-label="読み込むセーブデータ" placeholder="書き出した文字列を貼り付け"></textarea>
+      <div class="acts"><button class="btn" type="button" id="importBtn"><span class="lbl">読み込む（今のデータは上書き）</span><span class="cf">もう一度タップで上書き</span></button></div>
+    </div>
+    <div class="panel">
+      <h3>最初からやり直す</h3>
+      <p class="muted small">すべての進行が消えます。元に戻せません。</p>
+      <div class="acts"><button class="btn" type="button" id="resetBtn"><span class="lbl">データを消して最初から</span><span class="cf">もう一度タップで消去</span></button></div>
+    </div>
+    <p class="muted small">AddAll 第2版</p>
+  </div>
+</div>
+
+<div class="toasts" id="toasts" aria-live="polite"></div>
+
+<script>
+(() => {
+'use strict';
+
+/* ===================== データ ===================== */
+const RARITY = ['ありふれた', '普通', '珍しい', '希少', '伝説'];
+const W10 = [100, 60, 45, 25, 12, 7, 3.5, 1.4, 0.5, 0.15];
+const R10 = [0, 0, 0, 1, 1, 2, 2, 3, 3, 4];
+// 採取地での採取回数（探索）がこの数に届くと、その素材が出るようになる
+const DEPTH = [0, 0, 0, 30, 80, 200, 500, 1200, 3000, 8000];
+
+const AREAS = [
+  { id: 'a1', name: '工房の裏山', desc: '工房の裏に広がる小さな山。ありふれた素材ばかりだが、まれに珍しいものが見つかる。' },
+  { id: 'a2', name: '霧の森', desc: '一年中霧が晴れない森。木々の奥から、ときどき光の粒が漂ってくる。', unlock: { area: 'a1', n: 8, brute: 5e5 } },
+  { id: 'a3', name: '水晶の洞窟', desc: '壁一面に水晶が生えた洞窟。奥へ進むほど、石の値打ちが跳ね上がる。', unlock: { area: 'a2', n: 6, brute: 1e11 } },
+];
+const AREA = Object.fromEntries(AREAS.map(a => [a.id, a]));
+
+const RAW = {
+  a1: [
+    ['stone', '小石', 1, 'どこにでもある石ころ。分解すると、ほんのわずかなマナがにじみ出る。'],
+    ['twig', '枯れ枝', 2, '乾いた小枝。炉にくべる燃料としても使える。'],
+    ['weed', '雑草', 3, '抜いても抜いても生えてくる。しぶとさだけなら一級品。'],
+    ['clay', '粘土', 6, '沢沿いで採れる灰色の土。こねて焼けば煉瓦になる。'],
+    ['copper', '銅鉱石', 15, '緑の筋が走る石。錬金術師が最初に覚える金属。'],
+    ['herb', '薬草', 30, '傷に効く苦い葉。煎じた汁にもマナが溶けている。'],
+    ['iron', '鉄鉱石', 70, 'ずしりと重い赤茶色の石。分解炉の扉もこれでできている。'],
+    ['crystal', '水晶片', 180, '透き通ったかけら。のぞき込むと、マナの流れがかすかに見える。'],
+    ['silver', '銀鉱石', 500, '月の光を好む金属。古い手記には「マナをよく通す」とある。'],
+    ['moonherb', '月光草', 1500, '月夜にだけ淡く光る草。師匠の手記には、この光こそ「マナのしずく」だと記されている。'],
+  ],
+  a2: [
+    ['leaf', '落ち葉', 20, '霧に湿った落ち葉。積もった下には、森の時間が眠っている。'],
+    ['bark', '樹皮', 35, '古い木の皮。内側に樹液の通り道が残っている。'],
+    ['mushroom', 'キノコ', 60, '倒木に生える白いキノコ。食べられるかどうかは誰も知らない。'],
+    ['sap', '樹液', 100, '琥珀色のしずく。煮詰めると固まって樹脂になる。'],
+    ['bone', '獣の骨', 180, '森で力尽きた獣の骨。砕けば良い肥料になる。'],
+    ['fairy', '妖精の粉', 350, '光の粒の正体。指でつまむと、くすぐったそうに逃げていく。'],
+    ['mist', '霧の露', 700, '朝霧が葉に残したしずく。マナが濃く溶け込んでいる。'],
+    ['heartwood', '古木の芯', 1500, '千年を生きた木の芯。年輪のひとつひとつにマナがたまっている。'],
+    ['spiritstone', '精霊石', 4000, '森の精霊が宿るといわれる石。手に取るとほんのり温かい。'],
+    ['worldleaf', '世界樹の葉', 12000, 'どこから舞ってきたのか誰も知らない一枚の葉。森のどの木とも形が違う。'],
+  ],
+  a3: [
+    ['gravel', '砂利', 300, '洞窟の床を埋めつくす砂利。ここでは石ころさえ値打ちが違う。'],
+    ['sulfur', '硫黄', 500, '黄色い結晶。鼻をつく匂いがする。火薬の材料になる。'],
+    ['coal', '石炭', 800, '黒く光る燃える石。炉の火を強くする。'],
+    ['goldore', '金鉱石', 1500, '金色の粒が混じる石。錬金術師の永遠の目標のひとつ。'],
+    ['amethyst', '紫水晶', 3000, '深い紫の結晶。持つ者の心を静めるという。'],
+    ['mithril', '魔鉄', 6000, 'マナを吸って育つ鉄。鍛えるほど硬く、軽くなる。'],
+    ['dragonscale', '竜の鱗', 15000, '洞窟の奥で見つかる、とても硬い鱗。持ち主の姿を見た者はいない。'],
+    ['starshard', '星の欠片', 40000, '空から落ちてきた石。夜になると内側から光る。'],
+    ['sagesand', '賢者の砂', 100000, 'さらさらと指からこぼれる金色の砂。師匠が探し続けていたもの。'],
+    ['primal', '原初の結晶', 400000, 'すべての物質の始まりとされる結晶。分解すると、とても多くのマナが流れ出す。'],
+  ],
+};
+
+const PROC = [
+  { id: 'brick', name: '煉瓦', area: 'a1', r: 0, in: { clay: 3, stone: 5 }, d: '粘土と小石を焼き固めたもの。工房の壁もこれでできている。' },
+  { id: 'tonic', name: '薬湯', area: 'a1', r: 1, in: { herb: 2, weed: 5 }, d: '薬草を雑草と一緒に煮出した湯。苦いが体に良い。' },
+  { id: 'cuIngot', name: '銅のインゴット', area: 'a1', r: 1, in: { copper: 4, twig: 4 }, d: '銅鉱石を溶かして固めたもの。道具づくりの基本になる。' },
+  { id: 'feIngot', name: '鉄のインゴット', area: 'a1', r: 2, in: { iron: 4, twig: 8 }, d: '強い火で鉄鉱石を溶かしたもの。丈夫な道具の材料。' },
+  { id: 'agPowder', name: '銀の粉', area: 'a1', r: 3, in: { silver: 2, crystal: 1 }, d: '銀と水晶をすり合わせた粉。マナをよく通す。' },
+  { id: 'moonElixir', name: '月光の霊薬', area: 'a1', r: 4, in: { moonherb: 2, tonic: 3 }, d: '月光草を薬湯に溶かした霊薬。瓶の中で淡く光り続ける。' },
+  { id: 'humus', name: '腐葉土', area: 'a2', r: 1, in: { leaf: 5, mushroom: 1 }, d: '落ち葉をキノコで分解させた土。森の力が詰まっている。' },
+  { id: 'resin', name: '樹脂', area: 'a2', r: 1, in: { sap: 3, bark: 2 }, d: '樹液を煮詰めて固めたもの。道具の継ぎ目に使う。' },
+  { id: 'boneMeal', name: '骨粉', area: 'a2', r: 2, in: { bone: 2, stone: 20 }, d: '獣の骨を小石で砕いた粉。火薬にも肥料にもなる。' },
+  { id: 'fairyLamp', name: '妖精の灯', area: 'a2', r: 3, in: { fairy: 2, mist: 1, crystal: 2 }, d: '妖精の粉を水晶に閉じこめた灯り。消えることがない。' },
+  { id: 'spiritCrystal', name: '精霊の結晶', area: 'a2', r: 4, in: { spiritstone: 1, agPowder: 2 }, d: '精霊石を銀の粉で包んだ結晶。精霊の声が聞こえるという。' },
+  { id: 'auIngot', name: '金のインゴット', area: 'a3', r: 2, in: { goldore: 3, coal: 3 }, d: '本物の金。ついに作ってしまった。' },
+  { id: 'gunpowder', name: '火薬', area: 'a3', r: 2, in: { sulfur: 2, coal: 2, boneMeal: 1 }, d: '硫黄と石炭と骨粉を混ぜた粉。扱いには注意。' },
+  { id: 'mIngot', name: '魔鉄のインゴット', area: 'a3', r: 3, in: { mithril: 3, coal: 5 }, d: '魔鉄を石炭の火で鍛えたもの。羽のように軽い。' },
+  { id: 'scalePlate', name: '竜鱗の板', area: 'a3', r: 3, in: { dragonscale: 2, resin: 3 }, d: '竜の鱗を樹脂で貼り合わせた板。どんな刃も通さない。' },
+  { id: 'catalyst', name: '賢者の触媒', area: 'a3', r: 4, in: { sagesand: 2, starshard: 1, moonElixir: 1 }, d: '賢者の砂と星の欠片を霊薬で練ったもの。あらゆる錬成を助ける。' },
+];
+
+const ITEMS = [];
+for (const a of AREAS) RAW[a.id].forEach(([id, name, v, d], i) => ITEMS.push({ id, name, v, d, area: a.id, kind: 'raw', w: W10[i], r: R10[i], depth: DEPTH[i] }));
+const ITEM = Object.fromEntries(ITEMS.map(i => [i.id, i]));
+for (const p of PROC) {
+  p.kind = 'proc';
+  p.v = Math.round(Object.entries(p.in).reduce((a, [id, n]) => a + ITEM[id].v * n, 0) * 1.5);
+  ITEMS.push(p); ITEM[p.id] = p;
+}
+const rawOf = a => ITEMS.filter(i => i.area === a && i.kind === 'raw');
+const depthOf = a => S.st.areaTaps[a] || 0;
+// いま採取で出てくる素材（探索が届いたもの＋登録済みのもの）
+const availOf = a => rawOf(a).filter(i => S.reg[i.id] || depthOf(a) >= i.depth);
+const nextDepth = a => { const d = depthOf(a); const n = rawOf(a).find(i => !S.reg[i.id] && i.depth > d); return n ? n.depth : null; };
+const sortedArea = a => ITEMS.filter(i => i.area === a).sort((x, y) => x.v - y.v);
+
+const SLOTS = [
+  { id: 'hand', name: '手', stat: '採取力' },
+  { id: 'waist', name: '腰', stat: '使い魔の速さ' },
+  { id: 'neck', name: '首', stat: 'マナ' },
+];
+const SLOT = Object.fromEntries(SLOTS.map(s => [s.id, s]));
+const TOOLR = [
+  { id: 'stonePick', name: '石のつるはし', slot: 'hand', area: 'a1', base: 1.5, r: 0, in: { stone: 30, twig: 10 } },
+  { id: 'cuPick', name: '銅のつるはし', slot: 'hand', area: 'a1', base: 2.5, r: 1, in: { cuIngot: 5, twig: 20 } },
+  { id: 'fePick', name: '鉄のつるはし', slot: 'hand', area: 'a2', base: 4, r: 2, in: { feIngot: 8, resin: 4 } },
+  { id: 'mPick', name: '魔鉄のつるはし', slot: 'hand', area: 'a3', base: 10, r: 3, in: { mIngot: 6, scalePlate: 2 } },
+  { id: 'grassFlute', name: '草笛', slot: 'waist', area: 'a1', base: 1.3, r: 0, in: { weed: 30, twig: 10 } },
+  { id: 'boneFlute', name: '骨の笛', slot: 'waist', area: 'a2', base: 2, r: 2, in: { boneMeal: 5, resin: 2 } },
+  { id: 'fairyBell', name: '妖精の鈴', slot: 'waist', area: 'a2', base: 3.5, r: 3, in: { fairyLamp: 3, agPowder: 3 } },
+  { id: 'dragonHorn', name: '竜鱗の角笛', slot: 'waist', area: 'a3', base: 7, r: 4, in: { scalePlate: 3, auIngot: 2 } },
+  { id: 'clayCharm', name: '粘土の護符', slot: 'neck', area: 'a1', base: 1.2, r: 0, in: { brick: 3, herb: 2 } },
+  { id: 'silverNeck', name: '銀の首飾り', slot: 'neck', area: 'a1', base: 1.8, r: 3, in: { agPowder: 4, cuIngot: 2 } },
+  { id: 'spiritNeck', name: '精霊の首飾り', slot: 'neck', area: 'a2', base: 3, r: 4, in: { spiritCrystal: 3, agPowder: 4 } },
+  { id: 'sageAmulet', name: '賢者のアミュレット', slot: 'neck', area: 'a3', base: 6, r: 4, in: { catalyst: 2, auIngot: 5 } },
+];
+const TOOL = Object.fromEntries(TOOLR.map(t => [t.id, t]));
+const TRAITS = {
+  power: { name: '豪腕', fx: '採取力 +10%', d: '1回の採取で手に入る素材の数が、1レベルごとに10%増えます。使い魔の採取にも効きます。', now: l => `採取力 +${l * 10}%` },
+  luck: { name: '幸運', fx: '目利き +1', d: '強化の「目利き」のレベルが、1レベルごとに1上がります。珍しい素材ほど、追加で多く手に入ります。', now: l => `目利き +${l}` },
+  skill: { name: '修練', fx: '熟練の伸び +15%', d: '採取のたびに増える熟練が、1レベルごとに15%多くなります。', now: l => `熟練の伸び +${l * 15}%` },
+  mana: { name: '錬金', fx: 'マナ +8%', d: '分解や依頼で得られるマナが、1レベルごとに8%増えます。素材の価値が上がるので、生成に必要なマナも同じだけ増えます。', now: l => `マナ +${l * 8}%` },
+  fam: { name: '使役', fx: '使い魔の速さ +10%', d: 'すべての採取地の使い魔が、1レベルごとに10%速く採取します。', now: l => `使い魔の速さ +${l * 10}%` },
+  craft: { name: '職人', fx: '加工の生産量 +5%', d: '加工でできる加工品の数が、1レベルごとに5%増えます（材料の数は変わりません）。', now: l => `加工の生産量 +${l * 5}%` },
+};
+const TRAIT_IDS = Object.keys(TRAITS);
+const MAX_TOOLS = 40;
+
+const RW_NAME = { power: '採取力', mana: 'マナ', fam: '使い魔の速さ', skill: '熟練の伸び' };
+const inv = id => S.inv[id] || 0;
+const areaReg = a => rawOf(a).filter(i => S.reg[i.id]).length;
+const MIS = [
+  // 工房の裏山
+  { id: 'm1', area: 'a1', name: 'はじめての採取', text: '採取地を10回タップする', prog: () => S.st.manual, goal: 10, rw: ['power', 1.2], brute: 50 },
+  { id: 'm2', area: 'a1', name: '石拾い', text: '小石を累計200個採取する', prog: () => S.col.stone || 0, goal: 200, rw: ['mana', 1.1], brute: 300 },
+  { id: 'm3', area: 'a1', name: 'マナの目覚め', text: 'マナを累計500集める', prog: () => S.st.totalMana, goal: 500, rw: ['power', 1.25], brute: 2000 },
+  { id: 'm4', area: 'a1', name: '図鑑の1ページ目', text: '図鑑に5種類登録する', prog: () => regCount(), goal: 5, rw: ['fam', 1.25], brute: 5000 },
+  { id: 'm5', area: 'a1', name: '煉瓦を焼く', text: '煉瓦を20個加工する', prog: () => S.st.crafted.brick || 0, goal: 20, rw: ['skill', 1.5], brute: 3000 },
+  { id: 'm6', area: 'a1', name: '最初の道具', text: '道具を1つ作る', prog: () => S.st.toolsMade, goal: 1, rw: ['power', 1.3], brute: 5000 },
+  { id: 'm7', area: 'a1', name: '慣れた手つき', text: '熟練を300にする', prog: () => S.skill, goal: 300, rw: ['power', 1.3], brute: 1e4 },
+  { id: 'm8', area: 'a1', name: '銅の納品', text: '銅のインゴットを30個納品する', deliver: 'cuIngot', goal: 30, rw: ['mana', 1.2], brute: 3e4 },
+  { id: 'm9', area: 'a1', name: '依頼に応える', text: '依頼を3回達成する', prog: () => S.st.reqDone, goal: 3, rw: ['mana', 1.2], brute: 3e4 },
+  { id: 'm10', area: 'a1', name: '使い魔の群れ', text: '裏山の使い魔をLv10にする', prog: () => famLv('a1'), goal: 10, rw: ['fam', 1.5], brute: 1e5 },
+  { id: 'm11', area: 'a1', name: '鉄の納品', text: '鉄のインゴットを50個納品する', deliver: 'feIngot', goal: 50, rw: ['power', 1.5], brute: 2e5 },
+  { id: 'm12', area: 'a1', name: '裏山の図鑑', text: '裏山の素材10種類をすべて図鑑に登録する', prog: () => areaReg('a1'), goal: 10, rw: ['mana', 1.5], brute: 1e6 },
+  { id: 'm13', area: 'a1', name: 'マナの奔流', text: 'マナを累計100万集める', prog: () => S.st.totalMana, goal: 1e6, rw: ['mana', 1.5], brute: 5e6 },
+  { id: 'm14', area: 'a1', name: '月のしずく', text: '月光の霊薬を5個納品する', deliver: 'moonElixir', goal: 5, rw: ['power', 2], brute: 1e8 },
+  { id: 'm15', area: 'a1', name: '熟練の極み', text: '熟練を1万にする', prog: () => S.skill, goal: 1e4, rw: ['skill', 2], brute: 1e9 },
+  // 霧の森
+  { id: 'f1', area: 'a2', name: '森の第一歩', text: '霧の森で100回採取する', prog: () => S.st.areaTaps.a2 || 0, goal: 100, rw: ['power', 1.3], brute: 1e6 },
+  { id: 'f2', area: 'a2', name: '土を育てる', text: '腐葉土を50個加工する', prog: () => S.st.crafted.humus || 0, goal: 50, rw: ['mana', 1.2], brute: 3e6 },
+  { id: 'f3', area: 'a2', name: 'はじめての融合', text: '道具を1回融合する', prog: () => S.st.fusions, goal: 1, rw: ['power', 1.3], brute: 5e6 },
+  { id: 'f4', area: 'a2', name: '樹脂の納品', text: '樹脂を30個納品する', deliver: 'resin', goal: 30, rw: ['fam', 1.3], brute: 1e7 },
+  { id: 'f5', area: 'a2', name: '良い道具', text: '品質50%以上の道具を持つ', prog: () => maxToolQ() * 100, goal: 50, rw: ['skill', 1.5], brute: 3e7 },
+  { id: 'f6', area: 'a2', name: '森の図鑑', text: '霧の森の素材10種類をすべて図鑑に登録する', prog: () => areaReg('a2'), goal: 10, rw: ['mana', 1.5], brute: 1e8 },
+  { id: 'f7', area: 'a2', name: '頼れる錬金術師', text: '依頼を15回達成する', prog: () => S.st.reqDone, goal: 15, rw: ['mana', 1.3], brute: 3e8 },
+  { id: 'f8', area: 'a2', name: '妖精の灯の納品', text: '妖精の灯を20個納品する', deliver: 'fairyLamp', goal: 20, rw: ['fam', 1.5], brute: 1e9 },
+  { id: 'f9', area: 'a2', name: '精霊の声', text: '精霊の結晶を10個納品する', deliver: 'spiritCrystal', goal: 10, rw: ['power', 1.5], brute: 1e10 },
+  { id: 'f10', area: 'a2', name: '森の主', text: 'マナを累計1兆集める', prog: () => S.st.totalMana, goal: 1e12, rw: ['mana', 2], brute: 5e12 },
+  // 水晶の洞窟
+  { id: 'c1', area: 'a3', name: '洞窟の入口', text: '水晶の洞窟で500回採取する', prog: () => S.st.areaTaps.a3 || 0, goal: 500, rw: ['power', 1.5], brute: 1e12 },
+  { id: 'c2', area: 'a3', name: '本物の金', text: '金のインゴットを100個加工する', prog: () => S.st.crafted.auIngot || 0, goal: 100, rw: ['mana', 1.3], brute: 3e12 },
+  { id: 'c3', area: 'a3', name: '火薬の納品', text: '火薬を50個納品する', deliver: 'gunpowder', goal: 50, rw: ['power', 1.5], brute: 1e13 },
+  { id: 'c4', area: 'a3', name: '完璧に近づく', text: '品質90%以上の道具を持つ', prog: () => maxToolQ() * 100, goal: 90, rw: ['skill', 2], brute: 3e13 },
+  { id: 'c5', area: 'a3', name: '特性の継承', text: '特性レベルの合計が6以上の道具を持つ', prog: () => maxTraitSum(), goal: 6, rw: ['fam', 2], brute: 1e14 },
+  { id: 'c6', area: 'a3', name: '洞窟の図鑑', text: '水晶の洞窟の素材10種類をすべて図鑑に登録する', prog: () => areaReg('a3'), goal: 10, rw: ['mana', 1.5], brute: 3e14 },
+  { id: 'c7', area: 'a3', name: '名高い錬金術師', text: '名声を50にする', prog: () => S.fame, goal: 50, rw: ['mana', 1.5], brute: 1e15 },
+  { id: 'c8', area: 'a3', name: '竜鱗の納品', text: '竜鱗の板を20個納品する', deliver: 'scalePlate', goal: 20, rw: ['fam', 1.5], brute: 3e15 },
+  { id: 'c9', area: 'a3', name: '賢者への道', text: '賢者の触媒を10個納品する', deliver: 'catalyst', goal: 10, rw: ['power', 2], brute: 1e17 },
+  { id: 'c10', area: 'a3', name: 'すべてを記録する', text: '図鑑のすべて（素材と加工品）を登録する', prog: () => regCount(), goal: ITEMS.length, rw: ['mana', 3], brute: 1e19 },
+];
+const MISS = Object.fromEntries(MIS.map(m => [m.id, m]));
+
+const UPS = [
+  { id: 'tool', name: '採取の腕前', info: '1回の採取で手に入る素材の基本数が増えます。',
+    eff: l => `基本 ${fmt(1 + l)} 個`, cost: l => 15 * 1.45 ** l },
+  ...[['a1', 40], ['a2', 4000], ['a3', 4e6]].map(([a, c0]) => ({
+    id: 'fam_' + a, area: a, name: `使い魔（${AREA[a].name}）`, info: `${AREA[a].name}で自動で採取してくれます。ほかの採取地にいる間も、画面を閉じている間も働きます（最大8時間ぶん）。`,
+    eff: l => `${fmtD(l * 0.5 * famMulti())} 回/秒`, cost: l => c0 * 1.55 ** l })),
+  { id: 'furnace', name: '分解炉', info: '分解で得られるマナが増えます。生成に必要なマナも同じだけ増えます。',
+    eff: l => `マナ ${fmtX(1.1 ** l)}`, cost: l => 120 * 1.75 ** l },
+  { id: 'eye', name: '目利き', info: '珍しい素材ほど、追加で多く手に入ります。ありふれた素材の数は変わりません。',
+    eff: l => RARITY.slice(1).map((n, i) => `${n} ${fmtX(eyeF(l) ** (i + 1))}`).join('　'), cost: l => 250 * 2.1 ** l, long: true },
+  { id: 'autodis', name: '自動分解装置', once: true, info: '採取した素材を、その場でマナに変えます。採取画面でオン・オフできます。',
+    eff: l => l ? '設置済み' : '未設置', cost: () => 300 },
+];
+const UP = Object.fromEntries(UPS.map(u => [u.id, u]));
+
+/* ===================== 状態 ===================== */
+const fresh = () => ({
+  v: 3, mana: 0, skill: 0, fame: 0, autoCraft: {},
+  area: 'a1', unlocked: { a1: true },
+  inv: {}, reg: {}, col: {}, dis: {}, ref: {},
+  tools: [], eq: { hand: null, waist: null, neck: null }, toolSeq: 1,
+  reqs: [],
+  st: { manual: 0, auto: 0, totalMana: 0, areaTaps: {}, crafted: {}, toolsMade: 0, fusions: 0, reqDone: 0 },
+  up: { tool: 0, fam_a1: 0, fam_a2: 0, fam_a3: 0, furnace: 0, eye: 0, autodis: 0 },
+  autoDis: false, done: {}, savedAt: 0, created: Date.now(),
+});
+function normalize(o) {
+  const f = fresh();
+  if (!o || typeof o !== 'object') return f;
+  for (const k in f) {
+    if (o[k] === undefined || o[k] === null) continue;
+    if (typeof f[k] === 'object' && !Array.isArray(f[k])) {
+      f[k] = Object.assign(f[k], o[k]);
+      if (k === 'st') for (const kk of ['areaTaps', 'crafted']) f.st[kk] = Object.assign({}, o.st[kk] || {});
+    } else f[k] = o[k];
+  }
+  if (!AREA[f.area] || !f.unlocked[f.area]) f.area = 'a1';
+  if (!Array.isArray(f.tools)) f.tools = [];
+  f.tools = f.tools.filter(t => t && TOOL[t.b]);
+  for (const s of SLOTS) if (f.eq[s.id] && !f.tools.some(t => t.u === f.eq[s.id])) f.eq[s.id] = null;
+  // 使い魔が1種類だった頃のセーブは、そのレベルを裏山の使い魔に引き継ぐ
+  if (f.up.familiar !== undefined) { if (!f.up.fam_a1) f.up.fam_a1 = f.up.familiar; delete f.up.familiar; }
+  // 探索の回数を記録していなかった頃のセーブは、裏山の探索を累計の採取回数で補う
+  if (!f.st.areaTaps.a1) f.st.areaTaps.a1 = (f.st.manual || 0) + (f.st.auto || 0) - (f.st.areaTaps.a2 || 0) - (f.st.areaTaps.a3 || 0);
+  for (const i of ITEMS) if ((f.inv[i.id] || 0) > 0 || (f.col[i.id] || 0) > 0 || (f.st.crafted[i.id] || 0) > 0) f.reg[i.id] = true;
+  if (!Array.isArray(f.reqs)) f.reqs = [];
+  f.reqs = f.reqs.filter(r => r && (r.wait || ITEM[r.id]));
+  // 第1版の任務IDは内容が変わったので、同じ内容のものだけ引き継ぐ
+  if ((o.v || 1) < 2) {
+    const keep = {};
+    if (o.done) { if (o.done.m1) keep.m1 = 1; if (o.done.m2) keep.m2 = 1; if (o.done.m3) keep.m3 = 1; if (o.done.m4) keep.m4 = 1; if (o.done.m6) keep.m7 = 1; if (o.done.m10) keep.m13 = 1; if (o.done.m11) keep.m12 = 1; if (o.done.m14) keep.m15 = 1; }
+    f.done = keep;
+  }
+  // 精錬が「無限に近づく」方式だった頃の回数を、20段階に置き換える（品質は下がらないように切り上げ）
+  if ((o.v || 1) < 3) {
+    for (const id in f.ref) { const n = f.ref[id] || 0; f.ref[id] = Math.min(REF_MAX, Math.ceil((1 - 0.9 ** n) * REF_MAX - 1e-9)); }
+  }
+  f.v = 3;
+  return f;
+}
+let S = fresh();
+const ui = { tab: 'gather', gArea: 'a1', labView: 'dg', labArea: 'a1', misView: 'mis', misArea: 'a1', fuse: null };
+
+/* ===================== 数式 ===================== */
+const regCount = () => ITEMS.filter(i => S.reg[i.id]).length;
+function mult(type) { let x = 1; for (const m of MIS) if (S.done[m.id] && m.rw[0] === type) x *= m.rw[1]; return x; }
+const toolById = u => S.tools.find(t => t.u === u);
+const toolEff = t => 1 + (TOOL[t.b].base - 1) * (0.6 + 0.8 * t.q);
+const eqMult = slot => { const t = toolById(S.eq[slot]); return t ? toolEff(t) : 1; };
+function traitLv(id) { let s = 0; for (const sl of SLOTS) { const t = toolById(S.eq[sl.id]); if (t && t.t[id]) s += t.t[id]; } return s; }
+const fameMult = () => 1 + 0.03 * S.fame;
+const skillMult = () => 1 + S.skill * 0.004;
+const skillGain = () => mult('skill') * (1 + 0.15 * traitLv('skill'));
+const power = () => (1 + S.up.tool) * skillMult() * mult('power') * eqMult('hand') * (1 + 0.1 * traitLv('power'));
+const famLv = a => S.up['fam_' + a] || 0;
+const famMulti = () => mult('fam') * eqMult('waist') * (1 + 0.1 * traitLv('fam'));
+const famRate = (a = S.area) => famLv(a) * 0.5 * famMulti();
+const famTotal = () => unlockedAreas().reduce((s, a) => s + famRate(a.id), 0);
+const manaMult = () => 1.1 ** S.up.furnace * mult('mana') * eqMult('neck') * (1 + 0.08 * traitLv('mana')) * fameMult();
+// 精錬は20段階。1段階ごとに品質+5%、100%で「完璧」（価値2.5倍）
+const REF_MAX = 20;
+const refSteps = id => Math.min(REF_MAX, S.ref[id] || 0);
+const qOf = id => refSteps(id) / REF_MAX;
+const perfect = id => refSteps(id) >= REF_MAX;
+const valMult = id => perfect(id) ? 2.5 : 1 + qOf(id);
+const baseVal = id => ITEM[id].v * valMult(id);
+const unitMana = id => baseVal(id) * manaMult();
+const eyeF = (eye = S.up.eye + traitLv('luck')) => 1 + 0.1 * eye;
+const autoDisOn = () => S.up.autodis > 0 && S.autoDis;
+const maxToolQ = () => S.tools.reduce((a, t) => Math.max(a, t.q), 0);
+const traitSum = t => Object.values(t.t).reduce((a, b) => a + b, 0);
+const maxTraitSum = () => S.tools.reduce((a, t) => Math.max(a, traitSum(t)), 0);
+const refineCost = id => Math.ceil(10 * 1.3 ** refSteps(id));
+const procOn = p => (S.st.crafted[p.id] || 0) > 0 && S.unlocked[p.area];
+const autoUsed = () => { const s = new Set(); for (const p of PROC) if (procOn(p)) Object.keys(p.in).forEach(id => s.add(id)); return s; };
+function avgValue(a = S.area) {
+  const f = eyeF(); const raws = availOf(a);
+  const tot = raws.reduce((s, i) => s + i.w, 0);
+  return raws.reduce((s, i) => s + baseVal(i.id) * i.w * f ** i.r, 0) / tot;
+}
+const unlockedAreas = () => AREAS.filter(a => S.unlocked[a.id]);
+const missionDoneIn = a => MIS.filter(m => m.area === a && S.done[m.id]).length;
+
+/* ===================== 数値の表記 ===================== */
+const UNITS = ['', '万', '億', '兆', '京', '垓', '𥝱', '穣', '溝', '澗', '正', '載', '極', '恒河沙', '阿僧祇', '那由他', '不可思議', '無量大数'];
+function fmt(n) {
+  if (!isFinite(n)) return '∞';
+  if (n < 0) return '-' + fmt(-n);
+  if (n < 1e4) return Math.floor(n).toLocaleString('ja-JP');
+  const i = Math.floor(Math.log10(n) / 4);
+  if (i >= UNITS.length) return n.toExponential(2).replace('e+', 'e');
+  const m = n / 10 ** (4 * i);
+  const s = m < 10 ? (Math.floor(m * 100) / 100).toFixed(2) : m < 100 ? (Math.floor(m * 10) / 10).toFixed(1) : String(Math.floor(m));
+  return s + UNITS[i];
+}
+function fmtD(n) { return n < 100 ? (Math.round(n * 10) / 10).toString() : fmt(n); }
+function fmtX(x) { return '×' + (x < 100 ? x.toFixed(2) : fmt(x)); }
+const fmtQ = q => (Math.floor(q * 1000) / 10).toFixed(1) + '%';
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const nameOf = id => S.reg[id] || inv(id) > 0 || (S.col[id] || 0) > 0 ? ITEM[id].name : '？？？';
+
+/* ===================== ゲーム処理 ===================== */
+function addMana(x) { S.mana += x; S.st.totalMana += x; }
+// 一度手に入れたものは自動で図鑑に登録する
+function register(id) { if (!S.reg[id]) { S.reg[id] = true; toast(`図鑑に登録: ${ITEM[id].name}`); } }
+function addItem(id, c) { S.inv[id] = inv(id) + c; if (c > 0) register(id); }
+function dissolve(id, c) {
+  if (c <= 0) return 0;
+  const gain = c * unitMana(id);
+  addMana(gain);
+  S.dis[id] = (S.dis[id] || 0) + c;
+  register(id);
+  return gain;
+}
+function roll(n, raws, wfn, got) {
+  const W = raws.map(wfn);
+  const tot = W.reduce((a, b) => a + b, 0);
+  if (tot <= 0 || n <= 0) return;
+  if (n <= 40) {
+    const k = Math.floor(n) + (Math.random() < n % 1 ? 1 : 0);
+    for (let j = 0; j < k; j++) {
+      let r = Math.random() * tot, i = 0;
+      r -= W[0];
+      while (r >= 0 && i < W.length - 1) { i++; r -= W[i]; }
+      got[raws[i].id] = (got[raws[i].id] || 0) + 1;
+    }
+  } else {
+    raws.forEach((m, i) => {
+      const e = n * W[i] / tot;
+      const c = Math.floor(e) + (Math.random() < e % 1 ? 1 : 0);
+      if (c > 0) got[m.id] = (got[m.id] || 0) + c;
+    });
+  }
+}
+function gather(n, a = S.area) {
+  const raws = availOf(a);
+  const tot = raws.reduce((a, i) => a + i.w, 0);
+  const f = eyeF();
+  const got = {};
+  roll(n, raws, i => i.w, got);
+  if (f > 1) {
+    const extra = raws.reduce((a, i) => a + i.w * (f ** i.r - 1), 0);
+    roll(n * extra / tot, raws, i => i.w * (f ** i.r - 1), got);
+  }
+  for (const id in got) {
+    const c = got[id];
+    S.col[id] = (S.col[id] || 0) + c;
+    addItem(id, c);
+  }
+  return got;
+}
+// 自動加工 → 自動分解（自動加工の材料は残す）。採取のあと少しずつ呼ばれる
+function processAuto() {
+  for (const p of PROC) {
+    if (!procOn(p)) continue;
+    const n = canMake(p.in);
+    if (n > 0) craft(p, n);
+  }
+  if (!autoDisOn()) return;
+  const keep = autoUsed();
+  for (const i of ITEMS) {
+    if (keep.has(i.id)) continue;
+    const c = inv(i.id);
+    if (c > 0) { dissolve(i.id, c); S.inv[i.id] = 0; }
+  }
+}
+function autoTaps(k, a) {
+  S.st.auto += k;
+  S.st.areaTaps[a] = (S.st.areaTaps[a] || 0) + k;
+  S.skill += 0.1 * k * skillGain();
+  return gather(power() * k, a);
+}
+function offline(sec) {
+  sec = Math.min(sec, 8 * 3600);
+  const before = S.mana;
+  let taps = 0;
+  for (const a of unlockedAreas()) { const t = famRate(a.id) * sec; if (t >= 1) { autoTaps(t, a.id); taps += t; } }
+  if (taps < 1 || sec < 60) return;
+  const h = sec >= 3600 ? `${Math.floor(sec / 3600)}時間${Math.floor(sec % 3600 / 60)}分` : `${Math.floor(sec / 60)}分`;
+  const gain = S.mana - before;
+  toast(`留守の${h}の間に、使い魔が${fmt(taps)}回採取しました${gain > 0 ? '（+' + fmt(gain) + ' マナ）' : ''}`, 6000);
+}
+function dissolveIds(ids) {
+  let gain = 0;
+  for (const id of ids) { const c = inv(id); if (c > 0) { gain += dissolve(id, c); S.inv[id] = 0; } }
+  if (gain > 0) toast(`分解しました: +${fmt(gain)} マナ`);
+}
+// 不足している材料をマナで生成する費用（未登録の材料が足りないときは null）
+function missingCost(ins, times) {
+  let cost = 0;
+  for (const [id, n] of Object.entries(ins)) {
+    const lack = n * times - inv(id);
+    if (lack > 0) { if (!S.reg[id]) return null; cost += lack * unitMana(id); }
+  }
+  return cost;
+}
+function fillMissing(ins, times) {
+  const c = missingCost(ins, times);
+  if (c === null || S.mana < c) return false;
+  S.mana -= c;
+  for (const [id, n] of Object.entries(ins)) { const lack = n * times - inv(id); if (lack > 0) addItem(id, lack); }
+  return true;
+}
+const canMake = ins => Math.min(...Object.entries(ins).map(([id, n]) => Math.floor(inv(id) / n)));
+function craft(p, times) {
+  if (times <= 0 || canMake(p.in) < times) return false;
+  for (const [id, n] of Object.entries(p.in)) S.inv[id] -= n * times;
+  const out = times * (1 + 0.05 * traitLv('craft'));
+  const got = Math.floor(out) + (Math.random() < out % 1 ? 1 : 0);
+  addItem(p.id, got);
+  S.st.crafted[p.id] = (S.st.crafted[p.id] || 0) + times;
+  return got;
+}
+// 精錬に足りない数をマナで生成する費用
+const refineLack = id => Math.max(0, refineCost(id) - inv(id)) * unitMana(id);
+// 手持ちを使い、足りない分はマナで生成して精錬する
+function refine(id, maxTimes) {
+  let n = 0, spent = 0;
+  while (n < maxTimes && !perfect(id)) {
+    const c = refineCost(id);
+    const lack = Math.max(0, c - inv(id));
+    if (lack > 0) {
+      const cost = lack * unitMana(id);
+      if (!S.reg[id] || S.mana < cost) break;
+      S.mana -= cost; spent += cost; S.inv[id] = inv(id) + lack;
+    }
+    S.inv[id] -= c; S.ref[id] = (S.ref[id] || 0) + 1; n++;
+  }
+  return { n, spent };
+}
+function makeTool(tr) {
+  if (S.tools.length >= MAX_TOOLS || canMake(tr.in) < 1) return null;
+  const ids = Object.keys(tr.in);
+  const avgQ = ids.reduce((a, id) => a + qOf(id), 0) / ids.length;
+  for (const [id, n] of Object.entries(tr.in)) S.inv[id] -= n;
+  const q = Math.min(0.99, avgQ * 0.7 + Math.random() * 0.3);
+  const t = {};
+  const k = Math.random() < 0.7 ? 1 : 2;
+  const pool = TRAIT_IDS.slice();
+  for (let i = 0; i < k; i++) { const j = Math.floor(Math.random() * pool.length); t[pool.splice(j, 1)[0]] = 1; }
+  const tool = { u: S.toolSeq++, b: tr.id, q, t };
+  S.tools.push(tool);
+  S.st.toolsMade++;
+  if (!S.eq[tr.slot]) S.eq[tr.slot] = tool.u;
+  return tool;
+}
+function fuseResult(a, b) {
+  const same = a.b === b.b;
+  const hi = Math.max(a.q, b.q), lo = Math.min(a.q, b.q);
+  // 同じ種類のときだけ品質が上がる。100%に近づくほど上がり幅は小さいが、最低でも+5%なので必ず100%に届く
+  const q = same ? Math.min(1, hi + Math.max(0.05, (1 - hi) * (0.15 + 0.35 * lo))) : a.q;
+  const t = {};
+  for (const id of new Set([...Object.keys(a.t), ...Object.keys(b.t)])) t[id] = (a.t[id] || 0) + (b.t[id] || 0);
+  const keep = Object.entries(t).sort((p, r) => r[1] - p[1]);
+  return { q, t: Object.fromEntries(keep) };
+}
+function fuse(au, bu) {
+  const a = toolById(au), b = toolById(bu);
+  if (!a || !b || a === b || TOOL[a.b].slot !== TOOL[b.b].slot) return false;
+  const r = fuseResult(a, b);
+  a.q = r.q; a.t = r.t;
+  S.tools = S.tools.filter(t => t !== b);
+  for (const s of SLOTS) if (S.eq[s.id] === b.u) S.eq[s.id] = null;
+  S.st.fusions++;
+  return true;
+}
+function bulkFuse(au, times) {
+  const a = toolById(au); if (!a) return { n: 0, spent: 0 };
+  const tr = TOOL[a.b];
+  let n = 0; const before = S.mana;
+  while (n < times && S.tools.length < MAX_TOOLS) {
+    if (!fillMissing(tr.in, 1)) break;
+    const t = makeTool(tr); if (!t) break;
+    fuse(a.u, t.u); n++;
+  }
+  return { n, spent: before - S.mana };
+}
+const toolValue = t => Object.entries(TOOL[t.b].in).reduce((a, [id, n]) => a + n * unitMana(id), 0) * (1 + t.q);
+function scrapTool(u) {
+  const t = toolById(u); if (!t) return 0;
+  const g = toolValue(t);
+  addMana(g);
+  S.tools = S.tools.filter(x => x !== t);
+  for (const s of SLOTS) if (S.eq[s.id] === u) S.eq[s.id] = null;
+  return g;
+}
+function ready(m) { return m.deliver ? inv(m.deliver) >= m.goal : m.prog() >= m.goal; }
+function complete(m, how) {
+  S.done[m.id] = true;
+  toast(`ミッション達成「${m.name}」 ${RW_NAME[m.rw[0]]} ${fmtX(m.rw[1])}${how ? '（' + how + '）' : ''}`, 4000);
+}
+function buy(id) {
+  const u = UP[id], l = S.up[id];
+  if (u.once && l >= 1) return false;
+  const c = u.cost(l);
+  if (S.mana < c) return false;
+  S.mana -= c; S.up[id] = l + 1;
+  if (id === 'autodis') S.autoDis = true;
+  return true;
+}
+function canUnlock(a) { const u = AREA[a].unlock; return !!u && missionDoneIn(u.area) >= u.n; }
+function unlock(a) { S.unlocked[a] = true; S.area = a; ui.gArea = a; toast(`新しい採取地「${AREA[a].name}」へ行けるようになりました`, 4000); }
+
+/* --- 依頼 --- */
+const REQ_SLOTS = 3;
+function newReq() {
+  const pool = ITEMS.filter(i => S.reg[i.id] && S.unlocked[i.area]);
+  if (!pool.length) return { wait: Date.now() + 15000 };
+  const it = pool[Math.floor(Math.random() * pool.length)];
+  const scale = 1 + Math.log10(1 + power());
+  const n = Math.max(1, Math.ceil((5 + Math.random() * 20) * scale * (it.kind === 'proc' ? 0.3 : 1)));
+  return { id: it.id, n, rw: n * unitMana(it.id) * 2.5 };
+}
+function refreshReqs() {
+  const now = Date.now();
+  for (let i = 0; i < REQ_SLOTS; i++) {
+    const r = S.reqs[i];
+    if (!r || (r.wait && r.wait <= now)) S.reqs[i] = newReq();
+  }
+}
+function deliverReq(i) {
+  const r = S.reqs[i];
+  if (!r || r.wait || inv(r.id) < r.n) return false;
+  S.inv[r.id] -= r.n;
+  addMana(r.rw);
+  S.fame++; S.st.reqDone++;
+  S.reqs[i] = { wait: Date.now() + 40000 };
+  toast(`依頼を達成: +${fmt(r.rw)} マナ、名声 +1`);
+  return true;
+}
+
+/* ===================== 画面の部品（数字だけを更新するしくみ） ===================== */
+let B = [];
+const tx = fn => { B.push({ k: 't', fn }); return `<span data-b="${B.length - 1}">${esc(fn())}</span>`; };
+const dz = fn => { B.push({ k: 'd', fn }); return `data-b="${B.length - 1}"${fn() ? ' disabled' : ''}`; };
+const wd = fn => { B.push({ k: 'w', fn }); return `data-b="${B.length - 1}" style="width:${fn()}%"`; };
+const cl = (fn, c) => { B.push({ k: 'c', fn, c }); return `data-b="${B.length - 1}"`; };
+const main = document.getElementById('main');
+let lastKey = '';
+const regSig = ids => ids.map(id => S.reg[id] ? 2 : inv(id) > 0 ? 1 : 0).join('');
+const confirmBtn = (cls, attrs, label, cf) => `<button class="btn ${cls}" type="button" ${attrs}><span class="lbl">${label}</span><span class="cf">${cf}</span></button>`;
+
+function structKey() {
+  const ua = Object.keys(S.unlocked).join(',');
+  switch (ui.tab) {
+    case 'gather': return `g${ui.gArea}${ua}${S.up.autodis}`;
+    case 'lab': {
+      const base = `l${ui.labView}${ui.labArea}${ua}`;
+      if (ui.labView === 'craft') return base + PROC.map(p => procOn(p) ? 1 : 0).join('');
+      if (ui.labView === 'refine') return base + regSig(labIds()) + labIds().map(id => perfect(id) ? 1 : 0).join('');
+      return base + regSig(labIds());
+    }
+    case 'tools': return `t${ua}${ui.fuse}${ui.traitHelp ? 'h' : ''}|${S.tools.map(t => t.u).join(',')}|${SLOTS.map(s => S.eq[s.id]).join(',')}|${S.st.fusions}`;
+    case 'mission': return `m${ui.misView}${ui.misArea}${ua}${Object.keys(S.done).length}|${S.reqs.map(r => r ? (r.wait ? 'w' : r.id) : '-').join(',')}`;
+    case 'book': return `b${regCount()}${ua}`;
+    case 'up': return 'u' + S.up.autodis + Object.keys(S.unlocked).join(',');
+  }
+  return ui.tab;
+}
+function render() {
+  B = [];
+  const fn = { gather: vGather, lab: vLab, tools: vTools, mission: vMission, book: vBook, up: vUp }[ui.tab];
+  main.innerHTML = fn();
+  B.forEach((b, i) => { b.el = main.querySelector(`[data-b="${i}"]`); b.last = undefined; });
+  lastKey = structKey();
+  if (ui.tab === 'gather') {
+    bindTap();
+    const a = document.getElementById('autodis');
+    if (a) a.addEventListener('change', () => { S.autoDis = a.checked; });
+  }
+  update();
+}
+function update() {
+  if (structKey() !== lastKey) { render(); return; }
+  for (const b of B) {
+    if (!b.el) continue;
+    const v = b.fn();
+    if (v === b.last) continue;
+    b.last = v;
+    if (b.k === 't') b.el.textContent = v;
+    else if (b.k === 'd') b.el.disabled = !!v;
+    else if (b.k === 'w') b.el.style.width = v + '%';
+    else if (b.k === 'c') b.el.classList.toggle(b.c, !!v);
+  }
+  document.getElementById('hMana').textContent = fmt(S.mana);
+  const r = famTotal();
+  const perSec = () => unlockedAreas().reduce((s, a) => s + famRate(a.id) * avgValue(a.id), 0) * power() * manaMult();
+  document.getElementById('hRate').textContent = r <= 0 ? AREA[S.area].name :
+    autoDisOn() ? `${AREA[S.area].name}　+${fmt(perSec())} /秒` : `${AREA[S.area].name}　使い魔 計${fmtD(r)} 回/秒`;
+  const nReady = MIS.filter(m => !S.done[m.id] && S.unlocked[m.area] && ready(m)).length
+    + S.reqs.filter(q => q && !q.wait && inv(q.id) >= q.n).length;
+  const bd = document.getElementById('misBadge');
+  bd.hidden = nReady === 0; bd.textContent = nReady;
+}
+function areaChips(cur, act, opts = {}) {
+  const list = AREAS.filter((a, i) => S.unlocked[a.id] || (opts.showNext && i > 0 && S.unlocked[AREAS[i - 1].id]));
+  const chips = list.map(a => `<button type="button" class="chip${S.unlocked[a.id] ? '' : ' locked'}" data-act="${act}" data-id="${a.id}" aria-pressed="${a.id === cur}">${S.unlocked[a.id] ? '' : '未解放　'}${esc(a.name)}</button>`);
+  if (opts.extra) chips.push(...opts.extra);
+  return `<div class="chips">${chips.join('')}</div>`;
+}
+
+/* --- 採取 --- */
+function vGather() {
+  const a = AREA[ui.gArea];
+  const chips = areaChips(ui.gArea, 'garea', { showNext: true });
+  if (!S.unlocked[a.id]) {
+    const u = a.unlock;
+    return `${chips}
+    <section class="area-head"><span class="eyebrow">採取地 ${AREAS.indexOf(a) + 1}（未解放）</span><h2>${esc(a.name)}</h2><p class="muted small">${esc(a.desc)}</p></section>
+    <div class="panel">
+      <h3>解放の条件</h3>
+      <p>${esc(AREA[u.area].name)}のミッションを${u.n}個達成する</p>
+      <div class="prog"><i ${wd(() => Math.min(1, missionDoneIn(u.area) / u.n) * 100)}></i></div>
+      <p class="small muted">${tx(() => Math.min(missionDoneIn(u.area), u.n))} / ${u.n}</p>
+      <div class="acts">
+        <button class="btn okb" type="button" data-act="unlock" data-id="${a.id}" ${dz(() => !canUnlock(a.id))}>解放する</button>
+        ${confirmBtn('', `data-act="unlockBrute" data-id="${a.id}" ${dz(() => S.mana < u.brute)}`, `マナで押し通す <small>${fmt(u.brute)}</small>`, 'もう一度タップで確定')}
+      </div>
+    </div>`;
+  }
+  const raws = rawOf(a.id).map(i => i.id);
+  const bagCount = () => raws.reduce((s, id) => s + inv(id), 0);
+  const bagValue = () => raws.reduce((s, id) => s + inv(id) * unitMana(id), 0);
+  const here = S.area === a.id;
+  return `${chips}
+  <section class="area-head"><span class="eyebrow">採取地 ${AREAS.indexOf(a) + 1}</span><h2>${esc(a.name)}</h2><p class="muted small">${esc(a.desc)}</p></section>
+  <div class="tapzone" id="tapzone">
+    <button class="tap" id="tap" type="button" aria-label="採取する"><b>採取</b><small>タップ</small></button>
+  </div>
+  ${here ? '' : ''}
+  <div class="stats">
+    <div class="stat"><span class="lab">採取力</span><b>${tx(() => fmtD(power()))}</b><small>個 / 1回</small></div>
+    <div class="stat"><span class="lab">熟練</span><b>${tx(() => fmt(S.skill))}</b><small>${tx(() => '採取力 ' + fmtX(skillMult()))}</small></div>
+    <div class="stat"><span class="lab">ここの使い魔</span><b>${tx(() => fmtD(famRate(a.id)))}</b><small>回 / 秒（Lv ${tx(() => fmt(famLv(a.id)))}）</small></div>
+  </div>
+  <div class="panel">
+    <div class="row-between"><span class="small">この採取地の図鑑</span><b>${tx(() => areaReg(a.id))} / 10</b></div>
+    <div class="row-between small"><span>探索 ${tx(() => fmt(depthOf(a.id)))} 回</span><span class="muted">${tx(() => { const n = nextDepth(a.id); return n === null ? 'すべての素材が出るようになりました' : `次の発見まで あと ${fmt(n - depthOf(a.id))} 回`; })}</span></div>
+    <div class="tags">${rawOf(a.id).map(i => `<span class="tag${S.reg[i.id] ? '' : ' none'}" ${cl(() => !S.reg[i.id], 'none')}>${tx(() => S.reg[i.id] ? i.name : '？？？')}</span>`).join('')}</div>
+  </div>
+  <div class="panel">
+    <div class="row-between">
+      <div><div class="small muted">ここの素材の手持ち</div><b>${tx(() => fmt(bagCount()))}</b> 個 <span class="small muted">（分解すると ${tx(() => fmt(bagValue()))} マナ）</span></div>
+      <button class="btn pri" type="button" data-act="disarea" data-id="${a.id}" ${dz(() => bagCount() === 0)}>すべて分解</button>
+    </div>
+    ${S.up.autodis ? `<label class="switch"><input type="checkbox" id="autodis" ${S.autoDis ? 'checked' : ''}> 自動分解（素材と自動加工の加工品をマナにする。自動加工の材料は残す。道具や依頼の材料をためたいときはオフに）</label>`
+      : `<p class="small muted">強化の「自動分解装置」を設置すると、採取した素材を自動でマナにできます。</p>`}
+  </div>
+  <p class="small muted">採取するたびに、その採取地の探索が進みます（使い魔の分も含む）。珍しい素材は、探索が進むと出るようになります。</p>
+  <p class="small muted">タップするたびに熟練が増えます。熟練に上限はなく、増えるほど採取力が上がります。使い魔は採取地ごとに雇い（強化画面）、それぞれの採取地で同時に働きます。</p>`;
+}
+let tapHitTimer = 0;
+function bindTap() {
+  const t = document.getElementById('tap');
+  const z = document.getElementById('tapzone');
+  if (!t) return;
+  const go = (x, y) => {
+    S.area = ui.gArea;
+    S.st.manual++;
+    S.st.areaTaps[S.area] = (S.st.areaTaps[S.area] || 0) + 1;
+    S.skill += skillGain();
+    const got = gather(power());
+    t.classList.add('hit');
+    clearTimeout(tapHitTimer);
+    tapHitTimer = setTimeout(() => t.classList.remove('hit'), 70);
+    const zr = z.getBoundingClientRect();
+    const ids = Object.keys(got).sort((a, b) => ITEM[b].v - ITEM[a].v).slice(0, 2);
+    ids.forEach((id, k) => {
+      if (z.querySelectorAll('.pt').length > 10) return;
+      const p = document.createElement('div');
+      const m = ITEM[id];
+      p.className = 'pt r' + m.r;
+      p.textContent = `+${fmt(got[id])} ${m.name}`;
+      p.style.left = Math.min(Math.max(x - zr.left + (Math.random() * 40 - 20), 70), zr.width - 70) + 'px';
+      p.style.top = (y - zr.top - 24 - k * 22) + 'px';
+      z.appendChild(p);
+      setTimeout(() => p.remove(), 1000);
+    });
+    update();
+  };
+  t.addEventListener('pointerdown', e => { e.preventDefault(); go(e.clientX, e.clientY); });
+  t.addEventListener('click', e => {
+    if (e.detail !== 0) return; // キーボード操作のときだけ
+    const r = t.getBoundingClientRect();
+    go(r.left + r.width / 2, r.top + r.height / 2);
+  });
+}
+
+/* --- 工房 --- */
+function labIds() {
+  if (ui.labArea === 'proc') return PROC.filter(p => S.unlocked[p.area]).map(p => p.id);
+  return rawOf(ui.labArea).map(i => i.id);
+}
+function vLab() {
+  const seg = [['dg', '分解'], ['craft', '加工'], ['refine', '精錬']]
+    .map(([k, n]) => `<button type="button" data-act="labview" data-id="${k}" aria-pressed="${ui.labView === k}">${n}</button>`).join('');
+  let body = '';
+  if (ui.labView === 'dg') body = vLabDG();
+  else if (ui.labView === 'craft') body = vLabCraft();
+  else body = vLabRefine();
+  return `<div class="seg full" role="group" aria-label="工房の作業">${seg}</div>${body}`;
+}
+function labChips() {
+  if (ui.labArea !== 'proc' && !S.unlocked[ui.labArea]) ui.labArea = 'a1';
+  return areaChips(ui.labArea, 'labarea', { extra: [`<button type="button" class="chip" data-act="labarea" data-id="proc" aria-pressed="${ui.labArea === 'proc'}">加工品</button>`] });
+}
+function vLabDG() {
+  const ids = labIds();
+  const rows = ids.map(id => {
+    const m = ITEM[id];
+    if (S.reg[id]) {
+      return `<div class="item r${m.r}">
+        <div class="top-row"><span class="nm">${esc(m.name)}</span><span class="own">所持 <b>${tx(() => fmt(inv(id)))}</b></span></div>
+        <div class="meta">価値 ${tx(() => fmt(unitMana(id)))} マナ　品質 ${tx(() => fmtQ(qOf(id)))}</div>
+        <div class="acts">
+          <button class="btn" type="button" data-act="dis" data-id="${id}" ${dz(() => inv(id) === 0)}>分解 <small>+${tx(() => fmt(inv(id) * unitMana(id)))}</small></button>
+        </div>
+      </div>`;
+    }
+    const fc = () => unitMana(id) * 10;
+    return `<div class="item unknown r${m.r}">
+      <div class="top-row"><span class="nm">？？？</span></div>
+      <div class="meta">${m.kind === 'proc' ? 'まだ作ったことのない加工品' : 'まだ見つけていない素材'}</div>
+      <div class="acts">${confirmBtn('', `data-act="force" data-id="${id}" ${dz(() => S.mana < fc())}`, `強制錬成 <small>${tx(() => fmt(fc()))}</small>`, 'もう一度タップで錬成')}</div>
+    </div>`;
+  }).join('');
+  return `${labChips()}
+  <p class="muted small">分解するとマナになります。足りない材料は、加工・道具の作成・精錬・納品のときにマナで生成できます。「？？？」はまだ見つけていないもので、10倍のマナを払えば1つ強制錬成できます。</p>
+  <div class="row-between">
+    <span class="small muted">表示中の手持ち ${tx(() => fmt(ids.reduce((s, id) => s + inv(id) * unitMana(id), 0)))} マナぶん</span>
+    <button class="btn pri" type="button" data-act="dislist" ${dz(() => ids.every(id => inv(id) === 0))}>表示中を全部分解</button>
+  </div>
+  <div class="list">${rows}</div>`;
+}
+function insHtml(ins, times = 1) {
+  return `<div class="ins">${Object.entries(ins).map(([id, n]) =>
+    `<span ${cl(() => inv(id) < n * times, 'lack')}>${esc(nameOf(id))} ${tx(() => fmt(inv(id)))}/${fmt(n * times)}</span>`).join('')}</div>`;
+}
+function vLabCraft() {
+  const avail = PROC.filter(p => S.unlocked[p.area]);
+  const made = avail.filter(procOn).length;
+  const groups = unlockedAreas().map(a => {
+    const rows = PROC.filter(p => p.area === a.id).map(p => {
+      if (procOn(p)) {
+        return `<div class="item r${p.r}">
+          <div class="top-row"><span class="nm">${esc(p.name)} <span class="tag">自動で加工中</span></span><span class="own">所持 <b>${tx(() => fmt(inv(p.id)))}</b></span></div>
+          <div class="meta">価値 ${tx(() => fmt(unitMana(p.id)))} マナ　加工した数 ${tx(() => fmt(S.st.crafted[p.id] || 0))}</div>
+          ${insHtml(p.in, 1)}
+        </div>`;
+      }
+      const mc = () => missingCost(p.in, 1);
+      return `<div class="item r${p.r}">
+        <div class="top-row"><span class="nm">${esc(p.name)} <span class="tag none">未解放</span></span></div>
+        <div class="meta">価値 ${tx(() => fmt(unitMana(p.id)))} マナ（材料の合計の約1.5倍）</div>
+        ${insHtml(p.in, 1)}
+        <div class="acts">
+          <button class="btn pri" type="button" data-act="unlockcraft" data-id="${p.id}" ${dz(() => { if (canMake(p.in) >= 1) return false; const c = mc(); return c === null || S.mana < c; })}>加工して解放 <small>${tx(() => { if (canMake(p.in) >= 1) return '手持ちで足ります'; const c = mc(); return c === null ? '未登録の材料あり' : '不足分 ' + fmt(c) + ' マナ'; })}</small></button>
+        </div>
+      </div>`;
+    }).join('');
+    return `<h4>${esc(a.name)}のレシピ</h4>${rows}`;
+  }).join('');
+  return `<div class="panel"><div class="row-between"><span>解放した加工品</span><b>${made} / ${avail.length}</b></div><div class="prog"><i style="width:${avail.length ? made / avail.length * 100 : 0}%"></i></div></div>
+  <p class="muted small">一度加工すると解放され、それからは材料がそろうたびに自動で加工されます。加工品は材料の合計より価値が高いので、そのまま分解するより多くのマナになります。自動分解がオンのときも、解放したレシピの材料は分解されずに残ります。</p>
+  <div class="list">${groups}</div>`;
+}
+function vLabRefine() {
+  const ids = labIds().filter(id => S.reg[id]);
+  const rows = ids.map(id => {
+    const m = ITEM[id];
+    if (perfect(id)) {
+      return `<div class="item r${m.r}">
+        <div class="top-row"><span class="nm">${esc(m.name)}</span><span class="q">完璧</span></div>
+        <div class="prog"><i style="width:100%"></i></div>
+        <div class="meta">品質 100%　価値 ×2.50（完璧のおまけ込み）</div>
+      </div>`;
+    }
+    return `<div class="item r${m.r}">
+      <div class="top-row"><span class="nm">${esc(m.name)}</span><span class="own">所持 <b>${tx(() => fmt(inv(id)))}</b></span></div>
+      <div class="prog"><i ${wd(() => qOf(id) * 100)}></i></div>
+      <div class="meta">品質 <b class="q">${tx(() => fmtQ(qOf(id)))}</b> → ${tx(() => fmtQ((refSteps(id) + 1) / REF_MAX))}　価値 ${tx(() => fmtX(valMult(id)))}${tx(() => refSteps(id) === REF_MAX - 1 ? ' → 完璧で ×2.50' : '')}</div>
+      <div class="meta">必要 ${tx(() => fmt(refineCost(id)))}個　${tx(() => { const l = refineLack(id); return l > 0 ? `不足分は ${fmt(l)} マナで生成` : '手持ちで足ります'; })}</div>
+      <div class="acts">
+        <button class="btn pri" type="button" data-act="refine" data-id="${id}" ${dz(() => S.mana < refineLack(id))}>精錬</button>
+        ${confirmBtn('', `data-act="refinemax" data-id="${id}" ${dz(() => S.mana < refineLack(id))}`, '完璧まで精錬 <small>マナも使う</small>', 'もう一度タップで実行')}
+      </div>
+    </div>`;
+  }).join('');
+  return `${labChips()}
+  <p class="muted small">同じ素材をまとめて使い、その素材の品質を上げます。20段階あり、1段階ごとに品質が5%、価値も5%上がります。100%で「完璧」になり、価値が2.5倍になります。品質の高い素材で作った道具は、品質が高くなりやすくなります。手持ちが足りないときは、不足分をマナで生成して精錬します。</p>
+  <div class="list">${rows || '<p class="muted small">図鑑に登録した素材だけ精錬できます。</p>'}</div>`;
+}
+
+/* --- 道具 --- */
+const traitTags = t => {
+  const e = Object.entries(t.t);
+  return `<div class="tags">${e.length ? e.map(([id, lv]) => `<span class="tag">${TRAITS[id].name} Lv${lv}</span>`).join('') : '<span class="tag none">特性なし</span>'}</div>`;
+};
+const traitText = t => Object.entries(t.t).map(([id, lv]) => `${TRAITS[id].name} Lv${lv}（${TRAITS[id].fx}×${lv}）`).join('、');
+function vTools() {
+  const slots = SLOTS.map(s => {
+    const t = toolById(S.eq[s.id]);
+    if (!t) return `<div class="slot"><span class="lab">${s.name}（${s.stat}）</span><b class="muted">なし</b></div>`;
+    const tr = TOOL[t.b];
+    return `<div class="slot r${tr.r}"><span class="lab">${s.name}（${s.stat}）</span><b>${esc(tr.name)}</b><span class="eff">${fmtX(toolEff(t))}</span><span class="q">品質 ${fmtQ(t.q)}</span></div>`;
+  }).join('');
+  const tl = TRAIT_IDS.filter(id => traitLv(id) > 0).map(id => `${TRAITS[id].name} Lv${traitLv(id)}`).join('、');
+
+  let fusePanel = '';
+  const fa = ui.fuse != null ? toolById(ui.fuse) : null;
+  if (ui.fuse != null && !fa) ui.fuse = null;
+  if (fa) {
+    const slot = TOOL[fa.b].slot;
+    const cands = S.tools.filter(t => t !== fa && TOOL[t.b].slot === slot && S.eq[slot] !== t.u)
+      .sort((x, y) => (y.b === fa.b) - (x.b === fa.b) || traitSum(y) - traitSum(x));
+    const bc = () => missingCost(TOOL[fa.b].in, 10);
+    const rows = cands.map(c => {
+      const r = fuseResult(fa, c);
+      const tags = Object.entries(r.t).map(([id, lv]) => `<span class="tag">${TRAITS[id].name} Lv${lv}</span>`).join('') || '<span class="tag none">特性なし</span>';
+      return `<div class="item r${TOOL[c.b].r}">
+        <div class="top-row"><span class="nm">${esc(TOOL[c.b].name)}</span><span class="own small muted">${c.b === fa.b ? '同じ種類' : '特性だけ受け継ぐ'}</span></div>
+        <div class="meta">品質 ${fmtQ(c.q)}</div>
+        ${traitTags(c)}
+        <div class="meta">融合すると → 品質 <b class="q">${fmtQ(r.q)}</b>、効果 ${fmtX(toolEff({ b: fa.b, q: r.q }))}、特性は次のとおり</div>
+        <div class="tags">${tags}</div>
+        <div class="acts">${confirmBtn('pri', `data-act="fuse" data-id="${c.u}"`, 'この道具と融合する', 'もう一度タップで融合')}</div>
+      </div>`;
+    }).join('');
+    fusePanel = `<div class="panel" style="border-color:var(--mana)">
+      <div class="row-between"><h3>融合: ${esc(TOOL[fa.b].name)}</h3><button class="btn" type="button" data-act="fusecancel">やめる</button></div>
+      <p class="small">いまの品質 <b class="q">${fmtQ(fa.q)}</b>、効果 ${fmtX(toolEff(fa))}</p>
+      ${traitTags(fa)}
+      <p class="small muted">同じ枠の道具を1つ消費して、特性を受け継ぎます。両方にある特性はレベルを足し合わせ、上限はありません。同じ種類の道具なら品質も上がります。特性は全${TRAIT_IDS.length}種類すべて持て、融合で消えることはありません。装備中の道具は素材にできません。</p>
+      <div class="acts">
+        <button class="btn mana" type="button" data-act="bulkfuse" data-id="1" ${dz(() => { const c = missingCost(TOOL[fa.b].in, 1); return c === null || S.mana < c || S.tools.length >= MAX_TOOLS; })}>強化合成 ×1 <small>${tx(() => { const c = missingCost(TOOL[fa.b].in, 1); return c === null ? '未登録の材料あり' : fmt(c); })}</small></button>
+        ${confirmBtn('mana', `data-act="bulkfuse" data-id="10" ${dz(() => { const c = bc(); return c === null || S.mana < c || S.tools.length >= MAX_TOOLS; })}`, `まとめて強化合成 ×10 <small>${tx(() => { const c = bc(); return c === null ? '未登録の材料あり' : '約' + fmt(c); })}</small>`, 'もう一度タップで実行')}
+      </div>
+      <p class="small muted">強化合成: 同じ種類の道具を作って（足りない材料はマナで生成）すぐ融合します。</p>
+      <h4>持っている道具から選ぶ</h4>
+      <div class="list">${rows || '<p class="small muted">同じ枠の道具がほかにありません。強化合成を使うか、下の「作成」で作ってください。</p>'}</div>
+    </div>`;
+  }
+
+  const recipes = unlockedAreas().map(a => {
+    const rows = TOOLR.filter(r => r.area === a.id).map(r => {
+      const mc = () => missingCost(r.in, 1);
+      return `<div class="item r${r.r}">
+        <div class="top-row"><span class="nm">${esc(r.name)}</span><span class="own small muted">${SLOT[r.slot].name}・${SLOT[r.slot].stat} 基本${fmtX(r.base)}</span></div>
+        ${insHtml(r.in, 1)}
+        <div class="acts">
+          <button class="btn pri" type="button" data-act="mktool" data-id="${r.id}" ${dz(() => canMake(r.in) < 1 || S.tools.length >= MAX_TOOLS)}>作成</button>
+          <button class="btn mana" type="button" data-act="mktoolfill" data-id="${r.id}" ${dz(() => { const c = mc(); return c === null || c === 0 || S.mana < c || S.tools.length >= MAX_TOOLS; })}>不足分を生成して作成 <small>${tx(() => { const c = mc(); return c === null ? '未登録の材料あり' : fmt(c); })}</small></button>
+        </div>
+      </div>`;
+    }).join('');
+    return `<h4>${esc(a.name)}の道具</h4>${rows}`;
+  }).join('');
+
+  const owned = S.tools.slice().sort((x, y) => SLOTS.findIndex(s => s.id === TOOL[x.b].slot) - SLOTS.findIndex(s => s.id === TOOL[y.b].slot) || TOOL[y.b].base - TOOL[x.b].base || y.q - x.q);
+  const ownedRows = owned.map(t => {
+    const tr = TOOL[t.b];
+    const isEq = S.eq[tr.slot] === t.u;
+    const same = true;
+    return `<div class="item r${tr.r}${ui.fuse === t.u ? ' sel' : ''}">
+      <div class="top-row"><span class="nm">${esc(tr.name)}</span><span class="own small">${isEq ? '<b class="q">装備中</b>' : ''}</span></div>
+      <div class="meta">${SLOT[tr.slot].stat} <b>${fmtX(toolEff(t))}</b>　品質 <b class="q">${fmtQ(t.q)}</b></div>
+      ${traitTags(t)}
+      <div class="acts">
+        <button class="btn" type="button" data-act="equip" data-id="${t.u}" ${isEq ? 'disabled' : ''}>${isEq ? '装備中' : '装備する'}</button>
+        <button class="btn mana" type="button" data-act="fusesel" data-id="${t.u}" ${same ? '' : 'disabled'}>融合</button>
+        ${confirmBtn('', `data-act="scrap" data-id="${t.u}"`, `分解 <small>+${tx(() => fmt(toolValue(t)))}</small>`, 'もう一度タップで分解')}
+      </div>
+    </div>`;
+  }).join('');
+
+  return `
+  <section class="area-head"><span class="eyebrow">道具</span><h2>装備と融合</h2></section>
+  <div class="slots">${slots}</div>
+  <div class="row-between"><p class="small muted">装備中の特性: ${tl || 'なし'}</p><button class="btn" type="button" data-act="traithelp" aria-expanded="${!!ui.traitHelp}">${ui.traitHelp ? '特性の説明を閉じる' : '特性の説明'}</button></div>
+  ${ui.traitHelp ? `<div class="panel">
+    <h3>特性の説明</h3>
+    <p class="small muted">特性は装備中の道具の分だけ効きます。3つの枠のレベルは足し合わせます。レベルに上限はありません。</p>
+    ${TRAIT_IDS.map(id => { const tr = TRAITS[id]; const l = traitLv(id); return `<div class="item"><div class="top-row"><span class="nm">${tr.name}</span><span class="own small">${l ? `<b class="q">Lv${l}（${tr.now(l)}）</b>` : '<span class="muted">装備なし</span>'}</span></div><div class="meta">${esc(tr.d)}</div></div>`; }).join('')}
+  </div>` : ''}
+  ${fusePanel}
+  <h3>持っている道具 ${S.tools.length} / ${MAX_TOOLS}</h3>
+  <div class="list">${ownedRows || '<p class="small muted">まだ道具がありません。下の「作成」で作ってみましょう。作ると、空いている枠に自動で装備します。</p>'}</div>
+  <h3>作成</h3>
+  <p class="small muted">道具の品質は、材料の品質（精錬）が高いほど高くなりやすくなります。特性は作るたびにランダムで0〜2個つきます。</p>
+  <div class="list">${recipes}</div>`;
+}
+
+/* --- ミッションと依頼 --- */
+function vMission() {
+  const seg = [['mis', 'ミッション'], ['req', '依頼']]
+    .map(([k, n]) => `<button type="button" data-act="misview" data-id="${k}" aria-pressed="${ui.misView === k}">${n}</button>`).join('');
+  return `<div class="seg full" role="group" aria-label="表示の切り替え">${seg}</div>${ui.misView === 'req' ? vReq() : vMis()}`;
+}
+function vMis() {
+  if (!S.unlocked[ui.misArea]) ui.misArea = 'a1';
+  const list = MIS.filter(m => m.area === ui.misArea);
+  const open = list.filter(m => !S.done[m.id]);
+  const done = list.filter(m => S.done[m.id]);
+  const card = m => {
+    const cur = () => m.deliver ? Math.min(inv(m.deliver), m.goal) : Math.min(m.prog(), m.goal);
+    const gen = m.deliver ? () => { const c = missingCost({ [m.deliver]: m.goal }, 1); return c; } : null;
+    return `<div class="mis" ${cl(() => ready(m), 'ready')}>
+      <div class="hd"><h3>${esc(m.name)}</h3><span class="rw">${RW_NAME[m.rw[0]]} ${fmtX(m.rw[1])}</span></div>
+      <p class="tx">${esc(m.text)}</p>
+      <div class="prog"><i ${wd(() => cur() / m.goal * 100)}></i></div>
+      <div class="pv">${m.deliver ? '手持ち ' : ''}${tx(() => fmt(cur()))} / ${fmt(m.goal)}</div>
+      <div class="acts">
+        <button class="btn okb" type="button" data-act="claim" data-id="${m.id}" ${dz(() => !ready(m))}>${m.deliver ? '納品する' : '受け取る'}</button>
+        ${m.deliver ? `<button class="btn mana" type="button" data-act="claimfill" data-id="${m.id}" ${dz(() => { const c = gen(); return ready(m) || c === null || S.mana < c; })}>不足分を生成 <small>${tx(() => { const c = gen(); return c === null ? '未登録' : fmt(c); })}</small></button>` : ''}
+        ${confirmBtn('', `data-act="brute" data-id="${m.id}" ${dz(() => S.mana < m.brute)}`, `マナで押し通す <small>${fmt(m.brute)}</small>`, 'もう一度タップで確定')}
+      </div>
+    </div>`;
+  };
+  const doneRow = m => `<div class="mis done"><span class="nm">${esc(m.name)}</span><span class="ck">達成 ${RW_NAME[m.rw[0]]} ${fmtX(m.rw[1])}</span></div>`;
+  const bonus = Object.keys(RW_NAME).map(k => `<div class="row-between"><span>${RW_NAME[k]}</span><b>${fmtX(mult(k))}</b></div>`).join('');
+  return `${areaChips(ui.misArea, 'misarea')}
+  <section class="area-head">
+    <span class="eyebrow">${esc(AREA[ui.misArea].name)}のミッション ${done.length} / ${list.length}</span>
+    <p class="muted small">達成すると、ずっと続く強化がもらえます。条件を満たせないときは、マナで押し通すこともできます。</p>
+  </section>
+  <div class="panel"><div class="small muted">ミッションで得た強化（すべての採取地の合計）</div><div class="bonus">${bonus}</div></div>
+  ${open.map(card).join('')}
+  ${done.length ? `<h4>達成済み</h4>${done.map(doneRow).join('')}` : ''}`;
+}
+function vReq() {
+  const cards = S.reqs.slice(0, REQ_SLOTS).map((r, i) => {
+    if (!r || r.wait) {
+      return `<div class="mis"><p class="muted small">次の依頼が届くまで ${tx(() => Math.max(0, Math.ceil((((S.reqs[i] && S.reqs[i].wait) || 0) - Date.now()) / 1000)))} 秒</p></div>`;
+    }
+    const m = ITEM[r.id];
+    const mc = () => missingCost({ [r.id]: r.n }, 1);
+    return `<div class="mis r${m.r}" ${cl(() => inv(r.id) >= r.n, 'ready')}>
+      <div class="hd"><h3 class="rc">${esc(m.name)} を ${fmt(r.n)}個</h3><span class="rw">+${fmt(r.rw)} マナ・名声+1</span></div>
+      <div class="prog"><i ${wd(() => Math.min(1, inv(r.id) / r.n) * 100)}></i></div>
+      <div class="pv">手持ち ${tx(() => fmt(inv(r.id)))} / ${fmt(r.n)}</div>
+      <div class="acts">
+        <button class="btn okb" type="button" data-act="req" data-id="${i}" ${dz(() => inv(r.id) < r.n)}>納品する</button>
+        <button class="btn mana" type="button" data-act="reqfill" data-id="${i}" ${dz(() => { const c = mc(); return inv(r.id) >= r.n || c === null || S.mana < c; })}>不足分を生成 <small>${tx(() => { const c = mc(); return c === null ? '-' : fmt(c); })}</small></button>
+        <button class="btn" type="button" data-act="reqskip" data-id="${i}">断る</button>
+      </div>
+    </div>`;
+  }).join('');
+  return `<section class="area-head">
+    <span class="eyebrow">依頼</span>
+    <p class="muted small">村の人たちから素材や加工品の注文が届きます。報酬は価値の2.5倍のマナと名声です。名声が1増えるごとに、マナがずっと3%増えます。依頼は図鑑に登録したものから選ばれます。</p>
+  </section>
+  <div class="panel"><div class="row-between"><span>名声</span><b>${tx(() => fmt(S.fame))}</b></div><div class="row-between small"><span class="muted">名声によるマナ</span><b class="q">${tx(() => fmtX(fameMult()))}</b></div></div>
+  ${cards}`;
+}
+
+/* --- 図鑑 --- */
+function vBook() {
+  const n = regCount();
+  const sections = AREAS.map((a, ai) => {
+    if (!S.unlocked[a.id]) return `<h4>${esc(a.name)}（未解放）</h4>`;
+    const list = sortedArea(a.id);
+    const got = list.filter(i => S.reg[i.id]).length;
+    const cards = list.map(m => {
+      const no = 'No.' + String(ITEMS.indexOf(m) + 1).padStart(3, '0');
+      const kind = m.kind === 'proc' ? '加工品' : RARITY[m.r];
+      if (!S.reg[m.id]) {
+        return `<article class="card unknown"><span class="no"><span>${no}</span><span>${m.kind === 'proc' ? '加工品' : ''}</span></span><h3>？？？</h3><p>${m.kind === 'proc' ? '工房で作れるらしい。' : esc(a.name) + 'で見つかるらしい。'}</p></article>`;
+      }
+      return `<article class="card r${m.r}">
+        <span class="no"><span>${no}</span><span class="rc">${kind}</span></span>
+        <h3 class="rc">${esc(m.name)}</h3>
+        <span class="small">価値 ${fmt(m.v)}　品質 ${fmtQ(qOf(m.id))}</span>
+        <p>${esc(m.d)}</p>
+        <span class="num">${m.kind === 'proc' ? '加工 ' + fmt(S.st.crafted[m.id] || 0) : '採取 ' + fmt(S.col[m.id] || 0)} ／ 分解 ${fmt(S.dis[m.id] || 0)}</span>
+      </article>`;
+    }).join('');
+    return `<div class="row-between"><h4>${esc(a.name)}</h4><span class="small muted">${got} / ${list.length}</span></div><div class="book">${cards}</div>`;
+  }).join('');
+  return `
+  <section class="area-head">
+    <span class="eyebrow">図鑑</span>
+    <h2>素材の記録</h2>
+    <p class="muted small">採取地ごとに、価値の低い順に並んでいます。一度手に入れたもの（採取・加工・強制錬成）は自動で記録されます。「？？？」はまだ見つけていないものです。</p>
+  </section>
+  <div class="panel">
+    <div class="row-between"><span>すべての記録</span><b>${n} / ${ITEMS.length}</b></div>
+    <div class="prog"><i style="width:${n / ITEMS.length * 100}%"></i></div>
+  </div>
+  ${sections}`;
+}
+
+/* --- 強化 --- */
+function vUp() {
+  const cards = UPS.filter(u => !u.area || S.unlocked[u.area]).map(u => {
+    const l = () => S.up[u.id];
+    if (u.once && S.up[u.id] >= 1) {
+      return `<div class="up"><div class="row-between"><h3>${esc(u.name)}</h3><span class="lv">設置済み</span></div><p class="small muted">${esc(u.info)}</p></div>`;
+    }
+    return `<div class="up">
+      <div class="row-between"><h3>${esc(u.name)}</h3><span class="lv">${u.once ? '' : 'Lv ' + tx(() => fmt(l()))}</span></div>
+      <p class="small muted">${esc(u.info)}</p>
+      ${u.long ? `<p class="eff small">いま: ${tx(() => u.eff(l()))}</p><p class="eff small">次: <b>${tx(() => u.eff(l() + 1))}</b></p>`
+        : `<p class="eff">${tx(() => u.eff(l()))} → <b>${tx(() => u.eff(l() + 1))}</b></p>`}
+      <div class="acts">
+        <button class="btn pri" type="button" data-act="buy" data-id="${u.id}" ${dz(() => S.mana < u.cost(l()))}>強化 <small>${tx(() => fmt(u.cost(l())))} マナ</small></button>
+        ${u.once ? '' : `<button class="btn" type="button" data-act="buymax" data-id="${u.id}" ${dz(() => S.mana < u.cost(l()))}>買えるだけ</button>`}
+      </div>
+    </div>`;
+  }).join('');
+  return `
+  <section class="area-head">
+    <span class="eyebrow">強化</span>
+    <h2>腕前と工房</h2>
+    <p class="muted small">強化にレベルの上限はありません。マナさえあれば、どこまでも強くなれます。</p>
+  </section>
+  <div class="list">${cards}</div>
+  <p class="small muted">次の版で「賢者の石（周回）」を追加予定です。</p>`;
+}
+
+/* ===================== 操作 ===================== */
+function armed(btn) {
+  if (btn.classList.contains('armed')) { btn.classList.remove('armed'); return true; }
+  btn.classList.add('armed');
+  setTimeout(() => btn.classList.remove('armed'), 3000);
+  return false;
+}
+main.addEventListener('click', e => {
+  const b = e.target.closest('[data-act]');
+  if (!b || b.disabled) return;
+  const id = b.dataset.id;
+  switch (b.dataset.act) {
+    case 'garea': ui.gArea = id; if (S.unlocked[id]) S.area = id; break;
+    case 'unlock': if (canUnlock(id)) unlock(id); break;
+    case 'unlockBrute': { const u = AREA[id].unlock; if (S.mana < u.brute) break; if (!armed(b)) return; S.mana -= u.brute; unlock(id); break; }
+    case 'disarea': dissolveIds(rawOf(id).map(i => i.id)); break;
+    case 'labview': ui.labView = id; break;
+    case 'labarea': ui.labArea = id; break;
+    case 'dislist': dissolveIds(labIds()); break;
+    case 'dis': { const c = inv(id); const g = dissolve(id, c); S.inv[id] = 0; if (g > 0) toast(`${ITEM[id].name}を${fmt(c)}個分解: +${fmt(g)} マナ`); break; }
+    case 'force': { const c = unitMana(id) * 10; if (S.mana < c) break; if (!armed(b)) return; S.mana -= c; addItem(id, 1); toast(`強制錬成で${ITEM[id].name}が生まれた`); break; }
+    case 'unlockcraft': { const p = ITEM[id]; if (procOn(p)) break; if (canMake(p.in) < 1 && !fillMissing(p.in, 1)) break; if (craft(p, 1)) { toast(`${p.name}を解放しました。これからは自動で加工されます`, 4000); processAuto(); } break; }
+    case 'bulkfuse': { const n = Number(id); if (n > 1 && !armed(b)) return; const r = bulkFuse(ui.fuse, n); const t = toolById(ui.fuse); if (r.n && t) toast(`${r.n}回強化合成しました: 品質 ${fmtQ(t.q)}、${traitText(t) || '特性なし'}`, 4000); break; }
+    case 'craft': { const p = ITEM[id]; const g = craft(p, canMake(p.in)); if (g) toast(`${p.name}を${fmt(g)}個作りました`); break; }
+    case 'refine': { const r = refine(id, 1); if (r.n) toast(perfect(id) ? `${ITEM[id].name}が完璧になりました（価値 ×2.50）` : `${ITEM[id].name}の品質が ${fmtQ(qOf(id))} になりました${r.spent > 0 ? '（' + fmt(r.spent) + ' マナで不足分を生成）' : ''}`); break; }
+    case 'refinemax': { if (!armed(b)) return; const r = refine(id, REF_MAX); if (r.n) toast(`${ITEM[id].name}を${r.n}回精錬: ${perfect(id) ? '完璧になりました' : '品質 ' + fmtQ(qOf(id))}${r.spent > 0 ? '（' + fmt(r.spent) + ' マナ使用）' : ''}`); break; }
+    case 'mktool': { const t = makeTool(TOOL[id]); if (t) toolToast(t); break; }
+    case 'mktoolfill': { if (S.tools.length >= MAX_TOOLS) break; if (fillMissing(TOOL[id].in, 1)) { const t = makeTool(TOOL[id]); if (t) toolToast(t); } break; }
+    case 'equip': { const t = toolById(Number(id)); if (t) S.eq[TOOL[t.b].slot] = t.u; break; }
+    case 'fusesel': ui.fuse = Number(id); window.scrollTo({ top: 0, behavior: 'smooth' }); break;
+    case 'fusecancel': ui.fuse = null; break;
+    case 'traithelp': ui.traitHelp = !ui.traitHelp; break;
+    case 'fuse': { if (!armed(b)) return; if (fuse(ui.fuse, Number(id))) { const t = toolById(ui.fuse); toast(`融合しました: 品質 ${fmtQ(t.q)}、${traitText(t) || '特性なし'}`, 4000); } break; }
+    case 'scrap': { if (!armed(b)) return; const u = Number(id); if (ui.fuse === u) ui.fuse = null; const g = scrapTool(u); toast(`道具を分解: +${fmt(g)} マナ`); break; }
+    case 'misview': ui.misView = id; break;
+    case 'misarea': ui.misArea = id; break;
+    case 'claim': { const m = MISS[id]; if (!m || S.done[id] || !ready(m)) break; if (m.deliver) S.inv[m.deliver] -= m.goal; complete(m); break; }
+    case 'claimfill': { const m = MISS[id]; if (!m || S.done[id]) break; fillMissing({ [m.deliver]: m.goal }, 1); break; }
+    case 'brute': { const m = MISS[id]; if (!m || S.done[id] || S.mana < m.brute) break; if (!armed(b)) return; S.mana -= m.brute; complete(m, 'マナで押し通した'); break; }
+    case 'req': deliverReq(Number(id)); break;
+    case 'reqfill': { const r = S.reqs[Number(id)]; if (r && !r.wait && fillMissing({ [r.id]: r.n }, 1)) deliverReq(Number(id)); break; }
+    case 'reqskip': S.reqs[Number(id)] = { wait: Date.now() + 30000 }; break;
+    case 'buy': buy(id); break;
+    case 'buymax': { let n = 0; while (n < 1000 && buy(id)) n++; if (n > 1) toast(`${UP[id].name}を${n}レベル上げました`); break; }
+  }
+  update();
+});
+function toolToast(t) {
+  const tr = TOOL[t.b];
+  const tt = traitText(t);
+  toast(`${tr.name}を作りました: 品質 ${fmtQ(t.q)}${tt ? '、' + tt : ''}`, 4000);
+}
+document.querySelector('.tabs').addEventListener('click', e => {
+  const b = e.target.closest('[data-tab]');
+  if (!b) return;
+  ui.tab = b.dataset.tab;
+  if (ui.tab === 'gather') ui.gArea = S.area;
+  if (ui.tab === 'mission' && ui.misView === 'mis') ui.misArea = S.area;
+  setTabs();
+  render();
+  window.scrollTo(0, 0);
+});
+const setTabs = () => document.querySelectorAll('.tabs [data-tab]').forEach(x => x.setAttribute('aria-selected', String(x.dataset.tab === ui.tab)));
+
+/* ===================== 通知 ===================== */
+function toast(msg, ms = 2600) {
+  const box = document.getElementById('toasts');
+  while (box.children.length >= 3) box.firstChild.remove();
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = msg;
+  box.appendChild(t);
+  setTimeout(() => t.remove(), ms);
+}
+
+/* ===================== セーブ ===================== */
+const LS = 'addall.save.v1';
+let cloudRef = null, cloudBusy = false, lastCloud = 0, cloudStatus = '確認中';
+let bootSavedAt = 0;
+const hhmm = t => new Date(t).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+function lsLoad() { try { const s = localStorage.getItem(LS); return s ? JSON.parse(s) : null; } catch { return null; } }
+function lsSave() {
+  try { localStorage.setItem(LS, JSON.stringify(S)); document.getElementById('lsStatus').textContent = '保存済み ' + hhmm(Date.now()); }
+  catch { document.getElementById('lsStatus').textContent = 'このブラウザでは保存できません'; }
+}
+function saveLocal() { S.savedAt = Date.now(); lsSave(); }
+function setCloudStatus(s) { cloudStatus = s; document.getElementById('cloudStatus').textContent = s; }
+async function cloudSave(force) {
+  if (!cloudRef || cloudBusy) return;
+  if (!force && Date.now() - lastCloud < 30000) return;
+  if (force && Date.now() - lastCloud < 3000) return;
+  cloudBusy = true;
+  S.savedAt = Date.now();
+  try {
+    await cloudRef.set({ json: JSON.stringify(S), savedAt: S.savedAt });
+    lastCloud = Date.now();
+    setCloudStatus('保存済み ' + hhmm(lastCloud));
+  } catch (e) {
+    if (e && (e.code === 'invalid_argument' || e.code === 'revoked' || e.code === 'not_granted')) { cloudRef = null; setCloudStatus('この表示では保存できません'); }
+    else setCloudStatus('保存に失敗しました（あとで再試行）');
+  }
+  cloudBusy = false;
+}
+function adopt(obj, withOffline) {
+  S = normalize(obj);
+  ui.gArea = S.area; ui.misArea = S.area; ui.fuse = null;
+  if (withOffline && S.savedAt) { const sec = (Date.now() - S.savedAt) / 1000; if (sec > 10) offline(sec); }
+  lastTick = Date.now();
+  refreshReqs();
+  render();
+}
+async function cloudInit() {
+  const c = window.claude;
+  if (!c || typeof c.use !== 'function') { setCloudStatus('このページの外では使えません'); return; }
+  const timer = setTimeout(() => { if (!cloudRef) setCloudStatus('接続できませんでした'); }, 12000);
+  try {
+    const [db, user] = await Promise.all([c.use('db'), c.use('user')]);
+    if (!db || !user) { clearTimeout(timer); setCloudStatus('使えません（ブラウザ内にだけ保存）'); return; }
+    const uid = await user.id();
+    if (!uid) { clearTimeout(timer); setCloudStatus('ログインすると使えます'); return; }
+    const ref = db.doc('data/users/' + uid + '/save');
+    const snap = await ref.get();
+    clearTimeout(timer);
+    if (snap.exists) {
+      const d = snap.data();
+      if (d && typeof d.json === 'string' && Number(d.savedAt) > bootSavedAt + 1000) {
+        try { adopt(JSON.parse(d.json), true); toast('claude.aiのセーブデータを読み込みました'); } catch {}
+      }
+    }
+    cloudRef = ref;
+    setCloudStatus('接続済み');
+    cloudSave(true);
+  } catch (e) {
+    clearTimeout(timer);
+    setCloudStatus('接続できませんでした');
+  }
+}
+
+/* ===================== 設定シート ===================== */
+const sheetBg = document.getElementById('sheetBg');
+document.getElementById('gear').addEventListener('click', () => { sheetBg.hidden = false; document.getElementById('cloudStatus').textContent = cloudStatus; });
+document.getElementById('sheetClose').addEventListener('click', () => { sheetBg.hidden = true; });
+sheetBg.addEventListener('click', e => { if (e.target === sheetBg) sheetBg.hidden = true; });
+document.getElementById('saveNow').addEventListener('click', () => { saveLocal(); lastCloud = 0; cloudSave(true); toast('保存しました'); });
+document.getElementById('exportBtn').addEventListener('click', () => {
+  saveLocal();
+  const code = btoa(unescape(encodeURIComponent(JSON.stringify(S))));
+  const box = document.getElementById('exportBox');
+  box.value = code;
+  const fallback = () => { box.focus(); box.select(); toast('文字列を選択しました。コピーしてください'); };
+  try { navigator.clipboard.writeText(code).then(() => toast('コピーしました'), fallback); } catch { fallback(); }
+});
+document.getElementById('importBtn').addEventListener('click', e => {
+  const raw = document.getElementById('importBox').value.trim();
+  if (!raw) { toast('読み込む文字列を貼り付けてください'); return; }
+  let obj;
+  try { obj = JSON.parse(decodeURIComponent(escape(atob(raw)))); } catch { toast('文字列が正しくありません。書き出した文字列をそのまま貼り付けてください'); return; }
+  if (!obj || typeof obj.mana !== 'number') { toast('AddAllのセーブデータではないようです'); return; }
+  if (!armed(e.currentTarget)) return;
+  adopt(obj, false); saveLocal(); lastCloud = 0; cloudSave(true);
+  sheetBg.hidden = true; toast('セーブデータを読み込みました');
+});
+document.getElementById('resetBtn').addEventListener('click', e => {
+  if (!armed(e.currentTarget)) return;
+  adopt(fresh(), false); saveLocal(); lastCloud = 0; cloudSave(true);
+  sheetBg.hidden = true; toast('最初からやり直します');
+});
+
+/* ===================== ループ ===================== */
+let lastTick = Date.now();
+const acc = {};
+let frame = 0;
+function tick() {
+  const now = Date.now();
+  const dt = (now - lastTick) / 1000;
+  lastTick = now;
+  if (dt > 5) { offline(dt); }
+  else {
+    for (const a of unlockedAreas()) {
+      const r = famRate(a.id);
+      if (r <= 0) continue;
+      acc[a.id] = (acc[a.id] || 0) + r * dt;
+      if (acc[a.id] >= 1) { const k = Math.floor(acc[a.id]); acc[a.id] -= k; autoTaps(k, a.id); }
+    }
+  }
+  if (frame % 5 === 0 || dt > 5) processAuto();
+  if (frame % 10 === 0) refreshReqs();
+  if (++frame % 2 === 0 || dt > 5) update();
+}
+
+function start(data) {
+  if (data && data.state) {
+    S = normalize(data.state);
+    if (data.ui) Object.assign(ui, data.ui);
+  } else {
+    const ls = lsLoad();
+    if (ls) S = normalize(ls);
+    ui.gArea = S.area; ui.misArea = S.area;
+  }
+  bootSavedAt = S.savedAt || 0;
+  setTabs();
+  refreshReqs();
+  render();
+  if (!(data && data.state) && S.savedAt) { const sec = (Date.now() - S.savedAt) / 1000; if (sec > 10) { offline(sec); update(); } }
+  lastTick = Date.now();
+  setInterval(tick, 100);
+  setInterval(() => { saveLocal(); cloudSave(false); }, 5000);
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) { saveLocal(); cloudSave(true); }
+    else { tick(); }
+  });
+  window.addEventListener('pagehide', () => { saveLocal(); });
+  cloudInit();
+}
+
+try { window.claude?.hot?.snapshot?.(() => ({ state: S, ui })); } catch {}
+const hot = window.claude?.hot;
+if (hot && typeof hot.ready === 'function') hot.ready(start);
+else start(hot?.data ?? {});
+})();
+</script>
