@@ -276,7 +276,21 @@ details.help[open] summary { margin-bottom: 4px; }
 .up .eff { font-size: 14px; }
 .up .eff b { color: var(--brass); }
 .up .acts .btn:first-child { flex: 2 1 160px; }
+.up .gain { font-size: 12px; color: var(--ok); font-weight: 700; }
+.ms { display: flex; flex-direction: column; gap: 3px; }
+.ms .prog { height: 6px; }
+.ms b { color: var(--brass); }
+.rate-panel .big { font-size: 22px; font-weight: 700; color: var(--mana); }
+.cmp { color: var(--ok); font-weight: 700; }
+.ver { display: block; font-family: var(--f-body); font-size: 11px; font-weight: 500; color: var(--muted); background: none; border: 0; padding: 2px 0 0; cursor: pointer; letter-spacing: 0; }
+.picks { border: 2px solid var(--mana); }
+.pick-opts { display: grid; grid-template-columns: repeat(auto-fit, minmax(92px, 1fr)); gap: 6px; }
+.pick-opts .btn { flex-direction: column; gap: 2px; padding: 8px 6px; }
+.pick-opts .btn small { font-size: 11px; }
+.vh-item { border-top: 1px solid var(--line); padding-top: 8px; }
+.vh-item ul { margin: 4px 0 0; padding-left: 1.2em; font-size: 13px; }
 
+[hidden] { display: none !important; }
 /* 設定シート */
 .sheet-bg { position: fixed; inset: 0; z-index: 20; background: rgb(0 0 0 / .45); display: flex; align-items: flex-end; justify-content: center; }
 .sheet { background: var(--bg); width: 100%; max-width: 640px; max-height: 88%; overflow-y: auto; border-radius: 18px 18px 0 0; padding-block: 18px calc(18px + env(safe-area-inset-bottom, 0px)); display: flex; flex-direction: column; gap: 14px; }
@@ -328,7 +342,7 @@ details.help[open] summary { margin-bottom: 4px; }
 </style>
 
 <header class="top gut">
-  <div class="brand">AddAll</div>
+  <div class="brand">AddAll<button class="ver" id="verBtn" type="button" aria-label="変更の記録を見る">v1.8</button></div>
   <div class="bal" aria-live="off">
     <span class="lab">マナ</span>
     <b id="hMana">0</b>
@@ -346,7 +360,7 @@ details.help[open] summary { margin-bottom: 4px; }
   <button type="button" role="tab" data-tab="gather" aria-selected="true"><span class="k">採</span>採取</button>
   <button type="button" role="tab" data-tab="up" aria-selected="false"><span class="k">強</span>強化</button>
   <button type="button" role="tab" data-tab="lab" aria-selected="false"><span class="k">工</span>工房</button>
-  <button type="button" role="tab" data-tab="tools" aria-selected="false"><span class="k">相</span>相棒</button>
+  <button type="button" role="tab" data-tab="tools" aria-selected="false"><span class="k">相</span>相棒<span class="badge" id="homBadge" hidden>0</span></button>
   <button type="button" role="tab" data-tab="maze" aria-selected="false"><span class="k">迷</span>迷宮</button>
   <button type="button" role="tab" data-tab="mission" aria-selected="false"><span class="k">依</span>依頼<span class="badge" id="misBadge" hidden>0</span></button>
   <button type="button" role="tab" data-tab="book" aria-selected="false"><span class="k">鑑</span>図鑑<span class="badge" id="bookBadge" hidden>新</span></button>
@@ -384,7 +398,14 @@ details.help[open] summary { margin-bottom: 4px; }
       <p class="muted small">すべての進行が消えます。元に戻せません。</p>
       <div class="acts"><button class="btn" type="button" id="resetBtn"><span class="lbl">データを消して最初から</span><span class="cf">もう一度タップで消去</span></button></div>
     </div>
-    <p class="muted small">AddAll 第4版</p>
+    <p class="muted small" id="sheetVer">AddAll</p>
+  </div>
+</div>
+
+<div id="verBg" class="sheet-bg" hidden>
+  <div class="sheet gut" role="dialog" aria-modal="true" aria-labelledby="verTitle">
+    <div class="row-between"><h2 id="verTitle">変更の記録</h2><button class="btn" type="button" id="verClose">閉じる</button></div>
+    <div id="verList" class="panel"></div>
   </div>
 </div>
 
@@ -396,6 +417,19 @@ details.help[open] summary { margin-bottom: 4px; }
 'use strict';
 
 /* ===================== データ ===================== */
+// 版と変更の記録（新しいものを先頭に）
+const VERSIONS = [
+  { v: '1.8', date: '2026-11-24', changes: ['ホムンクルスのレベルアップで、伸ばす能力を3つの候補から選べるように。Lv10・Lv20では上げる技能も選べます', '強化に節目を追加: Lv10・25・50・100（以後50ごと）で効果が大きく上がります', '「稼ぐ力」（1秒あたりのマナ）を画面上部に表示。周回後は前の周の同じ時点と比べます', '強化ごとに、買うと稼ぐ力がどれだけ増えるかを表示', '画面の左上に版を表示（押すと変更の記録）'] },
+  { v: '1.7', date: '2026-11-03', changes: ['数字の表記を選べるように（日本語・英語・指数・すべての桁）'] },
+  { v: '1.6', date: '2026-11-03', changes: ['発見・達成・解放のカード、レベルアップの帯、火花、タップの波紋などの演出を追加'] },
+  { v: '1.5', date: '2026-11-03', changes: ['依頼・賢者の石・図鑑・未解放の採取地の表示を見やすく'] },
+  { v: '1.4', date: '2026-11-03', changes: ['説明を折りたためるように、一覧を1行に、タブの並びを変更'] },
+  { v: '1.3', date: '2026-11-03', changes: ['ホムンクルスと迷宮を追加', '機能が少しずつ開くように'] },
+  { v: '1.2', date: '2026-11-03', changes: ['師匠の手記（物語）を追加'] },
+  { v: '1.1', date: '2026-11-03', changes: ['賢者の石による周回を追加'] },
+  { v: '1.0', date: '2026-11-03', changes: ['最初の版: 採取・分解・加工・精錬・図鑑・ミッション・依頼・採取地3か所'] },
+];
+const APP_VERSION = VERSIONS[0].v;
 const RARITY = ['ありふれた', '普通', '珍しい', '希少', '伝説'];
 const W10 = [100, 60, 45, 25, 12, 7, 3.5, 1.4, 0.5, 0.15];
 const R10 = [0, 0, 0, 1, 1, 2, 2, 3, 3, 4];
@@ -568,16 +602,25 @@ const MIS = [
 ];
 const MISS = Object.fromEntries(MIS.map(m => [m.id, m]));
 
+// 強化の節目: Lv10・25・50・100、その後は50ごと。届くたびに効果が大きく上がる
+const MS = [10, 25, 50, 100];
+const msCount = l => MS.filter(m => l >= m).length + (l >= 150 ? Math.floor((l - 100) / 50) : 0);
+const msNext = l => MS.find(m => l < m) ?? 100 + 50 * (Math.floor((l - 100) / 50) + 1);
+const msPrev = l => l >= 100 ? 100 + 50 * Math.floor((l - 100) / 50) : [0, ...MS].filter(m => l >= m).pop();
+const toolBase = l => (1 + l) * 2 ** msCount(l);
+const famBase = l => l * 0.5 * 2 ** msCount(l);
+const furnaceMult = l => 1.1 ** l * 2 ** msCount(l);
+const eyeLv = l => l + 5 * msCount(l);
 const UPS = [
   { id: 'tool', name: '採取の腕前', info: '1回の採取で手に入る素材の基本数が増えます。',
-    eff: l => `基本 ${fmt(1 + l)} 個`, cost: l => 15 * 1.45 ** l },
+    eff: l => `基本 ${fmt(toolBase(l))} 個`, cost: l => 15 * 1.45 ** l, msText: '基本の数 ×2' },
   ...[['a1', 40], ['a2', 4000], ['a3', 4e6]].map(([a, c0]) => ({
     id: 'fam_' + a, area: a, name: `使い魔（${AREA[a].name}）`, info: `${AREA[a].name}で自動で採取してくれます。ほかの採取地にいる間も、画面を閉じている間も働きます（最大8時間ぶん）。`,
-    eff: l => `${fmtD(l * 0.5 * famMulti())} 回/秒`, cost: l => c0 * 1.55 ** l })),
+    eff: l => `${fmtD(famBase(l) * famMulti())} 回/秒`, cost: l => c0 * 1.55 ** l, msText: '採取の回数 ×2' })),
   { id: 'furnace', name: '分解炉', info: '分解で得られるマナが増えます。生成に必要なマナも同じだけ増えます。',
-    eff: l => `マナ ${fmtX(1.1 ** l)}`, cost: l => 120 * 1.75 ** l },
+    eff: l => `マナ ${fmtX(furnaceMult(l))}`, cost: l => 120 * 1.75 ** l, msText: 'マナ ×2' },
   { id: 'eye', name: '目利き', info: '珍しい素材ほど、追加で多く手に入ります。ありふれた素材の数は変わりません。',
-    eff: l => RARITY.slice(1).map((n, i) => `${n} ${fmtX(eyeF(l) ** (i + 1))}`).join('　'), cost: l => 250 * 2.1 ** l, long: true },
+    eff: l => RARITY.slice(1).map((n, i) => `${n} ${fmtX(eyeF(eyeLv(l) + traitLv('luck') + statSum('luk') / 10) ** (i + 1))}`).join('　'), cost: l => 250 * 2.1 ** l, long: true, msText: '目利き +5' },
   { id: 'autodis', name: '自動分解装置', once: true, info: '採取した素材を、その場でマナに変えます。採取画面でオン・オフできます。',
     eff: l => l ? '設置済み' : '未設置', cost: () => 300 },
 ];
@@ -653,6 +696,8 @@ function checkFeats(silent) {
 }
 // いま一番近い目標
 function nextGoal() {
+  const np = pickCount();
+  if (np) return { text: `ホムンクルスの成長を選べます（${np}件）`, r: 1, tab: 'tools', ok: true };
   if (featOpen('mission')) {
     const rd = MIS.find(m => misOpen(m) && S.unlocked[m.area] && ready(m));
     if (rd) return { text: `ミッション「${rd.name}」を受け取れます`, r: 1, tab: 'mission', ok: true };
@@ -687,6 +732,7 @@ const fresh = () => ({
   st: { manual: 0, auto: 0, totalMana: 0, areaTaps: {}, crafted: {}, homsMade: 0, fusions: 0, reqDone: 0 },
   up: { tool: 0, fam_a1: 0, fam_a2: 0, fam_a3: 0, furnace: 0, eye: 0, autodis: 0 },
   autoDis: false, done: {}, savedAt: 0, created: Date.now(),
+  runAt: Date.now(), curve: [], prevCurve: [],
 });
 function normalize(o) {
   const f = fresh();
@@ -702,6 +748,9 @@ function normalize(o) {
   if (!Array.isArray(f.tools)) f.tools = [];
   if (!Array.isArray(f.homs)) f.homs = [];
   f.homs = f.homs.filter(h => h && KIND[h.k]);
+  for (const h of f.homs) if (!Array.isArray(h.pk)) h.pk = [];
+  for (const k of ['curve', 'prevCurve']) if (!Array.isArray(f[k])) f[k] = [];
+  if (!(f.runAt > 0)) f.runAt = Date.now();
   delete f.party;
   if (!Array.isArray(f.mazeTeam)) f.mazeTeam = [];
   f.mazeTeam = f.mazeTeam.filter(u => f.homs.some(h => h.u === u)).slice(0, 3);
@@ -714,7 +763,7 @@ function normalize(o) {
       const t = o.tools.find(x => x && x.u === o.eq[slot]);
       if (!t) continue;
       const k = KIND[byTool[slotOf(t.b)]];
-      const h = { u: f.homSeq++, k: k.id, lv: 1, xp: 0, f: 0, s: {}, sk: [] };
+      const h = { u: f.homSeq++, k: k.id, lv: 1, xp: 0, f: 0, s: {}, sk: [], pk: [] };
       for (const st of STAT_IDS) h.s[st] = Math.round(capOf(h, st) * (0.2 + 0.5 * (t.q || 0)));
       h.sk = Object.entries(t.t || {}).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([id, lv]) => ({ id, r: Math.min(RANK_MAX, Math.floor(Math.log2(lv + 1))) }));
       f.homs.push(h);
@@ -780,12 +829,12 @@ const fameMult = () => (1 + 0.03 * S.fame) * mazeMult();
 const mazeMult = () => 1 + 0.02 * (S.life.mazeBest || 0);
 const skillMult = () => 1 + S.skill * 0.004;
 const skillGain = () => mult('skill') * (1 + 0.15 * traitLv('skill')) * statMult('dex');
-const power = () => (1 + S.up.tool) * skillMult() * mult('power') * 1.5 ** pu('power') * statMult('str') * (1 + 0.1 * traitLv('power'));
+const power = () => toolBase(S.up.tool) * skillMult() * mult('power') * 1.5 ** pu('power') * statMult('str') * (1 + 0.1 * traitLv('power'));
 const famLv = a => S.up['fam_' + a] || 0;
 const famMulti = () => mult('fam') * 1.5 ** pu('fam') * statMult('spd') * (1 + 0.1 * traitLv('fam'));
-const famRate = (a = S.area) => famLv(a) * 0.5 * famMulti();
+const famRate = (a = S.area) => famBase(famLv(a)) * famMulti();
 const famTotal = () => unlockedAreas().reduce((s, a) => s + famRate(a.id), 0);
-const manaMult = () => 1.1 ** S.up.furnace * mult('mana') * 1.5 ** pu('mana') * statMult('int') * (1 + 0.08 * traitLv('mana')) * fameMult();
+const manaMult = () => furnaceMult(S.up.furnace) * mult('mana') * 1.5 ** pu('mana') * statMult('int') * (1 + 0.08 * traitLv('mana')) * fameMult();
 // 精錬は20段階。1段階ごとに品質+5%、100%で「完璧」（価値2.5倍）
 const REF_MAX = 20;
 const refSteps = id => Math.min(REF_MAX, S.ref[id] || 0);
@@ -794,7 +843,7 @@ const perfect = id => refSteps(id) >= REF_MAX;
 const valMult = id => perfect(id) ? 2.5 : 1 + qOf(id);
 const baseVal = id => ITEM[id].v * valMult(id);
 const unitMana = id => baseVal(id) * manaMult();
-const eyeF = (eye = S.up.eye + traitLv('luck') + statSum('luk') / 10) => 1 + 0.1 * eye;
+const eyeF = (eye = eyeLv(S.up.eye) + traitLv('luck') + statSum('luk') / 10) => 1 + 0.1 * eye;
 const autoDisOn = () => S.up.autodis > 0 && S.autoDis;
 
 const refineCost = id => Math.ceil(10 * 1.3 ** refSteps(id));
@@ -806,6 +855,25 @@ function avgValue(a = S.area) {
   return raws.reduce((s, i) => s + baseVal(i.id) * i.w * f ** i.r, 0) / tot;
 }
 const unlockedAreas = () => AREAS.filter(a => S.unlocked[a.id]);
+// 稼ぐ力: 使い魔が採取したものをすべて分解したときの、1秒あたりのマナ
+const incomeRate = () => unlockedAreas().reduce((s, a) => s + famRate(a.id) * avgValue(a.id), 0) * power() * manaMult();
+// その強化を1つ買ったときの稼ぐ力
+function rateIf(id) { const l = S.up[id]; S.up[id] = l + 1; try { return incomeRate(); } finally { S.up[id] = l; } }
+// 周回ごとの稼ぐ力の記録（2分ごと、最大48時間ぶん）。前の周の同じ時点と比べるのに使う
+const CURVE_STEP = 120000, CURVE_MAX = 1440;
+const curveIdx = () => Math.floor(Math.max(0, Date.now() - S.runAt) / CURVE_STEP);
+function recordCurve() {
+  const i = curveIdx();
+  if (S.curve.length > i || S.curve.length >= CURVE_MAX) return;
+  const r = Number(incomeRate().toPrecision(3));
+  while (S.curve.length <= i && S.curve.length < CURVE_MAX) S.curve.push(r);
+}
+function prevRatio() {
+  const pc = S.prevCurve;
+  if (!pc || !pc.length) return null;
+  const p = pc[Math.min(curveIdx(), pc.length - 1)], now = incomeRate();
+  return p > 0 && now > 0 ? now / p : null;
+}
 const missionDoneIn = a => MIS.filter(m => m.area === a && S.done[m.id]).length;
 
 /* ===================== 数値の表記 ===================== */
@@ -971,7 +1039,7 @@ const rnd = n => Math.floor(Math.random() * n);
 function makeHom(kind) {
   if (S.homs.length >= MAX_HOMS || canMake(kind.in) < 1) return null;
   for (const [id, n] of Object.entries(kind.in)) S.inv[id] -= n;
-  const h = { u: S.homSeq++, k: kind.id, lv: 1, xp: 0, f: 0, s: {}, sk: [] };
+  const h = { u: S.homSeq++, k: kind.id, lv: 1, xp: 0, f: 0, s: {}, sk: [], pk: [] };
   for (const st of STAT_IDS) h.s[st] = Math.min(capOf(h, st), Math.round(kind.g[st] / 12) + rnd(5));
   h.sk.push({ id: kind.sk[0], r: Math.random() < 0.3 ? 1 : 0 });
   if (Math.random() < 0.6) { const pool = kind.sk.slice(1).concat(TRAIT_IDS).filter(id => !h.sk.some(k => k.id === id)); h.sk.push({ id: pool[rnd(Math.min(pool.length, kind.sk.length + 1))], r: 0 }); }
@@ -988,13 +1056,51 @@ function levelUp(h) {
     if (add > 0) { h.s[st] += add; got[st] = add; }
   }
   h.lv++;
+  // 成長の選択: 上限に届いていない能力から3つの候補を出し、プレイヤーが1つ選ぶ
+  const open = STAT_IDS.filter(st => h.s[st] < capOf(h, st));
+  for (let i = open.length - 1; i > 0; i--) { const j = rnd(i + 1); [open[i], open[j]] = [open[j], open[i]]; }
+  if (open.length) h.pk.push({ t: 's', o: open.slice(0, 3) });
+  // Lv10とLv20: 上げる技能を選ぶ（候補が1つだけならそのまま上がる）
   let sk = null;
   if (h.lv === 10 || h.lv === LV_MAX) {
     const up = h.sk.filter(k => k.r < RANK_MAX);
-    if (up.length) { sk = up[rnd(up.length)]; sk.r++; }
+    if (up.length === 1) { sk = up[0]; sk.r++; }
+    else if (up.length > 1) h.pk.push({ t: 'k' });
   }
   return { got, sk };
 }
+// 選んだときに伸びる能力値
+const PICK_ADD = 2;
+// まだ選べる成長だけを残す（上限に届いた能力の候補などを除く）
+function cleanPicks(h) {
+  h.pk = h.pk.filter(p => p.t === 's' ? p.o.some(st => h.s[st] < capOf(h, st)) : h.sk.some(k => k.r < RANK_MAX));
+  return h.pk;
+}
+function applyPick(h, val) {
+  const p = cleanPicks(h)[0];
+  if (!p) return null;
+  if (p.t === 's') {
+    if (!p.o.includes(val) || h.s[val] >= capOf(h, val)) return null;
+    const add = Math.min(PICK_ADD, capOf(h, val) - h.s[val]);
+    h.s[val] += add; h.pk.shift();
+    return `${KIND[h.k].name}の${STAT[val].name}が +${add}`;
+  }
+  const k = h.sk.find(x => x.id === val && x.r < RANK_MAX);
+  if (!k) return null;
+  k.r++; h.pk.shift();
+  return `${KIND[h.k].name}の${TRAITS[k.id].name}が ${RANKS[k.r]} に`;
+}
+// おまかせ: 能力はその種類の成長率が一番高いもの、技能は上がったときに一番強くなるもの
+function autoPickVal(h, p) {
+  if (p.t === 's') return p.o.filter(st => h.s[st] < capOf(h, st)).sort((a, b) => KIND[h.k].g[b] - KIND[h.k].g[a])[0];
+  return h.sk.filter(k => k.r < RANK_MAX).sort((a, b) => (RANK_V[b.r + 1] - RANK_V[b.r]) - (RANK_V[a.r + 1] - RANK_V[a.r]))[0].id;
+}
+function autoPicks(h) {
+  let n = 0;
+  while (cleanPicks(h).length && n < 100) { if (!applyPick(h, autoPickVal(h, h.pk[0]))) h.pk.shift(); n++; }
+  return n;
+}
+const pickCount = () => S.homs.reduce((a, h) => a + cleanPicks(h).length, 0);
 const homName = h => KIND[h.k].name + (h.f ? `（融合${h.f}）` : '');
 function gainExp(x, quiet) {
   const msgs = [];
@@ -1006,7 +1112,7 @@ function gainExp(x, quiet) {
     if (h.lv >= LV_MAX) h.xp = 0;
     if (!last) continue;
     if (quiet || h.lv - from > 1) msgs.push(`${KIND[h.k].name} Lv${from}→Lv${h.lv}`);
-    else msgs.push(`${KIND[h.k].name}がLv${h.lv}になった！ ${Object.entries(last.got).map(([st, n]) => STAT[st].name + '+' + n).join(' ') || '（伸びなかった）'}${last.sk ? `　${TRAITS[last.sk.id].name}が${RANKS[last.sk.r]}に` : ''}`);
+    else msgs.push(`${KIND[h.k].name}がLv${h.lv}になった！ ${Object.entries(last.got).map(([st, n]) => STAT[st].name + '+' + n).join(' ') || '（伸びなかった）'}${last.sk ? `　${TRAITS[last.sk.id].name}が${RANKS[last.sk.r]}に` : ''}${h.pk.length ? '　成長を選べます' : ''}`);
   }
   if (msgs.length) { if (quiet) toast(msgs.slice(0, 3).join('　') + (msgs.length > 3 ? `　ほか${msgs.length - 3}体` : ''), 3500); else banner('レベルアップ！ ' + msgs[0] + (msgs.length > 1 ? `　ほか${msgs.length - 1}体` : '')); }
 }
@@ -1027,7 +1133,7 @@ function mergeByKind(homs) {
     for (const [id, r] of rest) { if (sk.length >= slotsOf(base)) break; sk.push({ id, r }); }
     base.sk = sk;
     // レベルは1に戻り、上がった上限に向かってまた育つ
-    base.lv = 1; base.xp = 0;
+    base.lv = 1; base.xp = 0; base.pk = [];
     base.f += 1;
     out.push(base);
   }
@@ -1055,6 +1161,7 @@ function buy(id) {
   if (S.mana < c) return false;
   S.mana -= c; S.up[id] = l + 1;
   if (id === 'autodis') S.autoDis = true;
+  if (u.msText && msCount(l + 1) > msCount(l)) celebrate('節目に届いた', `${u.name} Lv${l + 1}`, u.msText, 'var(--brass)');
   return true;
 }
 function canUnlock(a) { const u = AREA[a].unlock; return !!u && missionDoneIn(u.area) >= u.n; }
@@ -1086,7 +1193,10 @@ function prestige() {
   if (!fillMissing(STONE_IN, 1)) return 0;
   for (const [id, n] of Object.entries(STONE_IN)) S.inv[id] -= n;
   const gain = stoneGain();
+  recordCurve();
+  for (const h of S.homs) autoPicks(h);
   const o = S, n = fresh();
+  n.prevCurve = o.curve;
   // 周回をまたいで残るもの
   n.run = o.run + 1; n.mc = o.mc; n.journal = o.journal; n.jread = o.jread; n.pref = o.pref; n.mazeTeam = o.mazeTeam.filter(u => n.homs.some(h => h.u === u)); n.open = o.open; n.newTab = {}; n.stones = o.stones + gain; n.pu = o.pu;
   n.life = { totalMana: o.life.totalMana, prestiges: o.life.prestiges + 1, bestStones: Math.max(o.life.bestStones, gain) };
@@ -1195,7 +1305,7 @@ function giveExp(h, x) {
   const from = h.lv; let last = null;
   while (h.lv < LV_MAX && h.xp >= expNeed(h.lv)) { h.xp -= expNeed(h.lv); last = levelUp(h); }
   if (h.lv >= LV_MAX) h.xp = 0;
-  if (last) banner(`レベルアップ！ ${KIND[h.k].name} Lv${h.lv}${h.lv - from > 1 ? '' : ' ' + (Object.entries(last.got).map(([st, n]) => STAT[st].name + '+' + n).join(' ') || '')}`);
+  if (last) banner(`レベルアップ！ ${KIND[h.k].name} Lv${h.lv}${h.lv - from > 1 ? '' : ' ' + (Object.entries(last.got).map(([st, n]) => STAT[st].name + '+' + n).join(' ') || '')}${h.pk.length ? '　成長を選べます（相棒）' : ''}`);
 }
 function mzChest() {
   const m = S.maze, fl = m.floor;
@@ -1286,11 +1396,11 @@ function structKey() {
       if (ui.labView === 'refine') return base + regSig(labIds()) + labIds().map(id => perfect(id) ? 1 : 0).join('');
       return base + regSig(labIds());
     }
-    case 'tools': return `t${ua}|${S.homs.map(h => [h.u, h.lv, h.f, h.sk.map(k => k.id + k.r).join('')].join(':')).join(',')}|${ui.traitHelp ? 'h' : ''}`;
+    case 'tools': return `t${ua}|${S.homs.map(h => [h.u, h.lv, h.f, h.pk.length, STAT_IDS.map(st => h.s[st]).join('.'), h.sk.map(k => k.id + k.r).join('')].join(':')).join(',')}|${ui.traitHelp ? 'h' : ''}`;
     case 'mission': return `m${ui.misView}${ui.misView === 'req' ? S.reqs.map(r => r && !r.wait && inv(r.id) >= r.n ? 1 : 0).join('') : ''}${ui.misArea}${ua}${S.run}:${MIS.filter(misOpen).length}|${S.reqs.map(r => r ? (r.wait ? 'w' : r.id) : '-').join(',')}`;
     case 'maze': return `z${S.maze ? [S.maze.floor, S.maze.choices.map(c => c.t + (c.hide ? 'h' : '')).join(''), JSON.stringify(S.maze.hp), S.maze.log.join('')].join('|') : 'off' + S.mazeTeam.join(',') + S.homs.map(h => h.u + ':' + h.lv).join(',')}`;
     case 'book': return `b${ui.bookView || 'items'}${regCount()}${ua}${Object.keys(S.journal).length}`;
-    case 'up': return 'u' + (ui.upView || 'shop') + S.up.autodis + Object.keys(S.unlocked).join(',') + S.run + JSON.stringify(S.pu);
+    case 'up': return 'u' + (ui.upView || 'shop') + (S.prevCurve.length ? 'p' : '') + S.up.autodis + Object.keys(S.unlocked).join(',') + S.run + JSON.stringify(S.pu);
   }
   return ui.tab;
 }
@@ -1325,10 +1435,16 @@ function update() {
   hm.textContent = fmt(shownMana);
   if (S.mana > lastManaSeen * 1.05 + 10 && Date.now() - lastPulse > 600) { lastPulse = Date.now(); hm.classList.remove('pulse'); void hm.offsetWidth; hm.classList.add('pulse'); }
   lastManaSeen = S.mana;
-  const r = famTotal();
-  const perSec = () => unlockedAreas().reduce((s, a) => s + famRate(a.id) * avgValue(a.id), 0) * power() * manaMult();
-  document.getElementById('hRate').textContent = r <= 0 ? AREA[S.area].name :
-    autoDisOn() ? `${AREA[S.area].name}　+${fmt(perSec())} /秒` : `${AREA[S.area].name}　使い魔 計${fmtD(r)} 回/秒`;
+  const hr = document.getElementById('hRate');
+  const ir = famTotal() > 0 ? incomeRate() : 0;
+  if (ir <= 0) hr.textContent = AREA[S.area].name;
+  else {
+    const pr = prevRatio();
+    hr.innerHTML = `稼ぐ力 +${esc(fmt(ir))}/秒${pr ? `　<span class="${pr >= 1 ? 'cmp' : ''}">前の周の${esc(fmtX(pr))}</span>` : ''}`;
+  }
+  const hb = document.getElementById('homBadge');
+  const np = pickCount();
+  hb.hidden = np === 0; hb.textContent = np;
   const nReady = MIS.filter(m => misOpen(m) && S.unlocked[m.area] && ready(m)).length
     + S.reqs.filter(q => q && !q.wait && inv(q.id) >= q.n).length;
   const g = nextGoal();
@@ -1574,6 +1690,33 @@ function homCard(h, acts, opts = {}) {
     ${acts ? `<div class="acts">${acts}</div>` : ''}
   </div>`;
 }
+// 成長の選択（レベルアップのたびに1件）
+function vPicks() {
+  const h = S.homs.find(x => cleanPicks(x).length);
+  if (!h) return '';
+  const p = h.pk[0], total = pickCount();
+  let opts;
+  if (p.t === 's') {
+    opts = p.o.map(st => {
+      const cap = capOf(h, st), nv = Math.min(cap, h.s[st] + PICK_ADD), full = h.s[st] >= cap;
+      const d = Math.max(0, nv - kindBest(h.k, st));
+      const eff = full ? '上限です' : d > 0 ? (st === 'luk' ? `目利き +${fmtD(d / 10)}` : `${STAT[st].fx} ${fmtX(1.02 ** d)}`) : '今は効果なし';
+      return `<button class="btn${d > 0 ? ' mana' : ''}" type="button" data-act="pick" data-id="${h.u}" data-v="${st}"${full ? ' disabled' : ''}><span>${STAT[st].name} +${nv - h.s[st]}</span><small>${h.s[st]}→${nv}（上限${cap}）</small><small>${eff}</small></button>`;
+    }).join('');
+  } else {
+    opts = h.sk.filter(x => x.r < RANK_MAX).map(x => {
+      const kr = kindRank(h.k, x.id), up = x.r + 1 > kr;
+      return `<button class="btn${up ? ' mana' : ''}" type="button" data-act="pick" data-id="${h.u}" data-v="${x.id}"><span>${TRAITS[x.id].name} ${RANKS[x.r]}→${RANKS[x.r + 1]}</span><small>${up ? `強さ ${RANK_V[kr]}→${RANK_V[x.r + 1]}` : '今は効果なし'}</small></button>`;
+    }).join('');
+  }
+  return `<div class="panel picks">
+    <div class="row-between"><h3>成長を選ぶ</h3><span class="small muted">残り ${total}件</span></div>
+    <p class="small"><b>${esc(KIND[h.k].name)}</b> Lv${h.lv}${h.f ? '・融合' + h.f : ''}: ${p.t === 's' ? `どの能力を伸ばしますか（選んだ能力が +${PICK_ADD}）` : 'どの技能のランクを上げますか'}</p>
+    <div class="pick-opts">${opts}</div>
+    <p class="small muted">効果は、種類ごとに一番高い子の値が効きます。色の付いた候補を選ぶと、今の効果が上がります。選ばずに周回したときは、おまかせで選ばれます。</p>
+    <div class="acts"><button class="btn" type="button" data-act="pickauto">残りをすべておまかせ（${total}件）</button></div>
+  </div>`;
+}
 function vTools() {
   const effects = STATS.map(st => `<div class="row-between"><span>${st.name} <span class="small muted">${st.fx}</span></span><b>${tx(() => st.id === 'luk' ? '目利き +' + fmtD(statSum('luk') / 10) : fmtX(statMult(st.id)))}</b></div>`).join('');
   const sk = TRAIT_IDS.filter(id => traitLv(id) > 0).map(id => `${TRAITS[id].name} ${TRAITS[id].now(traitLv(id))}`).join('、');
@@ -1610,12 +1753,13 @@ function vTools() {
   }).join('');
   return `
   <section class="area-head"><span class="eyebrow">相棒</span><h2>ホムンクルス</h2>
-    ${help('tools', `<p class="muted small">生み出した子は全員、採取のたびに経験値を得て育ちます。レベルが上がると、その子の成長率に従って能力値が伸びます。種類ごとに、能力値と技能はそれぞれ一番高い子のものが効きます。</p><p class="muted small">周回すると「因果融合」が起き、種類ごとに全員が1人にまとまって、それぞれの一番良い能力値と技能が残ります。そのたびに能力の上限が15上がり、Lv1から育ち直します。</p>`)}</section>
+    ${help('tools', `<p class="muted small">生み出した子は全員、採取のたびに経験値を得て育ちます。レベルが上がると、その子の成長率に従って能力値が伸び、さらに3つの候補から1つ選んで伸ばせます。種類ごとに、能力値と技能はそれぞれ一番高い子のものが効きます。</p><p class="muted small">周回すると「因果融合」が起き、種類ごとに全員が1人にまとまって、それぞれの一番良い能力値と技能が残ります。そのたびに能力の上限が15上がり、Lv1から育ち直します。</p>`)}</section>
+  ${vPicks()}
   <div class="panel">
     <div class="small muted">ホムンクルスの効果（能力値1ごとに効果が2%ずつ掛け算で伸びます）</div>
     <div class="list tight">${effects}</div>
     <div class="row-between"><p class="small muted">技能: ${sk || 'なし'}</p><button class="btn" type="button" data-act="traithelp" aria-expanded="${!!ui.traitHelp}">${ui.traitHelp ? '技能の説明を閉じる' : '技能の説明'}</button></div>
-    ${ui.traitHelp ? `<p class="small muted">技能のランクは E・D・C・B・A・S・S+ の7段階で、強さはそれぞれ ${RANK_V.join('・')} です。種類ごとに一番高いランクが効き、種類どうしは足し合わせます。Lv10とLv20になったとき、どれか1つのランクが上がります。</p>${TRAIT_IDS.map(id => { const tr = TRAITS[id]; const l = traitLv(id); return `<div class="item"><div class="top-row"><span class="nm">${tr.name}</span><span class="own small">${l ? `<b class="q">強さ${l}（${tr.now(l)}）</b>` : '<span class="muted">なし</span>'}</span></div><div class="meta">${esc(tr.d)}強さ1ごとに${tr.per}。</div></div>`; }).join('')}` : ''}
+    ${ui.traitHelp ? `<p class="small muted">技能のランクは E・D・C・B・A・S・S+ の7段階で、強さはそれぞれ ${RANK_V.join('・')} です。種類ごとに一番高いランクが効き、種類どうしは足し合わせます。Lv10とLv20になったとき、選んだ1つのランクが上がります。</p>${TRAIT_IDS.map(id => { const tr = TRAITS[id]; const l = traitLv(id); return `<div class="item"><div class="top-row"><span class="nm">${tr.name}</span><span class="own small">${l ? `<b class="q">強さ${l}（${tr.now(l)}）</b>` : '<span class="muted">なし</span>'}</span></div><div class="meta">${esc(tr.d)}強さ1ごとに${tr.per}。</div></div>`; }).join('')}` : ''}
   </div>
   ${groups || '<p class="small muted">まだホムンクルスがいません。下の「生み出す」で作ってみましょう。</p>'}
   <h3>生み出す（全部で ${S.homs.length} / ${MAX_HOMS}人）</h3>
@@ -1844,6 +1988,9 @@ function vShop() {
       <div class="row-between"><h3>${esc(u.name)}</h3><span class="lv">${u.once ? '' : 'Lv ' + tx(() => fmt(l()))}</span></div>
       ${u.long ? `<p class="eff small">いま: ${tx(() => u.eff(l()))}</p><p class="eff small">次: <b>${tx(() => u.eff(l() + 1))}</b></p>`
         : `<p class="eff">${tx(() => u.eff(l()))} → <b>${tx(() => u.eff(l() + 1))}</b></p>`}
+      ${u.once ? '' : `<p class="gain">${tx(() => { const d = rateIf(u.id) - incomeRate(); return d > 0 ? `稼ぐ力 +${fmt(d)}/秒` : ''; })}</p>`}
+      ${u.msText ? `<div class="ms"><div class="row-between small"><span class="muted">次の節目</span><span>${tx(() => `Lv${msNext(l())} で `)}<b>${esc(u.msText)}</b>${tx(() => `（あと${msNext(l()) - l()}）`)}</span></div>
+        <div class="prog"><i ${wd(() => (l() - msPrev(l())) / (msNext(l()) - msPrev(l())) * 100)}></i></div></div>` : ''}
       <div class="acts">
         <button class="btn pri" type="button" data-act="buy" data-id="${u.id}" ${dz(() => S.mana < u.cost(l()))}>強化 <small>${tx(() => fmt(u.cost(l())))} マナ</small></button>
         ${u.once ? '' : `<button class="btn" type="button" data-act="buymax" data-id="${u.id}" ${dz(() => S.mana < u.cost(l()))}>買えるだけ</button>`}
@@ -1854,9 +2001,14 @@ function vShop() {
   <section class="area-head">
     <span class="eyebrow">強化</span>
     <h2>腕前と工房</h2>
-    ${help('shop', `<p>強化にレベルの上限はありません。マナさえあれば、どこまでも強くなれます。「賢者の石」で周回すると、ずっと残る強化も習得できます。</p>` + UPS.filter(u => !u.area || S.unlocked[u.area]).map(u => `<p><b>${esc(u.name)}</b>: ${esc(u.info)}</p>`).join(''))}
+    ${help('shop', `<p>強化にレベルの上限はありません。マナさえあれば、どこまでも強くなれます。レベルが10・25・50・100（その後は50ごと）に届くと「節目」になり、効果が大きく上がります。「賢者の石」で周回すると、ずっと残る強化も習得できます。</p>` + UPS.filter(u => !u.area || S.unlocked[u.area]).map(u => `<p><b>${esc(u.name)}</b>: ${esc(u.info)}</p>`).join(''))}
   </section>
 
+  <div class="panel rate-panel">
+    <div class="row-between"><span>稼ぐ力</span><span class="big">${tx(() => '+' + fmt(incomeRate()) + ' /秒')}</span></div>
+    <p class="small">${tx(() => { const pr = prevRatio(); return pr ? `前の周の同じ時点（${fmt(curveIdx() * CURVE_STEP / 60000)}分）と比べて ${fmtX(pr)}` : S.run > 1 ? '前の周の記録がないため、比べられません（次の周から比べます）' : '周回すると、前の周の同じ時点と比べられます'; })}</p>
+    <p class="small muted">使い魔が採取したものを、すべて分解したときの1秒あたりのマナです。</p>
+  </div>
   <div class="list">${cards}</div>
   `;
 }
@@ -1888,6 +2040,8 @@ main.addEventListener('click', e => {
     case 'mkhomfill': { if (S.homs.length >= MAX_HOMS) break; if (fillMissing(KIND[id].in, 1)) { const h = makeHom(KIND[id]); if (h) homToast(h); } break; }
     case 'release': { if (!armed(b)) return; const u = Number(id); const g = releaseHom(u); toast(`ホムンクルスと別れました: +${fmt(g)} マナ`); break; }
     case 'traithelp': ui.traitHelp = !ui.traitHelp; break;
+    case 'pick': { const h = homById(Number(id)); const msg = h && applyPick(h, b.dataset.v); if (msg) toast(msg); break; }
+    case 'pickauto': { const n = S.homs.reduce((a, h) => a + autoPicks(h), 0); if (n) toast(`${n}件をおまかせで選びました`); break; }
     case 'mzpick': { const u = Number(id); if (S.mazeTeam.includes(u)) S.mazeTeam = S.mazeTeam.filter(x => x !== u); else if (S.mazeTeam.length < MAZE_TEAM) S.mazeTeam.push(u); break; }
     case 'mzstart': mzStart(); break;
     case 'mzgo': mzGo(Number(id)); break;
@@ -2038,6 +2192,7 @@ async function cloudSave(force) {
 function migrateOpen() { if (S._migrateOpen) { delete S._migrateOpen; checkFeats(true); } }
 function adopt(obj, withOffline) {
   S = normalize(obj);
+  S.pref.ver = APP_VERSION;
   shownMana = S.mana; lastManaSeen = S.mana;
   migrateOpen();
   ui.gArea = S.area; ui.misArea = S.area; ui.fuse = null;
@@ -2088,6 +2243,23 @@ document.getElementById('numSeg').addEventListener('click', e => {
   syncNumSeg(); shownMana = S.mana; render();
 });
 sheetBg.addEventListener('click', e => { if (e.target === sheetBg) sheetBg.hidden = true; });
+// 版と変更の記録
+const verBg = document.getElementById('verBg');
+document.getElementById('verBtn').textContent = 'v' + APP_VERSION;
+document.getElementById('sheetVer').textContent = 'AddAll v' + APP_VERSION;
+document.getElementById('verBtn').addEventListener('click', () => {
+  document.getElementById('verList').innerHTML = VERSIONS.map(x => `<div class="vh-item"><b>v${esc(x.v)}</b> <span class="small muted">${esc(x.date)}</span><ul>${x.changes.map(c => `<li>${esc(c)}</li>`).join('')}</ul></div>`).join('');
+  verBg.hidden = false;
+});
+document.getElementById('verClose').addEventListener('click', () => { verBg.hidden = true; });
+verBg.addEventListener('click', e => { if (e.target === verBg) verBg.hidden = true; });
+// 前に遊んだときと版が違えば、変わった所を知らせる
+function notifyVersion() {
+  S.pref = S.pref || {};
+  const returning = S.pref.ver || S.st.manual > 0 || S.run > 1;
+  if (S.pref.ver !== APP_VERSION && returning) toast(`v${APP_VERSION} に更新しました: ${VERSIONS[0].changes.slice(0, 3).join('／')}（左上の版を押すと全部見られます）`, 10000);
+  S.pref.ver = APP_VERSION;
+}
 document.getElementById('saveNow').addEventListener('click', () => { saveLocal(); lastCloud = 0; cloudSave(true); toast('保存しました'); });
 document.getElementById('exportBtn').addEventListener('click', () => {
   saveLocal();
@@ -2131,7 +2303,7 @@ function tick() {
     }
   }
   if (frame % 5 === 0 || dt > 5) processAuto();
-  if (frame % 10 === 0) { refreshReqs(); checkJournal(); }
+  if (frame % 10 === 0) { refreshReqs(); checkJournal(); recordCurve(); }
   if (frame % 3 === 0) checkFeats(false);
   if (++frame % 2 === 0 || dt > 5) update();
 }
@@ -2152,6 +2324,7 @@ function start(data) {
   setTabs();
   refreshReqs();
   render();
+  notifyVersion();
   if (!(data && data.state) && S.savedAt) { const sec = (Date.now() - S.savedAt) / 1000; if (sec > 10) { offline(sec); update(); } }
   lastTick = Date.now();
   setInterval(tick, 100);
