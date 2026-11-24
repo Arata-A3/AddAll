@@ -322,6 +322,7 @@ details.help[open] summary { margin-bottom: 4px; }
 .rs-step.next { font-weight: 700; }
 .rs-step.lock { color: var(--muted); }
 .ch.sel { border-color: var(--mana); box-shadow: 0 0 0 2px var(--mana-soft); }
+.town { border-left: 3px solid var(--line); padding-left: 8px; color: var(--muted); font-style: normal; }
 .bond { display: flex; gap: 4px; }
 .bond i { width: 22px; height: 6px; border-radius: 3px; background: var(--line); }
 .bond i.on { background: var(--ok); }
@@ -469,7 +470,7 @@ details.help[open] summary { margin-bottom: 4px; }
 /* ===================== データ ===================== */
 // 版と変更の記録（新しいものを先頭に）
 const VERSIONS = [
-  { v: '2.0', date: '2026-11-24', changes: ['舞台を現代の町に。古本屋で買ったノートから始まる物語に書き換え', '依頼を「町の人」の頼みごとに。5人と仲を深めると、話とずっと続く特典が手に入ります', '研究（周ごとに伸ばし方を選ぶ）、挑戦の周回、終わりのない実績を追加', '迷宮を「よどみ」（夜に行ける色のない町）に', 'スマホのホーム画面に入れて、アプリとして遊べるように', '設定で画面の明るさ（端末に合わせる・ライト・ダーク）を選べるように', '直した不具合: 周回すると、よどみ（迷宮）のいちばん深い記録が消えていた'] },
+  { v: '2.0', date: '2026-11-24', changes: ['舞台を現代の町に。古本屋で買ったノートから始まる物語に書き換え', '依頼を「町の人」の頼みごとに。5人と仲を深めると、話とずっと続く特典が手に入ります', '研究（周ごとに伸ばし方を選ぶ）、挑戦の周回、終わりのない実績を追加', '迷宮を「よどみ」（夜に行ける色のない町）に', 'スマホのホーム画面に入れて、アプリとして遊べるように', '設定で画面の明るさ（端末に合わせる・ライト・ダーク）を選べるように', '採取の画面に、その日の町のようすを一言', '直した不具合: 周回すると、よどみ（迷宮）のいちばん深い記録が消えていた'] },
   { v: '1.8', date: '2026-11-24', changes: ['ホムンクルスのレベルアップで、伸ばす能力を3つの候補から選べるように。Lv10・Lv20では上げる技能も選べます', '強化に節目を追加: Lv10・25・50・100（以後50ごと）で効果が大きく上がります', '「稼ぐ力」（1秒あたりのマナ）を画面上部に表示。周回後は前の周の同じ時点と比べます', '強化ごとに、買うと稼ぐ力がどれだけ増えるかを表示', '画面の左上に版を表示（押すと変更の記録）'] },
   { v: '1.7', date: '2026-11-03', changes: ['数字の表記を選べるように（日本語・英語・指数・すべての桁）'] },
   { v: '1.6', date: '2026-11-03', changes: ['発見・達成・解放のカード、レベルアップの帯、火花、タップの波紋などの演出を追加'] },
@@ -1494,6 +1495,26 @@ function checkAch() {
 // 町の人と実績をまとめた倍率
 const boost = perk => bondMult(perk) * achMult(perk);
 
+/* --- 町のようす（採取の画面に出る一言。1分ごとに変わる） --- */
+const TOWN_LINES = [
+  { c: () => true, t: '古本屋の前を通った。店主は、いつもの席で本を読んでいる。' },
+  { c: () => true, t: '川の水が、きのうより少しだけ澄んで見える。' },
+  { c: () => S.met.minato, t: '駅前で、ミナトが誰かの自転車を直している。手を振ると、工具を持ったまま振り返してきた。' },
+  { c: () => S.met.shiori, t: 'シオリさんの店から、知らないお茶の香りがする。' },
+  { c: () => S.met.genzo, t: 'ゲンゾウさんが、川べりで土をすくって指でつぶしていた。' },
+  { c: () => bondLv('genzo') >= 4, t: '川沿いの窯から、細い煙が上がっている。' },
+  { c: () => S.met.hiyori, t: 'ヒヨリが、土手でコロの絵を描いている。コロはじっとしていられない。' },
+  { c: () => bondLv('hiyori') >= 5, t: '夕方、制服のヒヨリとすれ違った。スケッチブックは、ちゃんと持っていた。' },
+  { c: () => S.met.kanata, t: 'カナタの乗ったバスが、今日も里山のほうへ走っていった。' },
+  { c: () => S.st.homsMade >= 1, t: 'ポケットの小石が、ときどき温かい。' },
+  { c: () => !!S.unlocked.a2, t: '春の風が、里山の霧の匂いを運んでくる。' },
+  { c: () => !!S.unlocked.a3, t: '鉱山の入口の看板が、前に見たときより少し傾いていた。' },
+  { c: () => (S.life.mazeBest || 0) >= 1, t: '夜になると、川の向こうの街灯が一つだけ色を失う。' },
+  { c: () => S.run >= 2, t: 'この春を、前にも見た気がする。' },
+  { c: () => S.run >= 3, t: '誰かが、河原の石を一列に並べていた。値打ちの低いものから順に。' },
+];
+const townLine = () => { const l = TOWN_LINES.filter(x => x.c()); return l[Math.floor(Date.now() / 60000) % l.length].t; };
+
 /* --- 町の人（頼みごとと、仲を深める話） --- */
 // 仲の段に必要な、頼みごとをかなえた回数（累計）
 const BOND_NEED = [2, 5, 9, 14, 20];
@@ -1726,7 +1747,7 @@ function vGather() {
   const bagCount = () => raws.reduce((s, id) => s + inv(id), 0);
   const bagValue = () => raws.reduce((s, id) => s + inv(id) * unitMana(id), 0);
   return `${chips}
-  <section class="area-head"><span class="eyebrow">${S.run > 1 ? S.run + '周目　' : ''}採取地 ${AREAS.indexOf(a) + 1}</span><h2>${esc(a.name)}</h2><p class="muted small">${esc(a.desc)}</p></section>
+  <section class="area-head"><span class="eyebrow">${S.run > 1 ? S.run + '周目　' : ''}採取地 ${AREAS.indexOf(a) + 1}</span><h2>${esc(a.name)}</h2><p class="muted small">${esc(a.desc)}</p><p class="small town">${tx(townLine)}</p></section>
   <div class="tapzone" id="tapzone">
     <button class="tap" id="tap" type="button" aria-label="採取する"><b>採取</b><small>タップ</small></button>
   </div>
