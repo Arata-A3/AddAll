@@ -1,5 +1,26 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>AddAll</title>
-<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="小石を拾ってマナにほどき、町の人と過ごしながら、少しずつ完璧に近づいていく錬金術の放置ゲーム。">
+<meta name="theme-color" content="#1a2422">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="AddAll">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="AddAll">
+<meta property="og:title" content="AddAll">
+<meta property="og:description" content="小石を拾ってマナにほどき、町の人と過ごしながら、少しずつ完璧に近づいていく錬金術の放置ゲーム。">
+<meta property="og:url" content="https://arata-a3.github.io/AddAll/">
+<meta property="og:image" content="https://arata-a3.github.io/AddAll/og-image.png">
+<meta property="og:image:width" content="512">
+<meta property="og:image:height" content="512">
+<meta property="og:locale" content="ja_JP">
+<meta name="twitter:card" content="summary">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@600;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
@@ -350,9 +371,11 @@ details.help[open] summary { margin-bottom: 4px; }
   .toast { animation: none; }
 }
 </style>
+</head>
+<body>
 
 <header class="top gut">
-  <div class="brand">AddAll<button class="ver" id="verBtn" type="button" aria-label="変更の記録を見る">v1.8</button></div>
+  <div class="brand">AddAll<button class="ver" id="verBtn" type="button" aria-label="変更の記録を見る">v2.0</button></div>
   <div class="bal" aria-live="off">
     <span class="lab">マナ</span>
     <b id="hMana">0</b>
@@ -381,8 +404,8 @@ details.help[open] summary { margin-bottom: 4px; }
     <div class="row-between"><h2 id="sheetTitle">設定とセーブ</h2><button class="btn" type="button" id="sheetClose">閉じる</button></div>
     <div class="panel">
       <div class="row-between"><span>ブラウザ内</span><span class="muted small" id="lsStatus">-</span></div>
-      <div class="row-between"><span>claude.ai（自分専用）</span><span class="muted small" id="cloudStatus">確認中</span></div>
-      <p class="muted small">5秒ごとにブラウザ内へ、30秒ごとにclaude.aiへ自動で保存します。</p>
+      <div class="row-between" id="cloudRow" hidden><span>claude.ai（自分専用）</span><span class="muted small" id="cloudStatus">確認中</span></div>
+      <p class="muted small">5秒ごとに、このブラウザの中へ自動で保存します。機種を変えるときは、下の「書き出し」と「読み込み」で移せます。</p>
       <div class="acts"><button class="btn pri" type="button" id="saveNow">今すぐ保存</button></div>
     </div>
     <div class="panel">
@@ -436,6 +459,7 @@ details.help[open] summary { margin-bottom: 4px; }
 /* ===================== データ ===================== */
 // 版と変更の記録（新しいものを先頭に）
 const VERSIONS = [
+  { v: '2.0', date: '2026-11-24', changes: ['舞台を現代の町に。古本屋で買ったノートから始まる物語に書き換え', '依頼を「町の人」の頼みごとに。5人と仲を深めると、話とずっと続く特典が手に入ります', '研究（周ごとに伸ばし方を選ぶ）、挑戦の周回、終わりのない実績を追加', '迷宮を「よどみ」（夜に行ける色のない町）に', 'スマホのホーム画面に入れて、アプリとして遊べるように', '直した不具合: 周回すると、よどみ（迷宮）のいちばん深い記録が消えていた'] },
   { v: '1.8', date: '2026-11-24', changes: ['ホムンクルスのレベルアップで、伸ばす能力を3つの候補から選べるように。Lv10・Lv20では上げる技能も選べます', '強化に節目を追加: Lv10・25・50・100（以後50ごと）で効果が大きく上がります', '「稼ぐ力」（1秒あたりのマナ）を画面上部に表示。周回後は前の周の同じ時点と比べます', '強化ごとに、買うと稼ぐ力がどれだけ増えるかを表示', '画面の左上に版を表示（押すと変更の記録）'] },
   { v: '1.7', date: '2026-11-03', changes: ['数字の表記を選べるように（日本語・英語・指数・すべての桁）'] },
   { v: '1.6', date: '2026-11-03', changes: ['発見・達成・解放のカード、レベルアップの帯、火花、タップの波紋などの演出を追加'] },
@@ -2482,6 +2506,7 @@ function adopt(obj, withOffline) {
 async function cloudInit() {
   const c = window.claude;
   if (!c || typeof c.use !== 'function') { setCloudStatus('このページの外では使えません'); return; }
+  document.getElementById('cloudRow').hidden = false;
   const timer = setTimeout(() => { if (!cloudRef) setCloudStatus('接続できませんでした'); }, 12000);
   try {
     const [db, user] = await Promise.all([c.use('db'), c.use('user')]);
@@ -2654,3 +2679,10 @@ if (hot && typeof hot.ready === 'function') hot.ready(start);
 else start(hot?.data ?? {});
 })();
 </script>
+<script>
+if ('serviceWorker' in navigator && window.isSecureContext && location.protocol !== 'file:') {
+  window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(() => {}); });
+}
+</script>
+</body>
+</html>
