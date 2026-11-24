@@ -6,6 +6,10 @@
 <title>AddAll</title>
 <meta name="description" content="小石を拾ってマナにほどき、町の人と過ごしながら、少しずつ完璧に近づいていく錬金術の放置ゲーム。">
 <meta name="theme-color" content="#1a2422">
+<script>
+// 選んだ明るさを描画前に当てる（読み込み中にちらつかないように）
+try { const t = (JSON.parse(localStorage.getItem('addall.save.v1') || '{}').pref || {}).theme; if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; } catch (e) {}
+</script>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -231,7 +235,7 @@ details.help[open] summary { margin-bottom: 4px; }
 .chips.wrap { flex-wrap: wrap; overflow: visible; }
 .panel.fuse { border-color: var(--mana); }
 
-/* 迷宮 */
+/* よどみ（迷宮） */
 .mzst { display: flex; flex-wrap: wrap; gap: 2px 12px; color: var(--muted); }
 .mzst b { color: var(--ink); }
 .hpline { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr) auto; gap: 8px; align-items: center; font-size: 13px; }
@@ -269,7 +273,7 @@ details.help[open] summary { margin-bottom: 4px; }
 .card.unknown { background: var(--surface2); border-top-color: var(--line); }
 .card.unknown h3 { color: var(--muted); letter-spacing: .15em; }
 
-/* 師匠の手記 */
+/* 古いノート */
 .journal { display: flex; flex-direction: column; gap: 12px; }
 .page { background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--brass); border-radius: 12px; padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; }
 .page h3 { font-size: 19px; }
@@ -416,6 +420,12 @@ details.help[open] summary { margin-bottom: 4px; }
       <p class="muted small" id="numSample">例: 1.23億</p>
     </div>
     <div class="panel">
+      <h3>画面の明るさ</h3>
+      <div class="seg full" role="group" aria-label="画面の明るさ" id="themeSeg">
+        <button type="button" data-theme-v="auto">端末に合わせる</button><button type="button" data-theme-v="light">ライト</button><button type="button" data-theme-v="dark">ダーク</button>
+      </div>
+    </div>
+    <div class="panel">
       <h3>セーブデータの書き出し</h3>
       <p class="muted small">この文字列をメモ帳などに保存しておくと、あとで読み込んで復元できます。</p>
       <textarea id="exportBox" readonly aria-label="書き出したセーブデータ"></textarea>
@@ -459,7 +469,7 @@ details.help[open] summary { margin-bottom: 4px; }
 /* ===================== データ ===================== */
 // 版と変更の記録（新しいものを先頭に）
 const VERSIONS = [
-  { v: '2.0', date: '2026-11-24', changes: ['舞台を現代の町に。古本屋で買ったノートから始まる物語に書き換え', '依頼を「町の人」の頼みごとに。5人と仲を深めると、話とずっと続く特典が手に入ります', '研究（周ごとに伸ばし方を選ぶ）、挑戦の周回、終わりのない実績を追加', '迷宮を「よどみ」（夜に行ける色のない町）に', 'スマホのホーム画面に入れて、アプリとして遊べるように', '直した不具合: 周回すると、よどみ（迷宮）のいちばん深い記録が消えていた'] },
+  { v: '2.0', date: '2026-11-24', changes: ['舞台を現代の町に。古本屋で買ったノートから始まる物語に書き換え', '依頼を「町の人」の頼みごとに。5人と仲を深めると、話とずっと続く特典が手に入ります', '研究（周ごとに伸ばし方を選ぶ）、挑戦の周回、終わりのない実績を追加', '迷宮を「よどみ」（夜に行ける色のない町）に', 'スマホのホーム画面に入れて、アプリとして遊べるように', '設定で画面の明るさ（端末に合わせる・ライト・ダーク）を選べるように', '直した不具合: 周回すると、よどみ（迷宮）のいちばん深い記録が消えていた'] },
   { v: '1.8', date: '2026-11-24', changes: ['ホムンクルスのレベルアップで、伸ばす能力を3つの候補から選べるように。Lv10・Lv20では上げる技能も選べます', '強化に節目を追加: Lv10・25・50・100（以後50ごと）で効果が大きく上がります', '「稼ぐ力」（1秒あたりのマナ）を画面上部に表示。周回後は前の周の同じ時点と比べます', '強化ごとに、買うと稼ぐ力がどれだけ増えるかを表示', '画面の左上に版を表示（押すと変更の記録）'] },
   { v: '1.7', date: '2026-11-03', changes: ['数字の表記を選べるように（日本語・英語・指数・すべての桁）'] },
   { v: '1.6', date: '2026-11-03', changes: ['発見・達成・解放のカード、レベルアップの帯、火花、タップの波紋などの演出を追加'] },
@@ -1156,9 +1166,9 @@ function autoPicks(h) {
 }
 const pickCount = () => S.homs.reduce((a, h) => a + cleanPicks(h).length, 0);
 const homName = h => KIND[h.k].name + (h.f ? `（融合${h.f}）` : '');
-function gainExp(x, quiet) {
+function gainExp(x, quiet, list = S.homs) {
   const msgs = [];
-  for (const h of S.homs) {
+  for (const h of list) {
     if (h.lv >= LV_MAX) continue;
     h.xp += x * boost('exp');
     const from = h.lv; let last = null;
@@ -1358,14 +1368,8 @@ function mzFight(kind) {
   m.log = [`${foe.name}をほどいた！（${rounds}ターン、攻撃${hits}回${crits ? `・会心${crits}回` : ''}）　受けたダメージ ${fmt(taken)}${down.length ? `　${down.join('・')}が倒れた` : ''}`, `+${fmt(gain)} マナ　経験値 +${fmt(xp)}${extra}`];
   return true;
 }
-function giveExp(h, x) {
-  if (h.lv >= LV_MAX) return;
-  h.xp += x * boost('exp');
-  const from = h.lv; let last = null;
-  while (h.lv < LV_MAX && h.xp >= expNeed(h.lv)) { h.xp -= expNeed(h.lv); last = levelUp(h); }
-  if (h.lv >= LV_MAX) h.xp = 0;
-  if (last) banner(`レベルアップ！ ${KIND[h.k].name} Lv${h.lv}${h.lv - from > 1 ? '' : ' ' + (Object.entries(last.got).map(([st, n]) => STAT[st].name + '+' + n).join(' ') || '')}${h.pk.length ? '　成長を選べます（相棒）' : ''}`);
-}
+// よどみで戦った子だけに経験値を与える
+const giveExp = (h, x) => gainExp(x, false, [h]);
 function mzChest() {
   const m = S.maze, fl = m.floor;
   const gain = mzReward(fl, 'foe') * 1.5;
@@ -1721,13 +1725,11 @@ function vGather() {
   const raws = rawOf(a.id).map(i => i.id);
   const bagCount = () => raws.reduce((s, id) => s + inv(id), 0);
   const bagValue = () => raws.reduce((s, id) => s + inv(id) * unitMana(id), 0);
-  const here = S.area === a.id;
   return `${chips}
   <section class="area-head"><span class="eyebrow">${S.run > 1 ? S.run + '周目　' : ''}採取地 ${AREAS.indexOf(a) + 1}</span><h2>${esc(a.name)}</h2><p class="muted small">${esc(a.desc)}</p></section>
   <div class="tapzone" id="tapzone">
     <button class="tap" id="tap" type="button" aria-label="採取する"><b>採取</b><small>タップ</small></button>
   </div>
-  ${here ? '' : ''}
   <div class="stats">
     <div class="stat"><span class="lab">採取力</span><b>${tx(() => fmtD(power()))}</b><small>個 / 1回</small></div>
     <div class="stat"><span class="lab">熟練</span><b>${tx(() => fmt(S.skill))}</b><small>${tx(() => '採取力 ' + fmtX(skillMult()))}</small></div>
@@ -1743,7 +1745,7 @@ function vGather() {
       <div><div class="small muted">ここの素材の手持ち</div><b>${tx(() => fmt(bagCount()))}</b> 個 <span class="small muted">（分解すると ${tx(() => fmt(bagValue()))} マナ）</span></div>
       <button class="btn pri" type="button" data-act="disarea" data-id="${a.id}" ${dz(() => bagCount() === 0)}>すべて分解</button>
     </div>
-    ${S.up.autodis ? `<label class="switch"><input type="checkbox" id="autodis" ${S.autoDis ? 'checked' : ''}> 自動分解（素材と自動加工の加工品をマナにする。自動加工の材料は残す。道具や依頼の材料をためたいときはオフに）</label>`
+    ${S.up.autodis ? `<label class="switch"><input type="checkbox" id="autodis" ${S.autoDis ? 'checked' : ''}> 自動分解（採取した素材を、その場でマナにする。加工品はほどかない。頼みごとやミッションの素材をためたいときはオフに）</label>`
       : `<p class="small muted">強化の「自動分解装置」を設置すると、採取した素材を自動でマナにできます。</p>`}
   </div>
   ${help('gather', `<p class="small muted">採取するたびに、その採取地の探索が進みます（使い魔の分も含む）。珍しい素材は、探索が進むと出るようになります。</p><p class="small muted">タップするたびに熟練が増えます。熟練に上限はなく、増えるほど採取力が上がります。使い魔は採取地ごとに雇い（強化画面）、それぞれの採取地で同時に働きます。</p>`)}`;
@@ -2502,6 +2504,7 @@ function adopt(obj, withOffline) {
   refreshReqs();
   setTabs();
   render();
+  applyTheme();
 }
 async function cloudInit() {
   const c = window.claude;
@@ -2533,8 +2536,17 @@ async function cloudInit() {
 
 /* ===================== 設定シート ===================== */
 const sheetBg = document.getElementById('sheetBg');
-document.getElementById('gear').addEventListener('click', () => { sheetBg.hidden = false; syncNumSeg(); document.getElementById('cloudStatus').textContent = cloudStatus; });
+document.getElementById('gear').addEventListener('click', () => { sheetBg.hidden = false; syncNumSeg(); applyTheme(); document.getElementById('cloudStatus').textContent = cloudStatus; });
 document.getElementById('sheetClose').addEventListener('click', () => { sheetBg.hidden = true; });
+function applyTheme() {
+  const t = (S.pref && S.pref.theme) || 'auto';
+  if (t === 'auto') delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme = t;
+  document.querySelectorAll('#themeSeg [data-theme-v]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.themeV === t)));
+}
+document.getElementById('themeSeg').addEventListener('click', e => {
+  const b = e.target.closest('[data-theme-v]'); if (!b) return;
+  S.pref = S.pref || {}; S.pref.theme = b.dataset.themeV; applyTheme(); saveLocal();
+});
 function syncNumSeg() {
   document.querySelectorAll('#numSeg [data-num]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.num === numMode())));
   document.getElementById('numSample').textContent = '例: ' + [12345, 123450000, 1.2345e15].map(fmt).join(' / ');
@@ -2659,6 +2671,7 @@ function start(data) {
   setTabs();
   refreshReqs();
   render();
+  applyTheme();
   notifyVersion();
   showIntro();
   if (!(data && data.state) && S.savedAt) { const sec = (Date.now() - S.savedAt) / 1000; if (sec > 10) { offline(sec); update(); } }
