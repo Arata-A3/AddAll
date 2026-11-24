@@ -219,6 +219,27 @@ details.help[open] summary { margin-bottom: 4px; }
 /* ホムンクルス */
 .hom { background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--rc, var(--line)); border-radius: 12px; padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; }
 .hom.sel { box-shadow: 0 0 0 2px var(--mana) inset; }
+/* 相棒の絵 */
+.himg { display: block; max-width: none; user-select: none; -webkit-user-select: none; -webkit-user-drag: none; }
+.face { flex: none; width: 40px; height: 40px; border-radius: 50%; overflow: hidden; background: var(--mana-soft); position: relative; }
+.face .himg { position: absolute; top: 1px; left: 50%; transform: translateX(-50%); height: 112px; width: auto; }
+.mkname { display: inline-flex; align-items: center; gap: 8px; }
+.hom .top-row:has(.mkname) { align-items: center; }
+.hpline .face { width: 28px; height: 28px; }
+.hpline .face .himg { height: 78px; }
+.hpline.down .face .himg { filter: grayscale(1); opacity: .6; }
+.khead { display: flex; gap: 12px; align-items: flex-start; }
+.kimg { height: 150px; width: auto; flex: none; }
+.kinfo { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; min-width: 0; }
+.pickwho { display: flex; gap: 10px; align-items: center; }
+.pickwho .himg { height: 84px; width: auto; flex: none; }
+.buddy { position: absolute; right: 2px; bottom: 2px; display: flex; flex-direction: column; align-items: center; pointer-events: none; animation: bob 3.2s ease-in-out infinite; }
+.buddy .himg { height: 150px; width: auto; }
+.buddy span { font-size: 11px; color: var(--muted); margin-top: -2px; }
+.buddy.idle { animation-duration: 6s; }
+.buddy.hop .himg { animation: hop .35s cubic-bezier(.3, 1.6, .5, 1); }
+@keyframes bob { 50% { transform: translateY(-3px); } }
+@keyframes hop { 40% { transform: translateY(-10px); } }
 .hom .nm { font-family: var(--f-display); font-weight: 600; font-size: 17px; }
 .hom .top-row { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
 .prog.thin { height: 5px; }
@@ -353,6 +374,11 @@ details.help[open] summary { margin-bottom: 4px; }
   background: var(--mana); color: var(--surface); font-weight: 700; font-size: 14px; border-radius: 999px; padding: 8px 18px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   box-shadow: 0 6px 20px rgb(0 0 0 / .25); animation: banIn .35s cubic-bezier(.2, 1.5, .4, 1) both, banOut .3s ease-in 1.6s forwards; }
 .banner.okc { background: var(--ok); }
+.banner.withimg { display: flex; align-items: center; gap: 8px; padding-left: 4px; }
+.banner .btxt { overflow: hidden; text-overflow: ellipsis; }
+.banner .face { width: 30px; height: 30px; background: var(--surface); }
+.banner .face .himg { height: 84px; }
+.cele .cimg { display: block; height: 130px; width: auto; margin: 0 auto 6px; }
 @keyframes banIn { from { opacity: 0; transform: translate(-50%, -14px) scale(.9); } to { opacity: 1; transform: translate(-50%, 0) scale(1); } }
 @keyframes banOut { to { opacity: 0; transform: translate(-50%, -10px); } }
 .spark { position: absolute; width: 8px; height: 8px; border-radius: 2px; background: var(--sc, var(--brass)); animation: spark .8s cubic-bezier(.1, .8, .3, 1) forwards; }
@@ -372,6 +398,7 @@ details.help[open] summary { margin-bottom: 4px; }
   .mis.ready, .bal b.pulse { animation: none; }
   .pt { animation-duration: .01s; }
   .tap { transition: none; }
+  .buddy, .buddy.hop .himg { animation: none; }
   .pt.big { animation-duration: .01s; }
   .toast { animation: none; }
 }
@@ -470,6 +497,7 @@ details.help[open] summary { margin-bottom: 4px; }
 /* ===================== データ ===================== */
 // 版と変更の記録（新しいものを先頭に）
 const VERSIONS = [
+  { v: '2.1', date: '2026-11-25', changes: ['ホムンクルスに絵が付きました。名前もペブリナ・スプラン・ミスティア・プリムラ・コパード・モナイトに変わりました', '採取の画面に相棒が1人いて、採取すると笑います。放っておくと眠ります（相棒の画面の「採取に連れていく」で選べます）', 'プリムラは月見草と樹液、コパードは銅鉱石と石炭から生まれるようになりました'] },
   { v: '2.0', date: '2026-11-24', changes: ['舞台を現代の町に。古本屋で買ったノートから始まる物語に書き換え', '依頼を「町の人」の頼みごとに。5人と仲を深めると、話とずっと続く特典が手に入ります', '研究（周ごとに伸ばし方を選ぶ）、挑戦の周回、終わりのない実績を追加', '迷宮を「よどみ」（夜に行ける色のない町）に', 'スマホのホーム画面に入れて、アプリとして遊べるように', '設定で画面の明るさ（端末に合わせる・ライト・ダーク）を選べるように', '採取の画面に、その日の町のようすを一言', '直した不具合: 周回すると、よどみ（迷宮）のいちばん深い記録が消えていた'] },
   { v: '1.8', date: '2026-11-24', changes: ['ホムンクルスのレベルアップで、伸ばす能力を3つの候補から選べるように。Lv10・Lv20では上げる技能も選べます', '強化に節目を追加: Lv10・25・50・100（以後50ごと）で効果が大きく上がります', '「稼ぐ力」（1秒あたりのマナ）を画面上部に表示。周回後は前の周の同じ時点と比べます', '強化ごとに、買うと稼ぐ力がどれだけ増えるかを表示', '画面の左上に版を表示（押すと変更の記録）'] },
   { v: '1.7', date: '2026-11-03', changes: ['数字の表記を選べるように（日本語・英語・指数・すべての桁）'] },
@@ -580,20 +608,31 @@ const STATS = [
 const STAT_IDS = STATS.map(x => x.id);
 const STAT = Object.fromEntries(STATS.map(x => [x.id, x]));
 const KINDS = [
-  { id: 'koro', name: 'コロ', area: 'a1', r: 1, d: '小石から生まれた、ころころ転がる元気な子。力仕事が得意。ほかの人には、ただの小石に見える。',
+  { id: 'koro', name: 'ペブリナ', img: 'pebble', area: 'a1', r: 1, d: '小石から生まれた、内気でがんばり屋の女の子。力仕事が得意。ほかの人には、ただの小石に見える。',
     g: { str: 130, spd: 60, luk: 30, int: 40, exp: 50, dex: 70 }, sk: ['power', 'skill'], in: { stone: 60, clay: 10 } },
-  { id: 'happa', name: 'ハッパ', area: 'a1', r: 1, d: '草の汁から生まれたのんびり屋。なぜか運がいい。ほかの人には、ただの葉っぱに見える。',
+  { id: 'happa', name: 'スプラン', img: 'sprout', area: 'a1', r: 1, d: '雑草の芽から生まれた、いつも眠たそうな男の子。なぜか運がいい。ほかの人には、ただの葉っぱに見える。',
     g: { str: 40, spd: 60, luk: 120, int: 50, exp: 60, dex: 90 }, sk: ['luck', 'skill'], in: { weed: 50, herb: 5 } },
-  { id: 'kiri', name: 'キリ', area: 'a2', r: 2, d: '霧の露から生まれた気まぐれな子。とにかく素早い。',
+  { id: 'kiri', name: 'ミスティア', img: 'mist', area: 'a2', r: 2, d: '霧の露から生まれた、気位が高くていたずら好きな女の子。とにかく素早い。かまわないと機嫌をそこねる。',
     g: { str: 50, spd: 130, luk: 60, int: 50, exp: 100, dex: 40 }, sk: ['fam', 'craft'], in: { mist: 3, leaf: 40 } },
-  { id: 'morisu', name: 'モリス', area: 'a2', r: 3, d: '古木の芯から生まれた物知り。マナの扱いがうまい。',
-    g: { str: 60, spd: 40, luk: 50, int: 130, exp: 60, dex: 80 }, sk: ['mana', 'skill'], in: { heartwood: 2, sap: 10 } },
-  { id: 'ruru', name: 'ルル', area: 'a3', r: 3, d: '水晶から生まれた静かな子。坑道の奥まで見通す。',
-    g: { str: 40, spd: 70, luk: 90, int: 70, exp: 130, dex: 50 }, sk: ['craft', 'luck'], in: { amethyst: 3, gravel: 30 } },
-  { id: 'draco', name: 'アモン', area: 'a3', r: 4, d: 'アンモナイトの化石から生まれた頼もしい子。何でもそつなくこなす。',
+  { id: 'morisu', name: 'プリムラ', img: 'primrose', area: 'a2', r: 3, d: '月見草から生まれた、夢見がちな女の子。マナの扱いがうまい。',
+    g: { str: 60, spd: 40, luk: 50, int: 130, exp: 60, dex: 80 }, sk: ['mana', 'skill'], in: { moonherb: 2, sap: 10 } },
+  { id: 'ruru', name: 'コパード', img: 'copper', area: 'a3', r: 3, d: '銅鉱石から生まれた、好奇心いっぱいの男の子。坑道の奥まで探検したがる。',
+    g: { str: 40, spd: 70, luk: 90, int: 70, exp: 130, dex: 50 }, sk: ['craft', 'luck'], in: { copper: 200, coal: 20 } },
+  { id: 'draco', name: 'モナイト', img: 'ammonite', area: 'a3', r: 4, d: 'アンモナイトの化石から生まれた、物知りの男の子。何でもそつなくこなす。',
     g: { str: 90, spd: 90, luk: 80, int: 90, exp: 80, dex: 80 }, sk: ['power', 'mana', 'fam'], in: { dragonscale: 2, mIngot: 2 } },
 ];
 const KIND = Object.fromEntries(KINDS.map(k => [k.id, k]));
+// 相棒の絵: face 0=ふつう 1=笑顔 2=眠り（ミスティアだけ 0=むっ 1=得意げ 2=怒り）
+const homSrc = (kid, face = 0) => `img/hom/${KIND[kid].img}_${face}.webp`;
+const homImg = (kid, face = 0, cls = 'himg') => `<img class="${cls}" src="${homSrc(kid, face)}" alt="" decoding="async">`;
+const homFace = (kid, face = 0) => `<span class="face">${homImg(kid, face)}</span>`;
+// 採取の画面に連れていく子（選んだ種類。いなければ一番育っている種類）
+function favKind() {
+  if (S.fav && S.homs.some(h => h.k === S.fav)) return S.fav;
+  let best = null, bv = -1;
+  for (const h of S.homs) { const v = statTotal(h) + h.f * 1000; if (v > bv) { bv = v; best = h.k; } }
+  return best;
+}
 const RANKS = ['E', 'D', 'C', 'B', 'A', 'S', 'S+'];
 const RANK_V = [1, 2, 3, 5, 8, 12, 20];
 const RANK_MAX = RANKS.length - 1;
@@ -805,6 +844,7 @@ function normalize(o) {
   if (!Array.isArray(f.tools)) f.tools = [];
   if (!Array.isArray(f.homs)) f.homs = [];
   f.homs = f.homs.filter(h => h && KIND[h.k]);
+  if (!KIND[f.fav]) f.fav = null;
   for (const h of f.homs) if (!Array.isArray(h.pk)) h.pk = [];
   for (const k of ['curve', 'prevCurve']) if (!Array.isArray(f[k])) f[k] = [];
   if (!(f.runAt > 0)) f.runAt = Date.now();
@@ -1169,17 +1209,19 @@ const pickCount = () => S.homs.reduce((a, h) => a + cleanPicks(h).length, 0);
 const homName = h => KIND[h.k].name + (h.f ? `（融合${h.f}）` : '');
 function gainExp(x, quiet, list = S.homs) {
   const msgs = [];
+  let face = null;
   for (const h of list) {
     if (h.lv >= LV_MAX) continue;
     h.xp += x * boost('exp');
     const from = h.lv; let last = null;
     while (h.lv < LV_MAX && h.xp >= expNeed(h.lv)) { h.xp -= expNeed(h.lv); last = levelUp(h); }
-    if (h.lv >= LV_MAX) h.xp = 0;
+    if (h.lv >= LV_MAX) { h.xp = 0; celebrate('育ちきった', `${KIND[h.k].name} Lv${LV_MAX}`, '因果融合で、上限を超えてさらに強くなれます', 'var(--brass)', homSrc(h.k, 1)); }
     if (!last) continue;
+    face = face || homSrc(h.k, 1);
     if (quiet || h.lv - from > 1) msgs.push(`${KIND[h.k].name} Lv${from}→Lv${h.lv}`);
     else msgs.push(`${KIND[h.k].name}がLv${h.lv}になった！ ${Object.entries(last.got).map(([st, n]) => STAT[st].name + '+' + n).join(' ') || '（伸びなかった）'}${last.sk ? `　${TRAITS[last.sk.id].name}が${RANKS[last.sk.r]}に` : ''}${h.pk.length ? '　成長を選べます' : ''}`);
   }
-  if (msgs.length) { if (quiet) toast(msgs.slice(0, 3).join('　') + (msgs.length > 3 ? `　ほか${msgs.length - 3}体` : ''), 3500); else banner('レベルアップ！ ' + msgs[0] + (msgs.length > 1 ? `　ほか${msgs.length - 1}体` : '')); }
+  if (msgs.length) { if (quiet) toast(msgs.slice(0, 3).join('　') + (msgs.length > 3 ? `　ほか${msgs.length - 3}体` : ''), 3500); else banner('レベルアップ！ ' + msgs[0] + (msgs.length > 1 ? `　ほか${msgs.length - 1}体` : ''), false, face); }
 }
 // 周回のとき（因果融合）: 種類ごとに全員を1人にまとめる
 function mergeByKind(homs) {
@@ -1274,6 +1316,7 @@ function prestige() {
   n.homs = mergeByKind(o.homs);
   n.st.fusions = n.homs.length;
   n.homSeq = o.homSeq;
+  n.fav = o.fav;
   if (pu('keepFame')) n.fame = o.fame;
   if (pu('keepBook')) { n.reg = Object.assign({}, o.reg); n.st.crafted = Object.assign({}, o.st.crafted); }
   if (pu('keepRef')) n.ref = Object.assign({}, o.ref);
@@ -1503,7 +1546,7 @@ const TOWN_LINES = [
   { c: () => S.met.shiori, t: 'シオリさんの店から、知らないお茶の香りがする。' },
   { c: () => S.met.genzo, t: 'ゲンゾウさんが、川べりで土をすくって指でつぶしていた。' },
   { c: () => bondLv('genzo') >= 4, t: '川沿いの窯から、細い煙が上がっている。' },
-  { c: () => S.met.hiyori, t: 'ヒヨリが、土手でコロの絵を描いている。コロはじっとしていられない。' },
+  { c: () => S.met.hiyori, t: 'ヒヨリが、土手でペブリナの絵を描いている。ペブリナは恥ずかしそうに、じっと座っている。' },
   { c: () => bondLv('hiyori') >= 5, t: '夕方、制服のヒヨリとすれ違った。スケッチブックは、ちゃんと持っていた。' },
   { c: () => S.met.kanata, t: 'カナタの乗ったバスが、今日も里山のほうへ走っていった。' },
   { c: () => S.st.homsMade >= 1, t: 'ポケットの小石が、ときどき温かい。' },
@@ -1561,12 +1604,12 @@ const PEOPLE = [
     meet: () => S.st.homsMade >= 1, meetHint: 'ホムンクルスを生み出す',
     ask: [(x, n) => `「${x}、${n}個……描きたいの」`, (x, n) => `「${x}を${n}個。色を見たい」`],
     scenes: [
-      '河川敷で、スケッチブックを抱えた女の子がこちらを見ていた。\n「その子、なんて名前？」——足元のコロを、まっすぐ指さしていた。',
+      '河川敷で、スケッチブックを抱えた女の子がこちらを見ていた。\n「その子、なんて名前？」——となりのペブリナを、まっすぐ指さしていた。',
       '七草ヒヨリ。中学生。学校には、しばらく行っていないらしい。\n「……この葉っぱ、きれい」それだけ言って、また絵を描きはじめた。',
-      'スケッチブックには、コロやハッパが何枚も描かれていた。\n「みんなには見えないんでしょ。わたしにも、ほかの人に見えないものが見える。だから、ここにいるの」',
-      '「学校、行こうと思えば行けるの。でも、見えてるものの話ができないから」\nヒヨリはコロを膝にのせて、黙って川を見ていた。',
+      'スケッチブックには、ペブリナやスプランが何枚も描かれていた。\n「みんなには見えないんでしょ。わたしにも、ほかの人に見えないものが見える。だから、ここにいるの」',
+      '「学校、行こうと思えば行けるの。でも、見えてるものの話ができないから」\nヒヨリはペブリナと並んで座って、黙って川を見ていた。',
       '「ねえ、夜の町、行ってるでしょ。色のない町」\nヒヨリはスケッチブックの最後のページを見せた。色のない町の絵だった。',
-      '「明日から、学校行ってみる。見えてるものは、絵にすればいいって分かったから」\n最後の絵には、コロとハッパと、こちらの後ろ姿が描かれていた。',
+      '「明日から、学校行ってみる。見えてるものは、絵にすればいいって分かったから」\n最後の絵には、ペブリナとスプランと、こちらの後ろ姿が描かれていた。',
     ] },
   { id: 'kanata', name: '遠見 カナタ', short: 'カナタ', role: '鉱山を調べる大学院生', perk: 'explore',
     likes: ['crystal', 'agPowder', 'spiritstone', 'amethyst', 'goldore', 'dragonscale', 'scalePlate', 'starshard', 'gunpowder'],
@@ -1648,14 +1691,14 @@ const confirmBtn = (cls, attrs, label, cf) => `<button class="btn ${cls}" type="
 function structKey() {
   const ua = Object.keys(S.unlocked).join(',') + '/' + Object.keys(S.open).join(',');
   switch (ui.tab) {
-    case 'gather': return `g${ui.gArea}${ua}${S.up.autodis}`;
+    case 'gather': return `g${ui.gArea}${ua}${S.up.autodis}${favKind()}`;
     case 'lab': {
       const base = `l${ui.labView}${ui.labArea}${ua}`;
       if (ui.labView === 'craft') return base + PROC.map(p => procOn(p) ? 1 : 0).join('');
       if (ui.labView === 'refine') return base + regSig(labIds()) + labIds().map(id => perfect(id) ? 1 : 0).join('');
       return base + regSig(labIds());
     }
-    case 'tools': return `t${ua}|${S.homs.map(h => [h.u, h.lv, h.f, h.pk.length, STAT_IDS.map(st => h.s[st]).join('.'), h.sk.map(k => k.id + k.r).join('')].join(':')).join(',')}|${ui.traitHelp ? 'h' : ''}`;
+    case 'tools': return `t${ua}|${S.homs.map(h => [h.u, h.lv, h.f, h.pk.length, STAT_IDS.map(st => h.s[st]).join('.'), h.sk.map(k => k.id + k.r).join('')].join(':')).join(',')}|${ui.traitHelp ? 'h' : ''}|${favKind()}`;
     case 'mission': return `m${ui.misView}${ui.misArea}${ua}${S.run}:${MIS.filter(misOpen).length}|${ui.misView === 'req' ? PEOPLE.map(p => { const r = S.reqs[p.id]; return [S.met[p.id] ? 1 : 0, bondLv(p.id), r ? (r.wait ? 'w' + (r.none ? 'n' : '') : r.id + (inv(r.id) >= r.n ? 'y' : 'n')) : '-', personUnread(p)].join(''); }).join(',') : ''}`;
     case 'maze': return `z${S.maze ? [S.maze.floor, S.maze.choices.map(c => c.t + (c.hide ? 'h' : '')).join(''), JSON.stringify(S.maze.hp), S.maze.log.join('')].join('|') : 'off' + S.mazeTeam.join(',') + S.homs.map(h => h.u + ':' + h.lv).join(',')}`;
     case 'book': return `b${ui.bookView || 'items'}${ui.bookView === 'ach' ? achTotal() : ''}${regCount()}${ua}${Object.keys(S.journal).length}`;
@@ -1750,6 +1793,7 @@ function vGather() {
   <section class="area-head"><span class="eyebrow">${S.run > 1 ? S.run + '周目　' : ''}採取地 ${AREAS.indexOf(a) + 1}</span><h2>${esc(a.name)}</h2><p class="muted small">${esc(a.desc)}</p><p class="small town">${tx(townLine)}</p></section>
   <div class="tapzone" id="tapzone">
     <button class="tap" id="tap" type="button" aria-label="採取する"><b>採取</b><small>タップ</small></button>
+    ${favKind() ? `<div class="buddy" id="buddy" aria-hidden="true">${homImg(favKind(), buddyFace, 'himg')}<span>${esc(KIND[favKind()].name)}</span></div>` : ''}
   </div>
   <div class="stats">
     <div class="stat"><span class="lab">採取力</span><b>${tx(() => fmtD(power()))}</b><small>個 / 1回</small></div>
@@ -1772,6 +1816,28 @@ function vGather() {
   ${help('gather', `<p class="small muted">採取するたびに、その採取地の探索が進みます（使い魔の分も含む）。珍しい素材は、探索が進むと出るようになります。</p><p class="small muted">タップするたびに熟練が増えます。熟練に上限はなく、増えるほど採取力が上がります。使い魔は採取地ごとに雇い（強化画面）、それぞれの採取地で同時に働きます。</p>`)}`;
 }
 let tapHitTimer = 0;
+// 採取の画面の相棒: 採取すると笑顔、しばらく放っておくと眠る（ミスティアは怒る）
+const BUDDY_IDLE = 20000;
+let buddyFace = 0, buddyAt = Date.now(), buddyTimer = 0;
+function setBuddy(face) {
+  buddyFace = face;
+  const el = document.getElementById('buddy');
+  const k = favKind();
+  if (!el || !k) return;
+  const img = el.querySelector('img');
+  const src = homSrc(k, face);
+  if (!img.src.endsWith(src)) img.src = src;
+  el.classList.toggle('idle', face === 2);
+}
+function buddyTap() {
+  buddyAt = Date.now();
+  setBuddy(1);
+  const el = document.getElementById('buddy');
+  if (el && !reduceMotion) { el.classList.remove('hop'); void el.offsetWidth; el.classList.add('hop'); }
+  clearTimeout(buddyTimer);
+  buddyTimer = setTimeout(() => setBuddy(0), 1400);
+}
+function buddyIdle() { if (buddyFace === 0 && Date.now() - buddyAt > BUDDY_IDLE) setBuddy(2); }
 function bindTap() {
   const t = document.getElementById('tap');
   const z = document.getElementById('tapzone');
@@ -1786,6 +1852,7 @@ function bindTap() {
     const got = gather(power() * rsManual());
     if (rsHas('gather', 5) && famRate(S.area) > 0) autoTaps(famRate(S.area), S.area);
     if (chDone('nofam')) for (const a of unlockedAreas()) if (famRate(a.id) > 0) autoTaps(famRate(a.id) * 5, a.id);
+    buddyTap();
     t.classList.add('hit');
     if (!reduceMotion && z.querySelectorAll('.ripple').length < 4) { const rp = document.createElement('span'); rp.className = 'ripple'; t.appendChild(rp); setTimeout(() => rp.remove(), 600); }
     clearTimeout(tapHitTimer);
@@ -1932,6 +1999,7 @@ function statGrid(h, cmp) {
 function homLine(h, acts) {
   const k = KIND[h.k];
   return `<div class="row1 r${k.r}">
+    ${homFace(h.k, h.lv >= LV_MAX ? 1 : 0)}
     <div class="r1main"><span class="nm">${esc(k.name)} <span class="small muted">Lv${h.lv}${h.f ? '・融合' + h.f : ''}</span></span>
       <span class="meta">${STATS.map(st => `${st.name}${h.s[st.id]}`).join(' ')}</span>
       <span class="meta">${h.sk.map(x => TRAITS[x.id].name + RANKS[x.r]).join('・') || '技能なし'}</span>
@@ -1971,7 +2039,7 @@ function vPicks() {
   }
   return `<div class="panel picks">
     <div class="row-between"><h3>成長を選ぶ</h3><span class="small muted">残り ${total}件</span></div>
-    <p class="small"><b>${esc(KIND[h.k].name)}</b> Lv${h.lv}${h.f ? '・融合' + h.f : ''}: ${p.t === 's' ? `どの能力を伸ばしますか（選んだ能力が +${PICK_ADD}）` : 'どの技能のランクを上げますか'}</p>
+    <div class="pickwho">${homImg(h.k, 1, 'himg')}<p class="small"><b>${esc(KIND[h.k].name)}</b> Lv${h.lv}${h.f ? '・融合' + h.f : ''}: ${p.t === 's' ? `どの能力を伸ばしますか（選んだ能力が +${PICK_ADD}）` : 'どの技能のランクを上げますか'}</p></div>
     <div class="pick-opts">${opts}</div>
     <p class="small muted">効果は、種類ごとに一番高い子の値が効きます。色の付いた候補を選ぶと、今の効果が上がります。選ばずに周回したときは、おまかせで選ばれます。</p>
     <div class="acts"><button class="btn" type="button" data-act="pickauto">残りをすべておまかせ（${total}件）</button></div>
@@ -1986,8 +2054,14 @@ function vTools() {
     for (const st of STAT_IDS) best.s[st] = kindBest(k.id, st);
     best.sk = TRAIT_IDS.map(id => ({ id, r: kindRank(k.id, id) })).filter(x => x.r >= 0).sort((a, b) => b.r - a.r);
     const cards = hs.map(h => homLine(h, confirmBtn('sm', `data-act="release" data-id="${h.u}"`, '別れる', 'もう一度で別れる'))).join('');
+    const fav = favKind() === k.id;
     return `<div class="panel kind r${k.r}">
-      <div class="row-between"><h3>${esc(k.name)}</h3><span class="small muted">${best.f ? `因果融合${best.f}回` : ''}</span></div>
+      <div class="khead">${homImg(k.id, fav ? 1 : 0, 'himg kimg')}
+        <div class="kinfo"><h3>${esc(k.name)}</h3>
+          <p class="small muted">${esc(k.d)}</p>
+          ${best.f ? `<span class="small muted">因果融合${best.f}回</span>` : ''}
+          ${fav ? '<span class="tag top">採取に連れている</span>' : `<button class="btn sm" type="button" data-act="fav" data-id="${k.id}">採取に連れていく</button>`}
+        </div></div>
       <h4>いま効いている力（この種類で一番高いもの）</h4>
       ${statGrid(best)}
       <div class="tags">${best.sk.map(rankTag).join('') || '<span class="tag none">技能なし</span>'}</div>
@@ -2000,7 +2074,7 @@ function vTools() {
       const mc = () => missingCost(k.in, 1);
       const bestSt = STAT_IDS.slice().sort((x, y) => k.g[y] - k.g[x]).slice(0, 2).map(st => STAT[st].name).join('・');
       return `<div class="item r${k.r}">
-        <div class="top-row"><span class="nm">${esc(k.name)}</span><span class="own small muted">得意: ${bestSt}　いま${kindHoms(k.id).length}人</span></div>
+        <div class="top-row"><span class="nm mkname">${homFace(k.id)}${esc(k.name)}</span><span class="own small muted">得意: ${bestSt}　いま${kindHoms(k.id).length}人</span></div>
         <p class="small muted">${esc(k.d)}</p>
         ${insHtml(k.in, 1)}
         <div class="acts">
@@ -2039,7 +2113,7 @@ function vMaze() {
       const on = team.includes(h.u);
       const c = cstat(h, S.homs.filter(x => team.includes(x.u)), 0);
       return `<div class="hom r${KIND[h.k].r}${on ? ' sel' : ''}">
-        <div class="top-row"><span class="nm">${esc(KIND[h.k].name)}</span><span class="own small">Lv ${h.lv}${h.f ? `　融合${h.f}回` : ''}</span></div>
+        <div class="top-row"><span class="nm mkname">${homFace(h.k, on ? 1 : 0)}${esc(KIND[h.k].name)}</span><span class="own small">Lv ${h.lv}${h.f ? `　融合${h.f}回` : ''}</span></div>
         <div class="mzst small"><span>HP <b>${fmt(c.maxhp)}</b></span><span>攻撃 <b>${fmt(c.atk)}</b></span><span>2回攻撃 ${Math.round(c.dbl * 100)}%</span><span>会心 ${Math.round(c.crit * 100)}%</span><span>回避 ${Math.round(c.dodge * 100)}%</span></div>
         ${skillTags(h)}
         <div class="acts"><button class="btn ${on ? 'okb' : ''}" type="button" data-act="mzpick" data-id="${h.u}" ${!on && team.length >= MAZE_TEAM ? 'disabled' : ''}>${on ? '連れていく（外す）' : team.length >= MAZE_TEAM ? 'もう連れていけない' : '連れていく'}</button></div>
@@ -2052,7 +2126,7 @@ function vMaze() {
     <div class="list">${cards || '<p class="small muted">ホムンクルスがいません。相棒の画面で生み出してください。</p>'}</div>`;
   }
   const team = mzTeam();
-  const bars = team.map(h => { const mx = cstat(h, team, m.buff).maxhp, hp = m.hp[h.u]; return `<div class="hpline${hp <= 0 ? ' down' : ''}"><span>${esc(KIND[h.k].name)} Lv${h.lv}</span><span class="hpbar"><i style="width:${Math.max(0, hp / mx * 100)}%"></i></span><span class="small">${hp <= 0 ? '戦闘不能' : fmt(hp) + '/' + fmt(mx)}</span></div>`; }).join('');
+  const bars = team.map(h => { const mx = cstat(h, team, m.buff).maxhp, hp = m.hp[h.u]; return `<div class="hpline${hp <= 0 ? ' down' : ''}"><span class="mkname">${homFace(h.k, hp <= 0 ? 2 : 0)}${esc(KIND[h.k].name)} Lv${h.lv}</span><span class="hpbar"><i style="width:${Math.max(0, hp / mx * 100)}%"></i></span><span class="small">${hp <= 0 ? '戦闘不能' : fmt(hp) + '/' + fmt(mx)}</span></div>`; }).join('');
   const bagItems = Object.entries(m.bag.items).filter(([, n]) => n > 0).map(([id, n]) => `${ITEM[id].name}×${fmt(n)}`).join('、');
   const choices = m.choices.map((c, i) => {
     const p = PATHS[c.t];
@@ -2362,6 +2436,7 @@ main.addEventListener('click', e => {
     case 'traithelp': ui.traitHelp = !ui.traitHelp; break;
     case 'pick': { const h = homById(Number(id)); const msg = h && applyPick(h, b.dataset.v); if (msg) toast(msg); break; }
     case 'pickauto': { const n = S.homs.reduce((a, h) => a + autoPicks(h), 0); if (n) toast(`${n}件をおまかせで選びました`); break; }
+    case 'fav': { S.fav = id; toast(`${KIND[id].name}を採取に連れていきます`); break; }
     case 'mzpick': { const u = Number(id); if (S.mazeTeam.includes(u)) S.mazeTeam = S.mazeTeam.filter(x => x !== u); else if (S.mazeTeam.length < MAZE_TEAM) S.mazeTeam.push(u); break; }
     case 'mzstart': mzStart(); break;
     case 'mzgo': mzGo(Number(id)); break;
@@ -2382,13 +2457,15 @@ main.addEventListener('click', e => {
     case 'quitch': { if (!armed(b)) return; S.ch = null; toast('挑戦をやめました。この周は普通の周として続きます'); break; }
     case 'bookview': ui.bookView = id; break;
     case 'buypu': if (buyPu(id)) toast(`「${PU[id].name}」を習得しました`); break;
-    case 'prestige': { if (!armed(b)) return; const g = prestige(); if (g) { setTabs(); checkJournal(); if (S.lastCh) { celebrate('挑戦を達成', CH[S.lastCh].name, CH[S.lastCh].reward, 'var(--ok)'); delete S.lastCh; } celebrate('春のはじまり', `${S.run}周目`, `賢者の石 +${g}個。古本屋の店主「${storeLine(S.run)}」`, 'var(--r4)'); window.scrollTo(0, 0); } break; }
+    case 'prestige': { if (!armed(b)) return; const g = prestige(); if (g) { setTabs(); checkJournal(); if (S.lastCh) { celebrate('挑戦を達成', CH[S.lastCh].name, CH[S.lastCh].reward, 'var(--ok)'); delete S.lastCh; } celebrate('春のはじまり', `${S.run}周目`, `賢者の石 +${g}個。古本屋の店主「${storeLine(S.run)}」`, 'var(--r4)'); const fk = favKind(); if (fk) celebrate('因果融合', S.homs.map(h => KIND[h.k].name).join('・'), `種類ごとに一番良い能力と技能がひとつになりました。能力の上限 +15`, 'var(--mana)', homSrc(fk, 1)); window.scrollTo(0, 0); } break; }
     case 'buymax': { let n = 0; while (n < 1000 && buy(id)) n++; if (n > 1) toast(`${UP[id].name}を${n}レベル上げました`); break; }
   }
   update();
 });
 function homToast(h) {
-  toast(`${KIND[h.k].name}が生まれました: ${h.sk.map(k => TRAITS[k.id].name + ' ' + RANKS[k.r]).join('、')}`, 4000);
+  const sk = h.sk.map(k => TRAITS[k.id].name + ' ' + RANKS[k.r]).join('、');
+  if (kindHoms(h.k).length === 1) celebrate('生まれました', KIND[h.k].name, KIND[h.k].d, RC(KIND[h.k].r), homSrc(h.k, 1));
+  toast(`${KIND[h.k].name}が生まれました: ${sk}`, 4000);
 }
 document.querySelector('.tabs').addEventListener('click', e => {
   const b = e.target.closest('[data-tab]');
@@ -2422,10 +2499,10 @@ const reduceMotion = (() => { try { return matchMedia('(prefers-reduced-motion: 
 const RC = r => `var(--r${r})`;
 let celeQ = [], celeBusy = false, fxQuiet = false;
 // 大きな瞬間: 中央のカード＋火花
-function celebrate(kicker, title, sub, color) {
+function celebrate(kicker, title, sub, color, img) {
   if (fxQuiet) return;
   if (celeQ.length >= 3) celeQ.shift();
-  celeQ.push({ kicker, title, sub, color });
+  celeQ.push({ kicker, title, sub, color, img });
   if (!celeBusy) nextCele();
 }
 function nextCele() {
@@ -2437,6 +2514,7 @@ function nextCele() {
   if (c.color) el.style.setProperty('--cc', c.color);
   const k = document.createElement('div'); k.className = 'ck'; k.textContent = c.kicker;
   const t = document.createElement('div'); t.className = 'ct'; t.textContent = c.title;
+  if (c.img) { const im = document.createElement('img'); im.className = 'cimg'; im.src = c.img; im.alt = ''; el.append(im); }
   el.append(k, t);
   if (c.sub) { const x = document.createElement('div'); x.className = 'cs'; x.textContent = c.sub; el.append(x); }
   fxLayer.appendChild(el);
@@ -2446,14 +2524,15 @@ function nextCele() {
 }
 // 小さな瞬間: 上部の帯
 let banBusyUntil = 0;
-function banner(text, ok) {
+function banner(text, ok, img) {
   if (fxQuiet) return;
   const now = Date.now();
   if (now < banBusyUntil) return;
   banBusyUntil = now + 900;
   const el = document.createElement('div');
-  el.className = 'banner' + (ok ? ' okc' : '');
-  el.textContent = text;
+  el.className = 'banner' + (ok ? ' okc' : '') + (img ? ' withimg' : '');
+  if (img) { const f = document.createElement('span'); f.className = 'face'; const im = document.createElement('img'); im.className = 'himg'; im.src = img; im.alt = ''; f.append(im); el.append(f); }
+  const tx = document.createElement('span'); tx.className = 'btxt'; tx.textContent = text; el.append(tx);
   fxLayer.appendChild(el);
   setTimeout(() => el.remove(), 2000);
 }
@@ -2673,6 +2752,7 @@ function tick() {
   if (frame % 5 === 0 || dt > 5) processAuto();
   if (frame % 10 === 0) { checkPeople(); refreshReqs(); checkJournal(); recordCurve(); checkAch(); }
   if (frame % 3 === 0) checkFeats(false);
+  if (frame % 5 === 0) buddyIdle();
   if (++frame % 2 === 0 || dt > 5) update();
 }
 

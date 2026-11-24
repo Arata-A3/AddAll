@@ -1,6 +1,7 @@
 // AddAll のサービスワーカー: ページはネットワーク優先（更新がすぐ届くように）、つながらないときは保存分を使う
-const CACHE = 'addall-v1';
-const FILES = ['./', 'index.html', 'manifest.webmanifest', 'icon.svg', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png'];
+const CACHE = 'addall-v2';
+const FILES = ['./', 'index.html', 'manifest.webmanifest', 'icon.svg', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png',
+  'img/hom/pebble_0.webp', 'img/hom/pebble_1.webp', 'img/hom/pebble_2.webp', 'img/hom/sprout_0.webp', 'img/hom/sprout_1.webp', 'img/hom/sprout_2.webp', 'img/hom/mist_0.webp', 'img/hom/mist_1.webp', 'img/hom/mist_2.webp', 'img/hom/copper_0.webp', 'img/hom/copper_1.webp', 'img/hom/copper_2.webp', 'img/hom/primrose_0.webp', 'img/hom/primrose_1.webp', 'img/hom/primrose_2.webp', 'img/hom/ammonite_0.webp', 'img/hom/ammonite_1.webp', 'img/hom/ammonite_2.webp'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)).then(() => self.skipWaiting()));
 });

@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const CHROME = process.env.CHROME_PATH || 'C:/Program Files/Google/Chrome/Application/chrome.exe';
-const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.svg': 'image/svg+xml', '.png': 'image/png', '.webmanifest': 'application/manifest+json' };
+const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.svg': 'image/svg+xml', '.png': 'image/png', '.webmanifest': 'application/manifest+json', '.webp': 'image/webp' };
 const server = createServer((req, res) => {
   if (req.url.startsWith('/__blank')) { res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' }); res.end('<!doctype html><title>blank</title>'); return; }
   const path = join(ROOT, decodeURIComponent(new URL(req.url, 'http://x').pathname.replace(/\/$/, '/index.html')));
@@ -101,6 +101,19 @@ await test('研究は1つの周で2つの派まで', async () => {
     for (const id of ['gather', 'alch']) { q('[data-act="buyrs"][data-id="' + id + '"]').click(); await sleep(50); }
     return { rs: save().rs, third: !!q('[data-act="buyrs"][data-id="fam"]') };`);
   ok(r.rs.gather === 1 && r.rs.alch === 1 && !r.third, JSON.stringify(r));
+});
+await test('相棒の絵が出て、採取すると笑い、連れていく子を選べる', async () => {
+  await open({ ...mid, homs: [...mid.homs, { u: 2, k: 'kiri', lv: 3, xp: 0, f: 0, s: { str: 5, spd: 9, luk: 3, int: 5, exp: 6, dex: 4 }, sk: [] }], homSeq: 3 });
+  const r = await ev(`${H} tab('gather'); await sleep(300);
+    const b0 = q('#buddy img').getAttribute('src');
+    q('#tap').dispatchEvent(new PointerEvent('pointerdown', { pointerType: 'touch', bubbles: true, cancelable: true })); await sleep(50);
+    const b1 = q('#buddy img').getAttribute('src');
+    tab('tools'); await sleep(300);
+    const imgs = qa('#main img.himg'); const broken = imgs.filter(i => !i.complete || !i.naturalWidth).map(i => i.getAttribute('src'));
+    q('[data-act="fav"][data-id="kiri"]').click(); await sleep(100);
+    tab('gather'); await sleep(200);
+    return { b0, b1, n: imgs.length, broken, fav: save().fav, b2: q('#buddy img').getAttribute('src') };`);
+  ok(r.b0 === 'img/hom/pebble_0.webp' && r.b1 === 'img/hom/pebble_1.webp' && r.n >= 6 && !r.broken.length && r.fav === 'kiri' && r.b2.startsWith('img/hom/mist_'), JSON.stringify(r));
 });
 await test('レベルアップで成長を選べ、おまかせで残りが片付く', async () => {
   const r = await ev(`${H} tab('gather'); await sleep(100); q('#tap').dispatchEvent(new PointerEvent('pointerdown', { pointerType: 'touch', bubbles: true, cancelable: true })); await sleep(100);
