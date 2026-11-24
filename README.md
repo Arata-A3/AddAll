@@ -29,4 +29,5 @@
 | sw.js | サービスワーカー（オフラインで遊べるようにする） |
 | manifest.webmanifest | ホーム画面に入れるときの名前とアイコン |
 | icon.svg / icon-*.png / apple-touch-icon.png / og-image.png | アイコンとリンクのプレビュー画像 |
+| tests/run.mjs | 自動テスト（`node tests/run.mjs`。Chrome が必要） |
 | 企画書.txt / 設計書.md / 現代版の案.md | 企画と仕組みのメモ |
