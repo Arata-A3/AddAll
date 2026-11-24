@@ -291,6 +291,10 @@ details.help[open] summary { margin-bottom: 4px; }
 .vh-item ul { margin: 4px 0 0; padding-left: 1.2em; font-size: 13px; }
 
 [hidden] { display: none !important; }
+.bond { display: flex; gap: 4px; }
+.bond i { width: 22px; height: 6px; border-radius: 3px; background: var(--line); }
+.bond i.on { background: var(--ok); }
+.ask { font-size: 14px; line-height: 1.6; }
 /* 設定シート */
 .sheet-bg { position: fixed; inset: 0; z-index: 20; background: rgb(0 0 0 / .45); display: flex; align-items: flex-end; justify-content: center; }
 .sheet { background: var(--bg); width: 100%; max-width: 640px; max-height: 88%; overflow-y: auto; border-radius: 18px 18px 0 0; padding-block: 18px calc(18px + env(safe-area-inset-bottom, 0px)); display: flex; flex-direction: column; gap: 14px; }
@@ -361,7 +365,7 @@ details.help[open] summary { margin-bottom: 4px; }
   <button type="button" role="tab" data-tab="up" aria-selected="false"><span class="k">強</span>強化</button>
   <button type="button" role="tab" data-tab="lab" aria-selected="false"><span class="k">工</span>工房</button>
   <button type="button" role="tab" data-tab="tools" aria-selected="false"><span class="k">相</span>相棒<span class="badge" id="homBadge" hidden>0</span></button>
-  <button type="button" role="tab" data-tab="maze" aria-selected="false"><span class="k">迷</span>迷宮</button>
+  <button type="button" role="tab" data-tab="maze" aria-selected="false"><span class="k">淀</span>よどみ</button>
   <button type="button" role="tab" data-tab="mission" aria-selected="false"><span class="k">依</span>依頼<span class="badge" id="misBadge" hidden>0</span></button>
   <button type="button" role="tab" data-tab="book" aria-selected="false"><span class="k">鑑</span>図鑑<span class="badge" id="bookBadge" hidden>新</span></button>
 </nav>
@@ -409,6 +413,13 @@ details.help[open] summary { margin-bottom: 4px; }
   </div>
 </div>
 
+<div id="storyBg" class="sheet-bg" hidden>
+  <div class="sheet gut" role="dialog" aria-modal="true" aria-labelledby="storyTitle">
+    <div class="row-between"><h2 id="storyTitle">話</h2><button class="btn" type="button" id="storyClose">閉じる</button></div>
+    <div id="storyBody" class="journal"></div>
+  </div>
+</div>
+
 <div class="toasts" id="toasts" aria-live="polite"></div>
 <div class="fx-layer" id="fx" aria-hidden="true"></div>
 
@@ -425,7 +436,7 @@ const VERSIONS = [
   { v: '1.5', date: '2026-11-03', changes: ['依頼・賢者の石・図鑑・未解放の採取地の表示を見やすく'] },
   { v: '1.4', date: '2026-11-03', changes: ['説明を折りたためるように、一覧を1行に、タブの並びを変更'] },
   { v: '1.3', date: '2026-11-03', changes: ['ホムンクルスと迷宮を追加', '機能が少しずつ開くように'] },
-  { v: '1.2', date: '2026-11-03', changes: ['師匠の手記（物語）を追加'] },
+  { v: '1.2', date: '2026-11-03', changes: ['手記（物語）を追加'] },
   { v: '1.1', date: '2026-11-03', changes: ['賢者の石による周回を追加'] },
   { v: '1.0', date: '2026-11-03', changes: ['最初の版: 採取・分解・加工・精錬・図鑑・ミッション・依頼・採取地3か所'] },
 ];
@@ -437,9 +448,9 @@ const R10 = [0, 0, 0, 1, 1, 2, 2, 3, 3, 4];
 const DEPTH = [0, 0, 0, 30, 80, 200, 500, 1200, 3000, 8000];
 
 const AREAS = [
-  { id: 'a1', name: '工房の裏山', desc: '工房の裏に広がる小さな山。ありふれた素材ばかりだが、まれに珍しいものが見つかる。' },
-  { id: 'a2', name: '霧の森', desc: '一年中霧が晴れない森。木々の奥から、ときどき光の粒が漂ってくる。', unlock: { area: 'a1', n: 8, brute: 5e5 } },
-  { id: 'a3', name: '水晶の洞窟', desc: '壁一面に水晶が生えた洞窟。奥へ進むほど、石の値打ちが跳ね上がる。', unlock: { area: 'a2', n: 6, brute: 1e11 } },
+  { id: 'a1', name: '町はずれの河川敷', desc: 'アパートから歩いて10分の河川敷。石と草ばかりだが、ときどき妙なものが流れ着く。' },
+  { id: 'a2', name: '霧の出る里山', desc: 'バスで40分の山あい。朝はいつも霧が出ていて、木々の奥で何かが淡く光っている。', unlock: { area: 'a1', n: 8, brute: 5e5 } },
+  { id: 'a3', name: '閉じた鉱山', desc: '昭和の終わりに閉じた鉱山。カナタの調査について入れてもらえる。坑道の奥ほど、石の値打ちが跳ね上がる。', unlock: { area: 'a2', n: 6, brute: 1e11 } },
 ];
 const AREA = Object.fromEntries(AREAS.map(a => [a.id, a]));
 
@@ -449,12 +460,12 @@ const RAW = {
     ['twig', '枯れ枝', 2, '乾いた小枝。炉にくべる燃料としても使える。'],
     ['weed', '雑草', 3, '抜いても抜いても生えてくる。しぶとさだけなら一級品。'],
     ['clay', '粘土', 6, '沢沿いで採れる灰色の土。こねて焼けば煉瓦になる。'],
-    ['copper', '銅鉱石', 15, '緑の筋が走る石。錬金術師が最初に覚える金属。'],
+    ['copper', '銅鉱石', 15, '緑の筋が走る石。上流の古い銅山から流れてきたらしい。'],
     ['herb', '薬草', 30, '傷に効く苦い葉。煎じた汁にもマナが溶けている。'],
-    ['iron', '鉄鉱石', 70, 'ずしりと重い赤茶色の石。分解炉の扉もこれでできている。'],
+    ['iron', '鉄鉱石', 70, 'ずしりと重い赤茶色の石。昔はこの川の上流でも鉄を掘っていたらしい。'],
     ['crystal', '水晶片', 180, '透き通ったかけら。のぞき込むと、マナの流れがかすかに見える。'],
-    ['silver', '銀鉱石', 500, '月の光を好む金属。古い手記には「マナをよく通す」とある。'],
-    ['moonherb', '月光草', 1500, '月夜にだけ淡く光る草。師匠の手記には、この光こそ「マナのしずく」だと記されている。'],
+    ['silver', '銀鉱石', 500, '黒ずんだ銀の粒が混じる石。ノートには「マナをよく通す」とある。'],
+    ['moonherb', '月見草', 1500, '夕方にだけ咲く黄色い花。ノートには、この花の色こそ「マナのしずく」だと書かれている。'],
   ],
   a2: [
     ['leaf', '落ち葉', 20, '霧に湿った落ち葉。積もった下には、森の時間が眠っている。'],
@@ -462,43 +473,43 @@ const RAW = {
     ['mushroom', 'キノコ', 60, '倒木に生える白いキノコ。食べられるかどうかは誰も知らない。'],
     ['sap', '樹液', 100, '琥珀色のしずく。煮詰めると固まって樹脂になる。'],
     ['bone', '獣の骨', 180, '森で力尽きた獣の骨。砕けば良い肥料になる。'],
-    ['fairy', '妖精の粉', 350, '光の粒の正体。指でつまむと、くすぐったそうに逃げていく。'],
+    ['fairy', '光る苔', 350, '岩陰で青白く光る苔。指でなぞると、光が少しだけ逃げていく。'],
     ['mist', '霧の露', 700, '朝霧が葉に残したしずく。マナが濃く溶け込んでいる。'],
-    ['heartwood', '古木の芯', 1500, '千年を生きた木の芯。年輪のひとつひとつにマナがたまっている。'],
-    ['spiritstone', '精霊石', 4000, '森の精霊が宿るといわれる石。手に取るとほんのり温かい。'],
-    ['worldleaf', '世界樹の葉', 12000, 'どこから舞ってきたのか誰も知らない一枚の葉。森のどの木とも形が違う。'],
+    ['heartwood', '古木の芯', 1500, '倒れた老木の芯。年輪のひとつひとつにマナがたまっている。'],
+    ['spiritstone', '祠の石', 4000, '山道の崩れた祠のそばに転がっていた石。手に取ると、ほんのり温かい。'],
+    ['worldleaf', '千年杉の葉', 12000, '山の上の大杉から落ちてきた葉。樹齢は千年を超えるという。'],
   ],
   a3: [
-    ['gravel', '砂利', 300, '洞窟の床を埋めつくす砂利。ここでは石ころさえ値打ちが違う。'],
+    ['gravel', '砂利', 300, '坑道の床を埋めつくす砂利。ここでは石ころさえ値打ちが違う。'],
     ['sulfur', '硫黄', 500, '黄色い結晶。鼻をつく匂いがする。火薬の材料になる。'],
     ['coal', '石炭', 800, '黒く光る燃える石。炉の火を強くする。'],
-    ['goldore', '金鉱石', 1500, '金色の粒が混じる石。錬金術師の永遠の目標のひとつ。'],
+    ['goldore', '金鉱石', 1500, '金色の粒が混じる石。この鉱山が閉じたのは、金が尽きたからだと聞いた。'],
     ['amethyst', '紫水晶', 3000, '深い紫の結晶。持つ者の心を静めるという。'],
-    ['mithril', '魔鉄', 6000, 'マナを吸って育つ鉄。鍛えるほど硬く、軽くなる。'],
-    ['dragonscale', '竜の鱗', 15000, '洞窟の奥で見つかる、とても硬い鱗。持ち主の姿を見た者はいない。'],
-    ['starshard', '星の欠片', 40000, '空から落ちてきた石。夜になると内側から光る。'],
-    ['sagesand', '賢者の砂', 100000, 'さらさらと指からこぼれる金色の砂。師匠が探し続けていたもの。'],
-    ['primal', '原初の結晶', 400000, 'すべての物質の始まりとされる結晶。分解すると、とても多くのマナが流れ出す。'],
+    ['mithril', '隕鉄', 6000, '空から落ちてきた鉄。普通の鉄より重く、マナをよく吸う。'],
+    ['dragonscale', 'アンモナイトの化石', 15000, '坑道の壁から出てきた渦巻きの化石。カナタが見たら喜びそうだ。'],
+    ['starshard', '隕石のかけら', 40000, '空から落ちてきた石。夜になると、内側がかすかに光る気がする。'],
+    ['sagesand', '賢者の砂', 100000, 'さらさらと指からこぼれる金色の砂。ほかの人には、ただの砂にしか見えないらしい。'],
+    ['primal', '原初の結晶', 400000, 'すべての物質の始まりとされる結晶。ノートにはそう書いてある。ほどくと、とても多くのマナが流れ出す。'],
   ],
 };
 
 const PROC = [
-  { id: 'brick', name: '煉瓦', area: 'a1', r: 0, in: { clay: 3, stone: 5 }, d: '粘土と小石を焼き固めたもの。工房の壁もこれでできている。' },
+  { id: 'brick', name: '煉瓦', area: 'a1', r: 0, in: { clay: 3, stone: 5 }, d: '粘土と小石を焼き固めたもの。小さな窯でも焼ける。' },
   { id: 'tonic', name: '薬湯', area: 'a1', r: 1, in: { herb: 2, weed: 5 }, d: '薬草を雑草と一緒に煮出した湯。苦いが体に良い。' },
   { id: 'cuIngot', name: '銅のインゴット', area: 'a1', r: 1, in: { copper: 4, twig: 4 }, d: '銅鉱石を溶かして固めたもの。道具づくりの基本になる。' },
   { id: 'feIngot', name: '鉄のインゴット', area: 'a1', r: 2, in: { iron: 4, twig: 8 }, d: '強い火で鉄鉱石を溶かしたもの。丈夫な道具の材料。' },
   { id: 'agPowder', name: '銀の粉', area: 'a1', r: 3, in: { silver: 2, crystal: 1 }, d: '銀と水晶をすり合わせた粉。マナをよく通す。' },
-  { id: 'moonElixir', name: '月光の霊薬', area: 'a1', r: 4, in: { moonherb: 2, tonic: 3 }, d: '月光草を薬湯に溶かした霊薬。瓶の中で淡く光り続ける。' },
+  { id: 'moonElixir', name: '月見草の霊薬', area: 'a1', r: 4, in: { moonherb: 2, tonic: 3 }, d: '月見草を薬湯に溶かした霊薬。瓶の中で淡く光り続ける。' },
   { id: 'humus', name: '腐葉土', area: 'a2', r: 1, in: { leaf: 5, mushroom: 1 }, d: '落ち葉をキノコで分解させた土。森の力が詰まっている。' },
   { id: 'resin', name: '樹脂', area: 'a2', r: 1, in: { sap: 3, bark: 2 }, d: '樹液を煮詰めて固めたもの。道具の継ぎ目に使う。' },
   { id: 'boneMeal', name: '骨粉', area: 'a2', r: 2, in: { bone: 2, stone: 20 }, d: '獣の骨を小石で砕いた粉。火薬にも肥料にもなる。' },
-  { id: 'fairyLamp', name: '妖精の灯', area: 'a2', r: 3, in: { fairy: 2, mist: 1, crystal: 2 }, d: '妖精の粉を水晶に閉じこめた灯り。消えることがない。' },
-  { id: 'spiritCrystal', name: '精霊の結晶', area: 'a2', r: 4, in: { spiritstone: 1, agPowder: 2 }, d: '精霊石を銀の粉で包んだ結晶。精霊の声が聞こえるという。' },
+  { id: 'fairyLamp', name: '光苔のランプ', area: 'a2', r: 3, in: { fairy: 2, mist: 1, crystal: 2 }, d: '光る苔を水晶と一緒に瓶に閉じこめた灯り。消えることがない。' },
+  { id: 'spiritCrystal', name: '祠石の結晶', area: 'a2', r: 4, in: { spiritstone: 1, agPowder: 2 }, d: '祠の石を銀の粉で包んだ結晶。耳を当てると、かすかに声がする。' },
   { id: 'auIngot', name: '金のインゴット', area: 'a3', r: 2, in: { goldore: 3, coal: 3 }, d: '本物の金。ついに作ってしまった。' },
   { id: 'gunpowder', name: '火薬', area: 'a3', r: 2, in: { sulfur: 2, coal: 2, boneMeal: 1 }, d: '硫黄と石炭と骨粉を混ぜた粉。扱いには注意。' },
-  { id: 'mIngot', name: '魔鉄のインゴット', area: 'a3', r: 3, in: { mithril: 3, coal: 5 }, d: '魔鉄を石炭の火で鍛えたもの。羽のように軽い。' },
-  { id: 'scalePlate', name: '竜鱗の板', area: 'a3', r: 3, in: { dragonscale: 2, resin: 3 }, d: '竜の鱗を樹脂で貼り合わせた板。どんな刃も通さない。' },
-  { id: 'catalyst', name: '賢者の触媒', area: 'a3', r: 4, in: { sagesand: 2, starshard: 1, moonElixir: 1 }, d: '賢者の砂と星の欠片を霊薬で練ったもの。あらゆる錬成を助ける。' },
+  { id: 'mIngot', name: '隕鉄のインゴット', area: 'a3', r: 3, in: { mithril: 3, coal: 5 }, d: '隕鉄を石炭の火で鍛えたもの。驚くほど軽い。' },
+  { id: 'scalePlate', name: '化石の標本板', area: 'a3', r: 3, in: { dragonscale: 2, resin: 3 }, d: 'アンモナイトの化石を樹脂で固めた標本板。とても丈夫。' },
+  { id: 'catalyst', name: '賢者の触媒', area: 'a3', r: 4, in: { sagesand: 2, starshard: 1, moonElixir: 1 }, d: '賢者の砂と隕石のかけらを霊薬で練ったもの。あらゆる錬成を助ける。' },
 ];
 
 const ITEMS = [];
@@ -528,17 +539,17 @@ const STATS = [
 const STAT_IDS = STATS.map(x => x.id);
 const STAT = Object.fromEntries(STATS.map(x => [x.id, x]));
 const KINDS = [
-  { id: 'koro', name: 'コロ', area: 'a1', r: 1, d: '小石から生まれた、ころころ転がる元気な子。力仕事が得意。',
+  { id: 'koro', name: 'コロ', area: 'a1', r: 1, d: '小石から生まれた、ころころ転がる元気な子。力仕事が得意。ほかの人には、ただの小石に見える。',
     g: { str: 130, spd: 60, luk: 30, int: 40, exp: 50, dex: 70 }, sk: ['power', 'skill'], in: { stone: 60, clay: 10 } },
-  { id: 'happa', name: 'ハッパ', area: 'a1', r: 1, d: '草の汁から生まれたのんびり屋。なぜか運がいい。',
+  { id: 'happa', name: 'ハッパ', area: 'a1', r: 1, d: '草の汁から生まれたのんびり屋。なぜか運がいい。ほかの人には、ただの葉っぱに見える。',
     g: { str: 40, spd: 60, luk: 120, int: 50, exp: 60, dex: 90 }, sk: ['luck', 'skill'], in: { weed: 50, herb: 5 } },
   { id: 'kiri', name: 'キリ', area: 'a2', r: 2, d: '霧の露から生まれた気まぐれな子。とにかく素早い。',
     g: { str: 50, spd: 130, luk: 60, int: 50, exp: 100, dex: 40 }, sk: ['fam', 'craft'], in: { mist: 3, leaf: 40 } },
   { id: 'morisu', name: 'モリス', area: 'a2', r: 3, d: '古木の芯から生まれた物知り。マナの扱いがうまい。',
     g: { str: 60, spd: 40, luk: 50, int: 130, exp: 60, dex: 80 }, sk: ['mana', 'skill'], in: { heartwood: 2, sap: 10 } },
-  { id: 'ruru', name: 'ルル', area: 'a3', r: 3, d: '水晶から生まれた静かな子。洞窟の奥まで見通す。',
+  { id: 'ruru', name: 'ルル', area: 'a3', r: 3, d: '水晶から生まれた静かな子。坑道の奥まで見通す。',
     g: { str: 40, spd: 70, luk: 90, int: 70, exp: 130, dex: 50 }, sk: ['craft', 'luck'], in: { amethyst: 3, gravel: 30 } },
-  { id: 'draco', name: 'ドラコ', area: 'a3', r: 4, d: '竜の鱗から生まれた頼もしい子。何でもそつなくこなす。',
+  { id: 'draco', name: 'アモン', area: 'a3', r: 4, d: 'アンモナイトの化石から生まれた頼もしい子。何でもそつなくこなす。',
     g: { str: 90, spd: 90, luk: 80, int: 90, exp: 80, dex: 80 }, sk: ['power', 'mana', 'fam'], in: { dragonscale: 2, mIngot: 2 } },
 ];
 const KIND = Object.fromEntries(KINDS.map(k => [k.id, k]));
@@ -561,7 +572,7 @@ const RW_NAME = { power: '採取力', mana: 'マナ', fam: '使い魔の速さ',
 const inv = id => S.inv[id] || 0;
 const areaReg = a => rawOf(a).filter(i => S.reg[i.id]).length;
 const MIS = [
-  // 工房の裏山
+  // 町はずれの河川敷
   { id: 'm1', area: 'a1', name: 'はじめての採取', text: '採取地を10回タップする', prog: () => S.st.manual, goal: 10, rw: ['power', 1.2], brute: 50 },
   { id: 'm2', area: 'a1', name: '石拾い', text: '小石を累計200個採取する', prog: () => S.col.stone || 0, goal: 200, rw: ['mana', 1.1], brute: 300 },
   { id: 'm3', area: 'a1', name: 'マナの目覚め', text: 'マナを累計500集める', prog: () => S.st.totalMana, goal: 500, rw: ['power', 1.25], brute: 2000 },
@@ -570,33 +581,33 @@ const MIS = [
   { id: 'm6', area: 'a1', name: '最初の相棒', text: 'ホムンクルスを1体生み出す', prog: () => S.st.homsMade, goal: 1, rw: ['power', 1.3], brute: 5000 },
   { id: 'm7', area: 'a1', name: '慣れた手つき', text: '熟練を300にする', prog: () => S.skill, goal: 300, rw: ['power', 1.3], brute: 1e4 },
   { id: 'm8', area: 'a1', name: '銅の納品', text: '銅のインゴットを30個納品する', deliver: 'cuIngot', goal: 30, rw: ['mana', 1.2], brute: 3e4 },
-  { id: 'm9', area: 'a1', name: '依頼に応える', text: '依頼を3回達成する', prog: () => S.st.reqDone, goal: 3, rw: ['mana', 1.2], brute: 3e4 },
-  { id: 'm10', area: 'a1', name: '使い魔の群れ', text: '裏山の使い魔をLv10にする', prog: () => famLv('a1'), goal: 10, rw: ['fam', 1.5], brute: 1e5 },
+  { id: 'm9', area: 'a1', name: '頼みごとに応える', text: '町の人の頼みごとを3回かなえる', prog: () => S.st.reqDone, goal: 3, rw: ['mana', 1.2], brute: 3e4 },
+  { id: 'm10', area: 'a1', name: '使い魔の群れ', text: '河川敷の使い魔をLv10にする', prog: () => famLv('a1'), goal: 10, rw: ['fam', 1.5], brute: 1e5 },
   { id: 'm11', area: 'a1', name: '鉄の納品', text: '鉄のインゴットを50個納品する', deliver: 'feIngot', goal: 50, rw: ['power', 1.5], brute: 2e5 },
-  { id: 'm12', area: 'a1', name: '裏山の図鑑', text: '裏山の素材10種類をすべて図鑑に登録する', prog: () => areaReg('a1'), goal: 10, rw: ['mana', 1.5], brute: 1e6 },
+  { id: 'm12', area: 'a1', name: '河川敷の図鑑', text: '河川敷の素材10種類をすべて図鑑に登録する', prog: () => areaReg('a1'), goal: 10, rw: ['mana', 1.5], brute: 1e6 },
   { id: 'm13', area: 'a1', name: 'マナの奔流', text: 'マナを累計100万集める', prog: () => S.st.totalMana, goal: 1e6, rw: ['mana', 1.5], brute: 5e6 },
-  { id: 'm14', area: 'a1', name: '月のしずく', text: '月光の霊薬を5個納品する', deliver: 'moonElixir', goal: 5, rw: ['power', 2], brute: 1e8 },
+  { id: 'm14', area: 'a1', name: '月のしずく', text: '月見草の霊薬を5個納品する', deliver: 'moonElixir', goal: 5, rw: ['power', 2], brute: 1e8 },
   { id: 'm15', area: 'a1', name: '熟練の極み', text: '熟練を1万にする', prog: () => S.skill, goal: 1e4, rw: ['skill', 2], brute: 1e9 },
-  // 霧の森
-  { id: 'f1', area: 'a2', name: '森の第一歩', text: '霧の森で100回採取する', prog: () => S.st.areaTaps.a2 || 0, goal: 100, rw: ['power', 1.3], brute: 1e6 },
+  // 霧の出る里山
+  { id: 'f1', area: 'a2', name: '里山の第一歩', text: '霧の出る里山で100回採取する', prog: () => S.st.areaTaps.a2 || 0, goal: 100, rw: ['power', 1.3], brute: 1e6 },
   { id: 'f2', area: 'a2', name: '土を育てる', text: '腐葉土を50個納品する', deliver: 'humus', goal: 50, rw: ['mana', 1.2], brute: 3e6 },
   { id: 'f3', area: 'a2', name: '兄弟', text: '同じ種類のホムンクルスを2人そろえる', prog: () => Math.max(0, ...KINDS.map(k => kindHoms(k.id).length)), goal: 2, rw: ['power', 1.3], brute: 5e6 },
   { id: 'f4', area: 'a2', name: '樹脂の納品', text: '樹脂を30個納品する', deliver: 'resin', goal: 30, rw: ['fam', 1.3], brute: 1e7 },
   { id: 'f5', area: 'a2', name: '育ち盛り', text: 'ホムンクルスをLv20まで育てる', prog: () => maxHomLv(), goal: 20, rw: ['skill', 1.5], brute: 3e7 },
-  { id: 'f6', area: 'a2', name: '森の図鑑', text: '霧の森の素材10種類をすべて図鑑に登録する', prog: () => areaReg('a2'), goal: 10, rw: ['mana', 1.5], brute: 1e8 },
-  { id: 'f7', area: 'a2', name: '頼れる錬金術師', text: '依頼を15回達成する', prog: () => S.st.reqDone, goal: 15, rw: ['mana', 1.3], brute: 3e8 },
-  { id: 'f8', area: 'a2', name: '妖精の灯の納品', text: '妖精の灯を20個納品する', deliver: 'fairyLamp', goal: 20, rw: ['fam', 1.5], brute: 1e9 },
-  { id: 'f9', area: 'a2', name: '精霊の声', text: '精霊の結晶を10個納品する', deliver: 'spiritCrystal', goal: 10, rw: ['power', 1.5], brute: 1e10 },
-  { id: 'f10', area: 'a2', name: '森の主', text: 'マナを累計1兆集める', prog: () => S.st.totalMana, goal: 1e12, rw: ['mana', 2], brute: 5e12 },
-  // 水晶の洞窟
-  { id: 'c1', area: 'a3', name: '洞窟の入口', text: '水晶の洞窟で500回採取する', prog: () => S.st.areaTaps.a3 || 0, goal: 500, rw: ['power', 1.5], brute: 1e12 },
+  { id: 'f6', area: 'a2', name: '里山の図鑑', text: '里山の素材10種類をすべて図鑑に登録する', prog: () => areaReg('a2'), goal: 10, rw: ['mana', 1.5], brute: 1e8 },
+  { id: 'f7', area: 'a2', name: '頼れるご近所', text: '町の人の頼みごとを15回かなえる', prog: () => S.st.reqDone, goal: 15, rw: ['mana', 1.3], brute: 3e8 },
+  { id: 'f8', area: 'a2', name: 'ランプの納品', text: '光苔のランプを20個納品する', deliver: 'fairyLamp', goal: 20, rw: ['fam', 1.5], brute: 1e9 },
+  { id: 'f9', area: 'a2', name: '祠の声', text: '祠石の結晶を10個納品する', deliver: 'spiritCrystal', goal: 10, rw: ['power', 1.5], brute: 1e10 },
+  { id: 'f10', area: 'a2', name: '里山の主', text: 'マナを累計1兆集める', prog: () => S.st.totalMana, goal: 1e12, rw: ['mana', 2], brute: 5e12 },
+  // 閉じた鉱山
+  { id: 'c1', area: 'a3', name: '坑道の入口', text: '閉じた鉱山で500回採取する', prog: () => S.st.areaTaps.a3 || 0, goal: 500, rw: ['power', 1.5], brute: 1e12 },
   { id: 'c2', area: 'a3', name: '本物の金', text: '金のインゴットを100個納品する', deliver: 'auIngot', goal: 100, rw: ['mana', 1.3], brute: 3e12 },
   { id: 'c3', area: 'a3', name: '火薬の納品', text: '火薬を50個納品する', deliver: 'gunpowder', goal: 50, rw: ['power', 1.5], brute: 1e13 },
   { id: 'c4', area: 'a3', name: '頂を目指して', text: '技能をSランクにする', prog: () => maxRank(), goal: 5, rw: ['skill', 2], brute: 3e13 },
   { id: 'c5', area: 'a3', name: '能力の極み', text: '能力値の合計が400以上のホムンクルスを育てる', prog: () => maxStatTotal(), goal: 400, rw: ['fam', 2], brute: 1e14 },
-  { id: 'c6', area: 'a3', name: '洞窟の図鑑', text: '水晶の洞窟の素材10種類をすべて図鑑に登録する', prog: () => areaReg('a3'), goal: 10, rw: ['mana', 1.5], brute: 3e14 },
-  { id: 'c7', area: 'a3', name: '名高い錬金術師', text: '名声を50にする', prog: () => S.fame, goal: 50, rw: ['mana', 1.5], brute: 1e15 },
-  { id: 'c8', area: 'a3', name: '竜鱗の納品', text: '竜鱗の板を20個納品する', deliver: 'scalePlate', goal: 20, rw: ['fam', 1.5], brute: 3e15 },
+  { id: 'c6', area: 'a3', name: '鉱山の図鑑', text: '閉じた鉱山の素材10種類をすべて図鑑に登録する', prog: () => areaReg('a3'), goal: 10, rw: ['mana', 1.5], brute: 3e14 },
+  { id: 'c7', area: 'a3', name: '町じゅうの信頼', text: '信頼を50にする', prog: () => S.fame, goal: 50, rw: ['mana', 1.5], brute: 1e15 },
+  { id: 'c8', area: 'a3', name: '標本の納品', text: '化石の標本板を20個納品する', deliver: 'scalePlate', goal: 20, rw: ['fam', 1.5], brute: 3e15 },
   { id: 'c9', area: 'a3', name: '賢者への道', text: '賢者の触媒を10個納品する', deliver: 'catalyst', goal: 10, rw: ['power', 2], brute: 1e17 },
   { id: 'c10', area: 'a3', name: 'すべてを記録する', text: '図鑑のすべて（素材と加工品）を登録する', prog: () => regCount(), goal: ITEMS.length, rw: ['mana', 3], brute: 1e19 },
 ];
@@ -626,44 +637,46 @@ const UPS = [
 ];
 const UP = Object.fromEntries(UPS.map(u => [u.id, u]));
 
-/* --- 師匠の手記（物語） --- */
+/* --- 古いノート（物語） --- */
 const JOURNAL = [
   { id: 'j1', title: 'はじめに', hint: '最初から読める', cond: () => true,
-    text: 'この工房と、裏の山と、この手記をおまえに残す。わたしは少し遠くへ行く。\nマナのことは、石ころに聞け。分解すれば、すべてのものはマナに戻る。そしてマナからは、すべてのものが生まれる。' },
-  { id: 'j2', title: '価値について', hint: '何度か採取する', cond: () => S.st.manual >= 20,
-    text: 'ものの価値は、分解したときに流れ出るマナの量で決まる。小石は小石なりに、月光草は月光草なりに。\n一度手にしたものは、マナさえあればいつでも呼び戻せる。だから、まずは手に取ることだ。' },
+    text: 'このノートを手に取った人へ。\nマナのことは、石ころに聞くといい。ほどけば、すべてのものはマナに戻る。そしてマナからは、すべてのものが戻ってくる。' },
+  { id: 'j2', title: '値打ちについて', hint: '何度か採取する', cond: () => S.st.manual >= 20,
+    text: 'ものの値打ちは、ほどいたときに流れ出るマナの量で決まる。小石は小石なりに、月見草は月見草なりに。\n一度手にしたものは、マナさえあればいつでも呼び戻せる。だから、まずは手に取ること。' },
   { id: 'j3', title: '並べること', hint: '図鑑に10種類登録する', cond: () => regCount() >= 10,
-    text: '集めたものは、並べておけ。価値の低いものから高いものへ。\n並べてみて初めて、足りないものが見えてくる。わたしの棚には、いつもひとつ分の空きがあった。' },
+    text: '集めたものは並べておくといい。値打ちの低いものから高いものへ。\n並べてみて初めて、足りないものが見えてくる。わたしの棚には、いつもひとつ分の空きがあった。' },
   { id: 'j4', title: '相棒', hint: 'ホムンクルスを生み出す', cond: () => S.st.homsMade >= 1,
-    text: '錬金術師は、ひとりでは何もできない。土と水とマナから、手伝いの子を生み出せ。\n生まれたばかりの子は弱い。だが、どう育つかは、その子が教えてくれる。' },
-  { id: 'j5', title: '霧の森', hint: '霧の森へ行く', cond: () => !!S.unlocked.a2,
-    text: '森の霧は、マナが濃すぎて目に見えるようになったものだ。あの森の木々は、ずっと昔に誰かが撒いたマナで育ったと聞く。\n妖精の粉に触れるときは、そっとな。' },
+    text: '土と水とマナから、手伝いの子を生み出せる。ほかの人の目には、ただの小石や葉っぱにしか見えない。\nヒヨリという子にだけは、どういうわけか見えていた。今もそうだろうか。' },
+  { id: 'j5', title: '霧の里山', hint: '霧の出る里山へ行く', cond: () => !!S.unlocked.a2,
+    text: '里山の霧は、マナが濃すぎて目に見えるようになったものだ。\n光る苔に触れるときは、そっと。あれは、誰かが昔あそこでほどいたものの名残だ。' },
+  { id: 'j16', title: '色のない町', hint: 'よどみに入る', cond: () => (S.life.mazeBest || 0) >= 1,
+    text: 'ノートを開いたまま眠ると、色のない町で目が覚める。ここと同じ道、同じ店、同じ川。人だけがいない。\nほどかれなかったマナが、埃や錆の形をとってうろついている。あれが何なのか、わたしにもまだ分からない。' },
   { id: 'j6', title: '因果の融合', hint: '同じ種類の子を2人そろえる', cond: () => KINDS.some(k => kindHoms(k.id).length >= 2),
-    text: '同じ土から生まれた子でも、育ち方はそれぞれ違う。\n世界がはじまりに戻るとき、子たちは一つになり、それぞれの良いところだけが残る。わたしはこれを因果の融合と呼んでいる。' },
+    text: '同じ土から生まれた子でも、育ち方はそれぞれ違う。\nはじまりに戻るとき、子たちは一つになり、それぞれの良いところだけが残る。わたしはこれを因果の融合と呼んでいる。' },
   { id: 'j7', title: '完璧な小石', hint: '素材を完璧まで精錬する', cond: () => ITEMS.some(i => perfect(i.id)),
-    text: '完璧な小石を見たことがあるか。わたしはある。ただの石ころなのに、目が離せなかった。\n完璧とは、それ以上何も足さなくてよい状態のことだ。' },
-  { id: 'j8', title: '水晶の洞窟', hint: '水晶の洞窟へ行く', cond: () => !!S.unlocked.a3,
-    text: '洞窟の奥には、星の欠片が落ちている。空から落ちたのか、それとも洞窟が空へ続いているのか。\n賢者の砂を見つけたら、それがわたしの探していたものだ。' },
+    text: '完璧な小石を見たことがあるだろうか。わたしはある。ただの石ころなのに、目が離せなかった。\n完璧とは、それ以上何も足さなくてよい状態のことだ。' },
+  { id: 'j8', title: '閉じた鉱山', hint: '閉じた鉱山へ行く', cond: () => !!S.unlocked.a3,
+    text: '坑道の奥には、隕石のかけらが落ちている。空から落ちたのか、それとも坑道が空へ続いているのか。\nカナタの測定器が夜にだけ騒ぐのは、たぶん気のせいではない。' },
   { id: 'j9', title: '原初の結晶', hint: '原初の結晶を見つける', cond: () => !!S.reg.primal,
-    text: 'すべての物質は、もとをたどればこの結晶に行き着く。ならば逆に、この結晶からすべてを作り直せるはずだ。\n世界のすべてを足し合わせたものが、ひとつの石に収まるのなら。' },
+    text: 'すべてのものは、もとをたどればこの結晶に行き着く。ならば逆に、この結晶からすべてを作り直せるはずだ。\n世界のすべてを足し合わせたものが、ひとつの石に収まるのなら。' },
   { id: 'j10', title: '賢者の石', hint: '賢者の触媒を作る', cond: () => !!S.reg.catalyst,
-    text: '触媒が三つ、精霊の結晶が三つ、原初の結晶がひとつ。わたしはついにここまで来た。\nだが錬成すれば、たぶん世界ははじまりに戻る。それでも、わたしはやるだろう。' },
-  { id: 'j11', title: '二度目の朝', hint: '周回する', cond: () => S.run >= 2,
-    text: '目が覚めると、工房はがらんとしていた。棚の素材も、裏山の道も、全部なくなっていた。\n手に残ったのは、使い慣れた道具と、この手記だけ。……この手記を、わたしは前にも読んだ気がする。' },
+    text: '触媒が三つ、祠石の結晶が三つ、原初の結晶がひとつ。ここまで来た。\nたぶん、錬成すれば春のはじまりに戻る。それでも、わたしはやるだろう。' },
+  { id: 'j11', title: '二度目の春', hint: '周回する', cond: () => S.run >= 2,
+    text: '目が覚めると、部屋はがらんとしていた。棚の素材も、町の人の記憶も、全部なくなっていた。\n古本屋に行くと、あのノートが同じ棚に戻っていた。店主は何も言わずに、同じ値段を告げた。' },
   { id: 'j12', title: '筆跡', hint: '3周目に入る', cond: () => S.run >= 3,
-    text: '手記の文字を、もう一度よく見た。\nこれは師匠の字ではない。わたしの字だ。' },
+    text: 'ノートの文字を、もう一度よく見た。\nこれは知らない誰かの字ではない。わたしの字だ。' },
   { id: 'j13', title: '変わるもの', hint: '5周目に入る', cond: () => S.run >= 5,
-    text: '何度やり直しても、小石は小石の価値で、月光草は月光草の価値だ。\n変わるのはわたしのほうだけだ。少しずつ、完璧に近づいていく。' },
+    text: '何度やり直しても、小石は小石の値打ちで、月見草は月見草の値打ちだ。\n変わるのはわたしのほうだけだ。少しずつ、完璧に近づいていく。' },
   { id: 'j14', title: 'すべてを足す', hint: '図鑑をすべて埋める', cond: () => regCount() >= ITEMS.length,
-    text: 'この世界のすべてを記録した。棚にはもう空きがない。\n……いや、ひとつだけある。わたし自身の場所だ。' },
+    text: 'この町のすべてを記録した。棚にはもう空きがない。\n……いや、ひとつだけある。わたし自身の場所だ。' },
   { id: 'j15', title: '次のわたしへ', hint: '10周目に入る', cond: () => S.run >= 10,
-    text: 'すべてを足し合わせても、終わりにはならなかった。足すたびに、次に足したいものが見つかる。それでいい。錬金術師とは、そういうものだ。\n次のわたしへ。小石から始めろ。' },
+    text: 'すべてを足し合わせても、終わりにはならなかった。足すたびに、次に足したいものが見つかる。それでいい。\n次のわたしへ。小石から始めるといい。それから、ひだまり書房の店主に、よろしく。' },
 ];
 function checkJournal() {
   for (const j of JOURNAL) {
     if (S.journal[j.id] || !j.cond()) continue;
     S.journal[j.id] = Date.now();
-    if (j.id !== 'j1') toast(`師匠の手記に新しいページ「${j.title}」（図鑑で読めます）`, 4500);
+    if (j.id !== 'j1') toast(`古いノートに新しいページ「${j.title}」（図鑑で読めます）`, 4500);
   }
 }
 const unreadJournal = () => JOURNAL.filter(j => S.journal[j.id] && !S.jread[j.id]).length;
@@ -672,13 +685,13 @@ const unreadJournal = () => JOURNAL.filter(j => S.journal[j.id] && !S.jread[j.id
 const FEATS = [
   { id: 'up', name: '強化', tab: 'up', hint: 'マナを累計10集める', p: () => [S.life.totalMana, 10], d: 'マナを使って、採取の腕前や使い魔を強化できます。' },
   { id: 'mission', name: 'ミッション', tab: 'mission', hint: '25回採取する', p: () => [S.st.manual + S.st.auto, 25], d: '達成すると、ずっと続く強化がもらえます。' },
-  { id: 'book', name: '図鑑', tab: 'book', hint: '素材を5種類見つける', p: () => [regCount(), 5], d: '見つけたものが価値の順に並びます。師匠の手記もここで読めます。' },
+  { id: 'book', name: '図鑑', tab: 'book', hint: '素材を5種類見つける', p: () => [regCount(), 5], d: '見つけたものが値打ちの順に並びます。古いノートもここで読めます。' },
   { id: 'lab', name: '工房', tab: 'lab', hint: 'マナを累計300集める', p: () => [S.life.totalMana, 300], d: '素材の分解と、加工品の解放ができます。' },
   { id: 'tools', name: '相棒', tab: 'tools', hint: 'マナを累計3,000集める', p: () => [S.life.totalMana, 3000], d: 'ホムンクルスを生み出して育てます。' },
-  { id: 'maze', name: '迷宮', tab: 'maze', hint: 'ホムンクルスを2人生み出す', p: () => [Math.max(S.homs.length, S.st.homsMade), 2], d: 'ホムンクルスを連れて、終わりのない迷宮を進めます。' },
+  { id: 'maze', name: 'よどみ', tab: 'maze', hint: 'ホムンクルスを2人生み出す', p: () => [Math.max(S.homs.length, S.st.homsMade), 2], d: '夜、ノートを開いたまま眠ると、ホムンクルスと一緒に「よどみ」を進めます。' },
   { id: 'refine', name: '精錬', sub: 'lab', hint: 'マナを累計2万集める', p: () => [S.life.totalMana, 2e4], d: '工房で、同じ素材を使って品質を上げられます。' },
-  { id: 'req', name: '依頼', sub: 'mission', hint: 'ミッションを3つ達成する', p: () => [Object.values(S.mc).reduce((a, b) => a + b, 0), 3], d: 'ミッションの画面で、村の人からの納品の依頼を受けられます。' },
-  { id: 'stone', name: '賢者の石', sub: 'up', hint: '水晶の洞窟へ行く', p: () => [S.unlocked.a3 || S.run > 1 ? 1 : 0, 1], d: '強化の画面で、賢者の石を錬成して周回できます。' },
+  { id: 'req', name: '町の人', sub: 'mission', hint: 'ミッションを3つ達成する', p: () => [Object.values(S.mc).reduce((a, b) => a + b, 0), 3], d: '依頼の画面で、町の人の頼みごとを聞けます。仲が深まると、ずっと続く特典と話が手に入ります。' },
+  { id: 'stone', name: '賢者の石', sub: 'up', hint: '閉じた鉱山へ行く', p: () => [S.unlocked.a3 || S.run > 1 ? 1 : 0, 1], d: '強化の画面で、賢者の石を錬成して周回できます。' },
 ];
 const featOpen = id => !!S.open[id];
 const tabOpen = t => t === 'gather' || FEATS.some(x => x.tab === t && S.open[x.id]);
@@ -728,7 +741,7 @@ const fresh = () => ({
   area: 'a1', unlocked: { a1: true },
   inv: {}, reg: {}, col: {}, dis: {}, ref: {},
   homs: [], homSeq: 1,
-  reqs: [],
+  reqs: {}, bond: {}, met: {}, scn: {},
   st: { manual: 0, auto: 0, totalMana: 0, areaTaps: {}, crafted: {}, homsMade: 0, fusions: 0, reqDone: 0 },
   up: { tool: 0, fam_a1: 0, fam_a2: 0, fam_a3: 0, furnace: 0, eye: 0, autodis: 0 },
   autoDis: false, done: {}, savedAt: 0, created: Date.now(),
@@ -775,8 +788,9 @@ function normalize(o) {
   // 探索の回数を記録していなかった頃のセーブは、裏山の探索を累計の採取回数で補う
   if (!f.st.areaTaps.a1) f.st.areaTaps.a1 = (f.st.manual || 0) + (f.st.auto || 0) - (f.st.areaTaps.a2 || 0) - (f.st.areaTaps.a3 || 0);
   for (const i of ITEMS) if ((f.inv[i.id] || 0) > 0 || (f.col[i.id] || 0) > 0 || (f.st.crafted[i.id] || 0) > 0) f.reg[i.id] = true;
-  if (!Array.isArray(f.reqs)) f.reqs = [];
-  f.reqs = f.reqs.filter(r => r && (r.wait || ITEM[r.id]));
+  // 3枠の依頼だった頃のセーブは捨てて、町の人ごとの頼みごとに作り直す
+  if (!f.reqs || typeof f.reqs !== 'object' || Array.isArray(o.reqs)) f.reqs = {};
+  for (const k in f.reqs) { const r = f.reqs[k]; if (!PERSON[k] || !r || (!r.wait && !ITEM[r.id])) delete f.reqs[k]; }
   // 第1版の任務IDは内容が変わったので、同じ内容のものだけ引き継ぐ
   if ((o.v || 1) < 2) {
     const keep = {};
@@ -828,13 +842,13 @@ const maxStatTotal = () => S.homs.reduce((a, h) => Math.max(a, statTotal(h)), 0)
 const fameMult = () => (1 + 0.03 * S.fame) * mazeMult();
 const mazeMult = () => 1 + 0.02 * (S.life.mazeBest || 0);
 const skillMult = () => 1 + S.skill * 0.004;
-const skillGain = () => mult('skill') * (1 + 0.15 * traitLv('skill')) * statMult('dex');
-const power = () => toolBase(S.up.tool) * skillMult() * mult('power') * 1.5 ** pu('power') * statMult('str') * (1 + 0.1 * traitLv('power'));
+const skillGain = () => mult('skill') * (1 + 0.15 * traitLv('skill')) * statMult('dex') * bondMult('skill');
+const power = () => toolBase(S.up.tool) * skillMult() * mult('power') * 1.5 ** pu('power') * statMult('str') * (1 + 0.1 * traitLv('power')) * bondMult('power');
 const famLv = a => S.up['fam_' + a] || 0;
 const famMulti = () => mult('fam') * 1.5 ** pu('fam') * statMult('spd') * (1 + 0.1 * traitLv('fam'));
 const famRate = (a = S.area) => famBase(famLv(a)) * famMulti();
 const famTotal = () => unlockedAreas().reduce((s, a) => s + famRate(a.id), 0);
-const manaMult = () => furnaceMult(S.up.furnace) * mult('mana') * 1.5 ** pu('mana') * statMult('int') * (1 + 0.08 * traitLv('mana')) * fameMult();
+const manaMult = () => furnaceMult(S.up.furnace) * mult('mana') * 1.5 ** pu('mana') * statMult('int') * (1 + 0.08 * traitLv('mana')) * fameMult() * bondMult('mana');
 // 精錬は20段階。1段階ごとに品質+5%、100%で「完璧」（価値2.5倍）
 const REF_MAX = 20;
 const refSteps = id => Math.min(REF_MAX, S.ref[id] || 0);
@@ -848,7 +862,7 @@ const autoDisOn = () => S.up.autodis > 0 && S.autoDis;
 
 const refineCost = id => Math.ceil(10 * 1.3 ** refSteps(id));
 const procOn = p => (S.st.crafted[p.id] || 0) > 0 && S.unlocked[p.area];
-const exploreMult = () => (1 + 0.1 * traitLv('craft')) * 2 ** pu('explore') * statMult('exp');
+const exploreMult = () => (1 + 0.1 * traitLv('craft')) * 2 ** pu('explore') * statMult('exp') * bondMult('explore');
 function avgValue(a = S.area) {
   const f = eyeF(); const raws = availOf(a);
   const tot = raws.reduce((s, i) => s + i.w, 0);
@@ -1106,7 +1120,7 @@ function gainExp(x, quiet) {
   const msgs = [];
   for (const h of S.homs) {
     if (h.lv >= LV_MAX) continue;
-    h.xp += x;
+    h.xp += x * bondMult('exp');
     const from = h.lv; let last = null;
     while (h.lv < LV_MAX && h.xp >= expNeed(h.lv)) { h.xp -= expNeed(h.lv); last = levelUp(h); }
     if (h.lv >= LV_MAX) h.xp = 0;
@@ -1178,7 +1192,7 @@ const PUS = [
   { id: 'skillKeep', name: '熟練の記憶', info: '周回のときに残す熟練 +10%（もとは10%、最大100%）', cost: l => 2 * (l + 1), max: 9 },
   { id: 'famStart', name: '使い魔の手ほどき', info: '周回のあと、すべての採取地の使い魔が Lv5 ずつ高い状態から始まる', cost: l => 3 * (l + 1) },
   { id: 'autodis', name: '始まりの装置', info: '周回のあと、最初から自動分解装置がある', cost: () => 1, max: 1 },
-  { id: 'keepFame', name: '名声の記憶', info: '周回のときに名声を残す', cost: () => 5, max: 1 },
+  { id: 'keepFame', name: '信頼の記憶', info: '周回のときに信頼を残す', cost: () => 5, max: 1 },
   { id: 'keepBook', name: '図鑑の記憶', info: '周回のときに図鑑の登録と加工の解放を残す', cost: () => 5, max: 1 },
   { id: 'keepRef', name: '精錬の記憶', info: '周回のときに素材の精錬（品質）を残す', cost: () => 10, max: 1 },
 ];
@@ -1198,7 +1212,7 @@ function prestige() {
   const o = S, n = fresh();
   n.prevCurve = o.curve;
   // 周回をまたいで残るもの
-  n.run = o.run + 1; n.mc = o.mc; n.journal = o.journal; n.jread = o.jread; n.pref = o.pref; n.mazeTeam = o.mazeTeam.filter(u => n.homs.some(h => h.u === u)); n.open = o.open; n.newTab = {}; n.stones = o.stones + gain; n.pu = o.pu;
+  n.run = o.run + 1; n.mc = o.mc; n.journal = o.journal; n.jread = o.jread; n.pref = o.pref; n.mazeTeam = o.mazeTeam.filter(u => n.homs.some(h => h.u === u)); n.open = o.open; n.newTab = {}; n.stones = o.stones + gain; n.pu = o.pu; n.bond = o.bond; n.met = o.met; n.scn = o.scn;
   n.life = { totalMana: o.life.totalMana, prestiges: o.life.prestiges + 1, bestStones: Math.max(o.life.bestStones, gain) };
   n.skill = o.skill * Math.min(1, 0.1 + 0.1 * pu('skillKeep'));
   n.homs = mergeByKind(o.homs);
@@ -1218,15 +1232,15 @@ function prestige() {
 
 /* --- ホムンクルスの迷宮 --- */
 const MAZE_TEAM = 3;
-const FOES = ['泥人形', '石の番兵', '霧の獣', '水晶蜘蛛', '影の錬金術師', '鉄の巨像', '星喰い', '原初の影'];
+const FOES = ['埃のかたまり', '錆びた影', '霧の影', '水晶の虫', '誰かの影', '鉄くずの巨体', '星を呑む影', '原初の影'];
 const foeName = fl => FOES[Math.min(FOES.length - 1, Math.floor((fl - 1) / 10))];
 const PATHS = {
-  foe: { name: '敵', d: '戦って勝つと、マナと経験値' },
-  elite: { name: '強敵', d: '手ごわいが、報酬は3倍' },
-  chest: { name: '宝箱', d: 'マナと素材が手に入る' },
-  spring: { name: '泉', d: 'HPが4割回復する' },
-  altar: { name: '祭壇', d: 'この探索の間、攻撃力+15%' },
-  boss: { name: '番人', d: '10階ごとの番人。倒すと大きな報酬' },
+  foe: { name: '影', d: 'ほどくと、マナと経験値' },
+  elite: { name: '濃い影', d: '手ごわいが、報酬は3倍' },
+  chest: { name: '忘れ物', d: 'マナと素材が手に入る' },
+  spring: { name: '水たまり', d: '澄んだ水。HPが4割回復する' },
+  altar: { name: '祠', d: 'この探索の間、攻撃力+15%' },
+  boss: { name: 'よどみの芯', d: '深さ10ごとの芯。ほどくと大きな報酬' },
 };
 function teamTrait(team, id) { let s = 0; for (const h of team) for (const k of h.sk) if (k.id === id) s += RANK_V[k.r]; return s; }
 function cstat(h, team, buff) {
@@ -1241,7 +1255,7 @@ function cstat(h, team, buff) {
 }
 const foeStats = (fl, kind) => {
   const m = kind === 'boss' ? 6 : kind === 'elite' ? 2.5 : 1;
-  return { name: (kind === 'boss' ? '番人・' : kind === 'elite' ? '強い' : '') + foeName(fl), hp: Math.round(30 * 1.18 ** fl * m), atk: 4 * 1.15 ** fl * (kind === 'boss' ? 2 : kind === 'elite' ? 1.5 : 1) };
+  return { name: (kind === 'boss' ? '芯・' : kind === 'elite' ? '濃い' : '') + foeName(fl), hp: Math.round(30 * 1.18 ** fl * m), atk: 4 * 1.15 ** fl * (kind === 'boss' ? 2 : kind === 'elite' ? 1.5 : 1) };
 };
 const mzReward = (fl, kind) => 20 * 1.25 ** fl * (kind === 'boss' ? 10 : kind === 'elite' ? 3 : 1) * manaMult() * (1 + 0.05 * teamTrait(mzTeam(), 'mana'));
 const mzTeam = () => (S.maze ? S.maze.team : S.mazeTeam).map(homById).filter(Boolean);
@@ -1257,7 +1271,7 @@ function mzStart() {
   const team = S.mazeTeam.map(homById).filter(Boolean);
   if (!team.length) return false;
   const hp = {}; for (const h of team) hp[h.u] = cstat(h, team, 0).maxhp;
-  S.maze = { floor: 1, team: team.map(h => h.u), hp, buff: 0, bag: { mana: 0, items: {}, stones: 0 }, choices: genChoices(1), log: ['迷宮に入った。'] };
+  S.maze = { floor: 1, team: team.map(h => h.u), hp, buff: 0, bag: { mana: 0, items: {}, stones: 0 }, choices: genChoices(1), log: ['ノートを開いたまま眠りについた。色のない町で目を覚ます。'] };
   return true;
 }
 function mzFight(kind) {
@@ -1286,7 +1300,7 @@ function mzFight(kind) {
     m.bag.mana -= lost;
     for (const id in m.bag.items) m.bag.items[id] = Math.floor(m.bag.items[id] / 2);
     m.bag.stones = Math.floor(m.bag.stones / 2);
-    m.log = [`${foe.name}に敗れた……（${rounds}ターン）。持ち物の半分を落として逃げ帰った。`];
+    m.log = [`${foe.name}に押し返された……（${rounds}ターン）。持ち物の半分を落として、目を覚ました。`];
     return mzReturn(true);
   }
   const gain = mzReward(fl, kind);
@@ -1295,13 +1309,13 @@ function mzFight(kind) {
   if (kind === 'boss' && fl >= 30) { m.bag.stones++; extra = '　賢者の石を1個見つけた！'; }
   const xp = 3 * fl * (kind === 'boss' ? 4 : kind === 'elite' ? 2 : 1) * (1 + 0.1 * teamTrait(team, 'skill'));
   for (const h of team) if (m.hp[h.u] > 0) giveExp(h, xp);
-  if (kind === 'boss') celebrate('番人を倒した', foe.name, `地下${fl}階　+${fmt(gain)} マナ${extra}`, 'var(--bad)'); else banner(`${foe.name}を倒した！ +${fmt(gain)} マナ`, true);
-  m.log = [`${foe.name}を倒した！（${rounds}ターン、攻撃${hits}回${crits ? `・会心${crits}回` : ''}）　受けたダメージ ${fmt(taken)}${down.length ? `　${down.join('・')}が倒れた` : ''}`, `+${fmt(gain)} マナ　経験値 +${fmt(xp)}${extra}`];
+  if (kind === 'boss') celebrate('よどみの芯をほどいた', foe.name, `深さ${fl}　+${fmt(gain)} マナ${extra}`, 'var(--bad)'); else banner(`${foe.name}をほどいた！ +${fmt(gain)} マナ`, true);
+  m.log = [`${foe.name}をほどいた！（${rounds}ターン、攻撃${hits}回${crits ? `・会心${crits}回` : ''}）　受けたダメージ ${fmt(taken)}${down.length ? `　${down.join('・')}が倒れた` : ''}`, `+${fmt(gain)} マナ　経験値 +${fmt(xp)}${extra}`];
   return true;
 }
 function giveExp(h, x) {
   if (h.lv >= LV_MAX) return;
-  h.xp += x;
+  h.xp += x * bondMult('exp');
   const from = h.lv; let last = null;
   while (h.lv < LV_MAX && h.xp >= expNeed(h.lv)) { h.xp -= expNeed(h.lv); last = levelUp(h); }
   if (h.lv >= LV_MAX) h.xp = 0;
@@ -1319,7 +1333,7 @@ function mzChest() {
     m.bag.items[it.id] = (m.bag.items[it.id] || 0) + n;
     got = `、${it.name} ×${fmt(n)}`;
   }
-  m.log = [`宝箱を開けた。+${fmt(gain)} マナ${got}`];
+  m.log = [`誰かの忘れ物を見つけた。+${fmt(gain)} マナ${got}`];
 }
 function mzGo(i) {
   const m = S.maze; if (!m) return;
@@ -1327,8 +1341,8 @@ function mzGo(i) {
   let t = c.t;
   if (t === 'foe' || t === 'elite' || t === 'boss') { if (!mzFight(t)) return; if (!S.maze) return; }
   else if (t === 'chest') mzChest();
-  else if (t === 'spring') { for (const h of mzTeam()) { const mx = cstat(h, mzTeam(), m.buff).maxhp; if (m.hp[h.u] > 0) m.hp[h.u] = Math.min(mx, m.hp[h.u] + Math.round(mx * 0.4)); } m.log = ['泉の水を飲んだ。HPが回復した。']; }
-  else if (t === 'altar') { m.buff++; m.log = [`祭壇に祈った。攻撃力 +15%（この探索の間 合計+${m.buff * 15}%）`]; }
+  else if (t === 'spring') { for (const h of mzTeam()) { const mx = cstat(h, mzTeam(), m.buff).maxhp; if (m.hp[h.u] > 0) m.hp[h.u] = Math.min(mx, m.hp[h.u] + Math.round(mx * 0.4)); } m.log = ['澄んだ水たまりで休んだ。HPが回復した。']; }
+  else if (t === 'altar') { m.buff++; m.log = [`道ばたの祠に手を合わせた。攻撃力 +15%（この探索の間 合計+${m.buff * 15}%）`]; }
   m.floor++;
   if (m.floor - 1 > (S.life.mazeBest || 0)) S.life.mazeBest = m.floor - 1;
   m.choices = genChoices(m.floor);
@@ -1339,37 +1353,125 @@ function mzReturn(lost) {
   for (const id in m.bag.items) if (m.bag.items[id] > 0) addItem(id, m.bag.items[id]);
   S.stones += m.bag.stones;
   const items = Object.entries(m.bag.items).filter(([, n]) => n > 0).map(([id, n]) => `${ITEM[id].name}×${fmt(n)}`).join('、');
-  toast(`${lost ? '命からがら' : '無事に'}帰還した（地下${m.floor}階）: +${fmt(m.bag.mana)} マナ${items ? '、' + items : ''}${m.bag.stones ? `、賢者の石 +${m.bag.stones}` : ''}`, 6000);
+  toast(`${lost ? '飛び起きた' : '静かに目を覚ました'}（深さ${m.floor}）: +${fmt(m.bag.mana)} マナ${items ? '、' + items : ''}${m.bag.stones ? `、賢者の石 +${m.bag.stones}` : ''}`, 6000);
   S.mazeLast = m.log;
   S.maze = null;
   return false;
 }
 
-/* --- 依頼 --- */
-const REQ_SLOTS = 3;
-function newReq() {
-  const pool = ITEMS.filter(i => S.reg[i.id] && S.unlocked[i.area]);
-  if (!pool.length) return { wait: Date.now() + 15000 };
+/* --- 町の人（頼みごとと、仲を深める話） --- */
+// 仲の段に必要な、頼みごとをかなえた回数（累計）
+const BOND_NEED = [2, 5, 9, 14, 20];
+const BOND_MAX = BOND_NEED.length;
+const PEOPLE = [
+  { id: 'minato', name: '明野 ミナト', short: 'ミナト', role: '幼なじみ・自転車屋', perk: 'power',
+    likes: ['copper', 'iron', 'silver', 'cuIngot', 'feIngot', 'goldore', 'auIngot', 'mithril', 'mIngot'],
+    meet: () => true, meetHint: '最初から',
+    ask: [(x, n) => `「${x}、${n}個あると助かる。店の修理に使いたいんだ」`, (x, n) => `「${x}を${n}個、頼めるか？ お礼はちゃんとするから」`],
+    scenes: [
+      'アパートの前で、自転車のチェーンを直している人がいた。「あれ、もしかして……やっぱり！ 小学校で一緒だったよな？」\n明野ミナト。駅前の自転車屋の息子で、今は店を手伝っているらしい。',
+      '「鉄くず、どこで集めてるんだ？ まあいいや、助かった」\nミナトは工具を磨きながら、店の古い看板を見上げていた。',
+      '「親父がさ、そろそろ店を任せたいって。……俺、まだ決めてないんだよな」\nいつもの明るい声が、少しだけ小さかった。',
+      '「最近おまえ、顔色いいよな。前より楽しそうっていうか」\nミナトは、こちらのポケットの小石をちらりと見た。何も聞かなかった。',
+      '「……なあ、さっき鉄が光ってほどけたように見えたんだけど。気のせい？」\n答えられずにいると、ミナトは笑った。「いいよ。言いたくなったら言えよ」',
+      '店の看板が新しくなっていた。「継ぐことにした。直すのが好きなんだ、俺」\n「おまえが何をしてるのかは知らないけどさ。困ったら、いつでも直してやるよ」',
+    ] },
+  { id: 'shiori', name: '白波 シオリ', short: 'シオリ', role: '喫茶店「しずく」の店長', perk: 'mana',
+    likes: ['weed', 'herb', 'tonic', 'moonherb', 'moonElixir', 'mushroom', 'mist', 'sap'],
+    meet: () => true, meetHint: '最初から',
+    ask: [(x, n) => `「${x}を${n}個、分けてもらえませんか？ 新しいお茶を試したくて」`, (x, n) => `「${x}が${n}個あれば、祖母のメモが一つ確かめられそうなんです」`],
+    scenes: [
+      '駅の裏の喫茶店「しずく」。窓際で、店長の白波シオリさんがお茶を淹れていた。\n「はじめてのお客さんですね。この町、何もないでしょう？ でも、わたしは好きなんです」',
+      '「この薬草、どこで摘んだんですか？ 香りがすごくいい」\nシオリさんは、古いメモを大事そうに眺めていた。',
+      '「祖母がよく淹れてくれたお茶があって。何が入っていたのか、誰も知らないんです」\nメモには、かすれた字で草の名前がいくつか書かれていた。',
+      '「わたし、この町を出たことがないんです。出なくてもいいかな、って思ってたけど」\nシオリさんは、窓の外の川をしばらく見ていた。',
+      '「月見草……！ メモの最後の字、たぶんこれです」\n淹れたお茶は、少しだけ光って見えた。シオリさんは気づかなかったようだった。',
+      '「この味です。祖母の味」\nシオリさんは泣きながら笑った。「いつか、この味を持って、遠くの町にも行ってみたいな」',
+    ] },
+  { id: 'genzo', name: '土門 ゲンゾウ', short: 'ゲンゾウ', role: '引退した陶芸家', perk: 'skill',
+    likes: ['stone', 'clay', 'brick', 'boneMeal', 'humus', 'gravel', 'coal', 'sulfur'],
+    meet: () => S.st.reqDone >= 5 || bondLv('shiori') >= 2, meetHint: 'シオリの頼みごとをかなえていく',
+    ask: [(x, n) => `「${x}を${n}個。土の具合を見たい」`, (x, n) => `「${x}、${n}個だ。急がん」`],
+    scenes: [
+      'シオリさんに連れられて、川沿いの古い窯を訪ねた。\n「弟子ならとらん」土門ゲンゾウさんは、こちらを見もせずに言った。「……土を持ってくるなら、話は別だ」',
+      '「いい粘土だ。どこの川だ？」\nゲンゾウさんは土を指でつぶし、匂いをかいで、少しだけうなずいた。',
+      '「もう十年、窯に火を入れとらん。焼きたいものが、なくなった」\n棚には、ほこりをかぶった器がいくつも並んでいた。どれも、少しずつ欠けていた。',
+      '「おまえ、土に触るとき妙な顔をするな。土の声でも聞いとるのか」\n冗談なのか本気なのか、分からなかった。',
+      '窯に火が入った。「最後に一つ、納得のいくものを焼く。手伝え」\n炎の色は、ほどけるマナの色によく似ていた。',
+      '焼き上がった器は、どこも欠けていなかった。「……完璧とは、何も足さなくていいことだ」\nどこかで聞いた言葉だった。あのノートの中で。',
+    ] },
+  { id: 'hiyori', name: '七草 ヒヨリ', short: 'ヒヨリ', role: '河川敷で絵を描く中学生', perk: 'exp',
+    likes: ['twig', 'weed', 'leaf', 'bark', 'fairy', 'resin', 'fairyLamp', 'worldleaf', 'crystal'],
+    meet: () => S.st.homsMade >= 1, meetHint: 'ホムンクルスを生み出す',
+    ask: [(x, n) => `「${x}、${n}個……描きたいの」`, (x, n) => `「${x}を${n}個。色を見たい」`],
+    scenes: [
+      '河川敷で、スケッチブックを抱えた女の子がこちらを見ていた。\n「その子、なんて名前？」——足元のコロを、まっすぐ指さしていた。',
+      '七草ヒヨリ。中学生。学校には、しばらく行っていないらしい。\n「……この葉っぱ、きれい」それだけ言って、また絵を描きはじめた。',
+      'スケッチブックには、コロやハッパが何枚も描かれていた。\n「みんなには見えないんでしょ。わたしにも、ほかの人に見えないものが見える。だから、ここにいるの」',
+      '「学校、行こうと思えば行けるの。でも、見えてるものの話ができないから」\nヒヨリはコロを膝にのせて、黙って川を見ていた。',
+      '「ねえ、夜の町、行ってるでしょ。色のない町」\nヒヨリはスケッチブックの最後のページを見せた。色のない町の絵だった。',
+      '「明日から、学校行ってみる。見えてるものは、絵にすればいいって分かったから」\n最後の絵には、コロとハッパと、こちらの後ろ姿が描かれていた。',
+    ] },
+  { id: 'kanata', name: '遠見 カナタ', short: 'カナタ', role: '鉱山を調べる大学院生', perk: 'explore',
+    likes: ['crystal', 'agPowder', 'spiritstone', 'amethyst', 'goldore', 'dragonscale', 'scalePlate', 'starshard', 'gunpowder'],
+    meet: () => !!S.unlocked.a2, meetHint: '霧の出る里山へ行く',
+    ask: [(x, n) => `「${x}のサンプルを${n}個、お願いできますか。比較に使います」`, (x, n) => `「${x}を${n}個。測定値を確かめたいんです」`],
+    scenes: [
+      '里山の帰りのバスで、隣の人が大きな測定器を抱えていた。\n「遠見カナタ。院生です。閉じた鉱山を調べています。……あなた、山で何を拾ってるんですか？」',
+      '「鉱物、詳しいんですか。分類が正確だ」\nカナタはメモを取りながら、測定器の針を何度も見直していた。',
+      '「この測定器、夜にだけおかしな値を出すんです。故障じゃない。三台とも同じ値です」\n「見えないものは信じません。でも、測れるものは信じます」',
+      '「鉱山の調査、手伝ってもらえませんか。人手が足りなくて」\n坑道の入口で、カナタは懐中電灯を二本渡してくれた。',
+      '「あなたが石に触れると、測定器が跳ねる。……説明できますか」\n黙っていると、カナタはメモに何かを書き、すぐに線を引いて消した。',
+      '「論文には書けません。でも、記録は残します」\nカナタはデータを一枚だけ印刷して、こちらに渡した。「あなたの分です。いつか、続きを測らせてください」',
+    ] },
+];
+const PERSON = Object.fromEntries(PEOPLE.map(p => [p.id, p]));
+const PERK_NAME = { power: '採取力', mana: 'マナ', skill: '熟練の伸び', exp: 'ホムンクルスの経験値', explore: '探索の進み' };
+// 周回のたびに、古本屋の店主が一言だけ話す
+const STORE_LINES = ['……いらっしゃい。そのノートなら、まだ棚にあるよ', '前にも、そのノートを手に取った人がいた気がするね', '春は何度来ても、同じ顔をしているね', '値段は変わらないよ。何度来てもね', '……字が、少しずつ上手になっていく', '棚の空きは、そのうち埋まるさ', 'よく来たね。いや、はじめましてだったかな'];
+const storeLine = run => run - 2 < STORE_LINES.length ? STORE_LINES[Math.max(0, run - 2)] : STORE_LINES[4 + (run % 3)];
+const bondPts = id => S.bond[id] || 0;
+const bondLv = id => BOND_NEED.filter(n => bondPts(id) >= n).length;
+const bondNext = id => BOND_NEED[bondLv(id)];
+const perkOf = id => 1 + 0.1 * bondLv(id) + (bondLv(id) >= BOND_MAX ? 0.5 : 0);
+const bondMult = perk => PEOPLE.filter(p => p.perk === perk && S.met[p.id]).reduce((a, p) => a * perkOf(p.id), 1);
+const sceneKey = (id, lv) => id + ':' + lv;
+// 読める話（出会い＋仲の段）のうち、まだ読んでいないもの
+const unreadScenes = () => PEOPLE.reduce((a, p) => { if (!S.met[p.id]) return a; for (let l = 0; l <= bondLv(p.id); l++) if (!S.scn[sceneKey(p.id, l)]) a++; return a; }, 0);
+function checkPeople() {
+  for (const p of PEOPLE) {
+    if (S.met[p.id] || !featOpen('req') || !p.meet()) continue;
+    S.met[p.id] = true;
+    celebrate('出会い', p.name, `${p.role}。町の人の画面で話を読めます`, 'var(--ok)');
+  }
+}
+function newReq(p) {
+  const pool = p.likes.map(id => ITEM[id]).filter(i => S.reg[i.id] && S.unlocked[i.area]);
+  if (!pool.length) return { wait: Date.now() + 15000, none: true };
   const it = pool[Math.floor(Math.random() * pool.length)];
   const scale = 1 + Math.log10(1 + power());
   const n = Math.max(1, Math.ceil((5 + Math.random() * 20) * scale * (it.kind === 'proc' ? 0.3 : 1)));
-  return { id: it.id, n, rw: n * unitMana(it.id) * 2.5 };
+  return { id: it.id, n, rw: n * unitMana(it.id) * 2.5, a: Math.floor(Math.random() * p.ask.length) };
 }
 function refreshReqs() {
   const now = Date.now();
-  for (let i = 0; i < REQ_SLOTS; i++) {
-    const r = S.reqs[i];
-    if (!r || (r.wait && r.wait <= now)) S.reqs[i] = newReq();
+  for (const p of PEOPLE) {
+    if (!S.met[p.id]) continue;
+    const r = S.reqs[p.id];
+    if (!r || (r.wait && r.wait <= now)) S.reqs[p.id] = newReq(p);
   }
 }
-function deliverReq(i) {
-  const r = S.reqs[i];
-  if (!r || r.wait || inv(r.id) < r.n) return false;
+function deliverReq(pid) {
+  const r = S.reqs[pid], p = PERSON[pid];
+  if (!p || !r || r.wait || inv(r.id) < r.n) return false;
   S.inv[r.id] -= r.n;
   addMana(r.rw);
+  const before = bondLv(pid);
   S.fame++; S.st.reqDone++;
-  S.reqs[i] = { wait: Date.now() + 40000 };
-  toast(`依頼を達成: +${fmt(r.rw)} マナ、名声 +1`);
+  S.bond[pid] = bondPts(pid) + 1;
+  S.reqs[pid] = { wait: Date.now() + 40000 };
+  if (bondLv(pid) > before) celebrate('仲が深まった', `${p.short}　${bondLv(pid)}段目`, `${PERK_NAME[p.perk]} ${fmtX(perkOf(pid))}。新しい話を読めます`, 'var(--ok)');
+  else toast(`${p.short}の頼みごとをかなえた: +${fmt(r.rw)} マナ、信頼 +1`);
   return true;
 }
 
@@ -1397,7 +1499,7 @@ function structKey() {
       return base + regSig(labIds());
     }
     case 'tools': return `t${ua}|${S.homs.map(h => [h.u, h.lv, h.f, h.pk.length, STAT_IDS.map(st => h.s[st]).join('.'), h.sk.map(k => k.id + k.r).join('')].join(':')).join(',')}|${ui.traitHelp ? 'h' : ''}`;
-    case 'mission': return `m${ui.misView}${ui.misView === 'req' ? S.reqs.map(r => r && !r.wait && inv(r.id) >= r.n ? 1 : 0).join('') : ''}${ui.misArea}${ua}${S.run}:${MIS.filter(misOpen).length}|${S.reqs.map(r => r ? (r.wait ? 'w' : r.id) : '-').join(',')}`;
+    case 'mission': return `m${ui.misView}${ui.misArea}${ua}${S.run}:${MIS.filter(misOpen).length}|${ui.misView === 'req' ? PEOPLE.map(p => { const r = S.reqs[p.id]; return [S.met[p.id] ? 1 : 0, bondLv(p.id), r ? (r.wait ? 'w' + (r.none ? 'n' : '') : r.id + (inv(r.id) >= r.n ? 'y' : 'n')) : '-', personUnread(p)].join(''); }).join(',') : ''}`;
     case 'maze': return `z${S.maze ? [S.maze.floor, S.maze.choices.map(c => c.t + (c.hide ? 'h' : '')).join(''), JSON.stringify(S.maze.hp), S.maze.log.join('')].join('|') : 'off' + S.mazeTeam.join(',') + S.homs.map(h => h.u + ':' + h.lv).join(',')}`;
     case 'book': return `b${ui.bookView || 'items'}${regCount()}${ua}${Object.keys(S.journal).length}`;
     case 'up': return 'u' + (ui.upView || 'shop') + (S.prevCurve.length ? 'p' : '') + S.up.autodis + Object.keys(S.unlocked).join(',') + S.run + JSON.stringify(S.pu);
@@ -1446,7 +1548,7 @@ function update() {
   const np = pickCount();
   hb.hidden = np === 0; hb.textContent = np;
   const nReady = MIS.filter(m => misOpen(m) && S.unlocked[m.area] && ready(m)).length
-    + S.reqs.filter(q => q && !q.wait && inv(q.id) >= q.n).length;
+    + Object.values(S.reqs).filter(q => q && !q.wait && inv(q.id) >= q.n).length + unreadScenes();
   const g = nextGoal();
   const ge = document.getElementById('goal');
   document.getElementById('goalText').textContent = g.text;
@@ -1770,8 +1872,8 @@ function vTools() {
 /* --- 迷宮 --- */
 function vMaze() {
   const best = S.life.mazeBest || 0;
-  const head = `<section class="area-head"><span class="eyebrow">ホムンクルスの迷宮　最深 地下${fmt(best)}階（マナ ${fmtX(mazeMult())}）</span><h2>迷宮</h2>
-    ${help('maze', `<p class="muted small">ホムンクルスを最大${MAZE_TEAM}人連れて、終わりのない迷宮を進みます。深いほど敵は強く、報酬も大きくなります。いつでも帰還して持ち帰れますが、全滅すると集めたものの半分を失います。最深到達階1つごとに、マナがずっと2%増えます。</p>`)}</section>`;
+  const head = `<section class="area-head"><span class="eyebrow">色のない町　いちばん深く ${fmt(best)}（マナ ${fmtX(mazeMult())}）</span><h2>よどみ</h2>
+    ${help('maze', `<p class="muted small">ノートを開いたまま眠ると、人のいない色のない町で目を覚まします。そこには、ほどかれなかったマナが固まった「よどみ」があり、埃や錆の形をとってうろついています。ホムンクルスを最大${MAZE_TEAM}人連れて、よどみをほどきながら奥へ進みます。深いほど手ごわく、報酬も大きくなります。いつでも目を覚まして持ち帰れますが、全員が倒れると集めたものの半分を失います。いちばん深く進んだ深さ1つごとに、マナがずっと2%増えます。</p>`)}</section>`;
   const m = S.maze;
   if (!m) {
     const team = S.mazeTeam;
@@ -1785,9 +1887,9 @@ function vMaze() {
         <div class="acts"><button class="btn ${on ? 'okb' : ''}" type="button" data-act="mzpick" data-id="${h.u}" ${!on && team.length >= MAZE_TEAM ? 'disabled' : ''}>${on ? '連れていく（外す）' : team.length >= MAZE_TEAM ? 'もう連れていけない' : '連れていく'}</button></div>
       </div>`;
     }).join('');
-    const last = S.mazeLast ? `<div class="panel"><div class="small muted">前回の探索</div>${S.mazeLast.map(l => `<p class="small">${esc(l)}</p>`).join('')}</div>` : '';
+    const last = S.mazeLast ? `<div class="panel"><div class="small muted">前の夜</div>${S.mazeLast.map(l => `<p class="small">${esc(l)}</p>`).join('')}</div>` : '';
     return `${head}${last}
-    <div class="panel"><div class="row-between"><span>連れていく子 ${team.length} / ${MAZE_TEAM}</span><button class="btn pri" type="button" data-act="mzstart" ${team.length ? '' : 'disabled'}>迷宮に入る</button></div>
+    <div class="panel"><div class="row-between"><span>連れていく子 ${team.length} / ${MAZE_TEAM}</span><button class="btn pri" type="button" data-act="mzstart" ${team.length ? '' : 'disabled'}>眠りにつく</button></div>
     ${help('team', `<p class="small muted">力と知恵が攻撃、力と器用がHP、速さが2回攻撃、運が会心、器用が回避に効きます。技能「豪腕」は攻撃、「修練」は経験値、「錬金」は報酬、「洞察」は分かれ道の先を見通す力になります。</p>`)}</div>
     <div class="list">${cards || '<p class="small muted">ホムンクルスがいません。相棒の画面で生み出してください。</p>'}</div>`;
   }
@@ -1802,20 +1904,20 @@ function vMaze() {
   }).join('');
   return `${head}
   <div class="panel mz">
-    <div class="row-between"><h3>地下${fmt(m.floor)}階</h3><span class="small muted">${m.buff ? `祭壇の加護 攻撃+${m.buff * 15}%` : ''}</span></div>
+    <div class="row-between"><h3>深さ ${fmt(m.floor)}</h3><span class="small muted">${m.buff ? `祠の加護 攻撃+${m.buff * 15}%` : ''}</span></div>
     ${bars}
     <div class="small">持ち物: <b class="q">${fmt(m.bag.mana)} マナ</b>${bagItems ? '、' + bagItems : ''}${m.bag.stones ? `、賢者の石 ${m.bag.stones}個` : ''}</div>
   </div>
   <div class="panel">${m.log.map(l => `<p class="small">${esc(l)}</p>`).join('')}</div>
   <h3>分かれ道</h3>
   <div class="paths">${choices}</div>
-  <div class="acts">${confirmBtn('', 'data-act="mzback"', '帰還する（持ち物を持ち帰る）', 'もう一度タップで帰還')}</div>`;
+  <div class="acts">${confirmBtn('', 'data-act="mzback"', '目を覚ます（持ち物を持ち帰る）', 'もう一度タップで目を覚ます')}</div>`;
 }
 
 /* --- ミッションと依頼 --- */
 function vMission() {
   if (!featOpen('req')) ui.misView = 'mis';
-  const seg = [['mis', 'ミッション'], ['req', '依頼']]
+  const seg = [['mis', 'ミッション'], ['req', '町の人']]
     .map(([k, n]) => `<button type="button" data-act="misview" data-id="${k}" aria-pressed="${ui.misView === k}">${n}</button>`).join('');
   return `${featOpen('req') ? `<div class="seg full" role="group" aria-label="表示の切り替え">${seg}</div>` : ''}${ui.misView === 'req' ? vReq() : vMis()}`;
 }
@@ -1851,35 +1953,49 @@ function vMis() {
   ${open.map(card).join('')}
   ${done.length ? `<h4>達成済み</h4>${done.map(doneRow).join('')}` : ''}`;
 }
+const personUnread = p => { if (!S.met[p.id]) return 0; let n = 0; for (let l = 0; l <= bondLv(p.id); l++) if (!S.scn[sceneKey(p.id, l)]) n++; return n; };
 function vReq() {
-  const cards = S.reqs.slice(0, REQ_SLOTS).map((r, i) => {
+  const cards = PEOPLE.filter(p => S.met[p.id]).map(p => {
+    const lv = bondLv(p.id), r = S.reqs[p.id], un = personUnread(p);
+    let body;
     if (!r || r.wait) {
-      return `<div class="mis"><p class="muted small">次の依頼が届くまで ${tx(() => Math.max(0, Math.ceil((((S.reqs[i] && S.reqs[i].wait) || 0) - Date.now()) / 1000)))} 秒</p></div>`;
-    }
-    const m = ITEM[r.id];
-    const mc = () => missingCost({ [r.id]: r.n }, 1);
-    return `<div class="mis r${m.r}" ${cl(() => inv(r.id) >= r.n, 'ready')}>
-      <div class="hd"><h3 class="rc">${esc(m.name)} を ${fmt(r.n)}個</h3><span class="rw">+${fmt(r.rw)} マナ・名声+1</span></div>
+      body = r && r.none
+        ? `<p class="small muted">今は特に頼みごとはないみたい（好きな素材が図鑑に載ると頼まれます）</p>`
+        : `<p class="small muted">次の頼みごとまで ${tx(() => { const q = S.reqs[p.id]; return Math.max(0, Math.ceil((((q && q.wait) || 0) - Date.now()) / 1000)); })} 秒</p>`;
+    } else {
+      const m = ITEM[r.id];
+      const mc = () => missingCost({ [r.id]: r.n }, 1);
+      body = `<p class="ask">${esc(p.ask[r.a || 0](m.name, fmt(r.n)))}</p>
+      <div class="row-between small"><span class="rc r${m.r}">${esc(m.name)} を ${fmt(r.n)}個</span><span class="rw">+${fmt(r.rw)} マナ・信頼+1・仲+1</span></div>
       <div class="prog"><i ${wd(() => Math.min(1, inv(r.id) / r.n) * 100)}></i></div>
       <div class="pv">手持ち ${tx(() => fmt(inv(r.id)))} / ${fmt(r.n)}</div>
       <div class="acts">
-        <button class="btn okb" type="button" data-act="req" data-id="${i}" ${dz(() => inv(r.id) < r.n)}>納品する</button>
-        ${inv(r.id) >= r.n ? '' : `<button class="btn mana" type="button" data-act="reqfill" data-id="${i}" ${dz(() => { const c = mc(); return inv(r.id) >= r.n || c === null || S.mana < c; })}>不足分を生成 <small>${tx(() => { const c = mc(); return c === null ? '-' : fmt(c); })}</small></button>`}
-        <button class="btn sm" type="button" data-act="reqskip" data-id="${i}">断る</button>
-      </div>
+        <button class="btn okb" type="button" data-act="req" data-id="${p.id}" ${dz(() => inv(r.id) < r.n)}>渡す</button>
+        ${inv(r.id) >= r.n ? '' : `<button class="btn mana" type="button" data-act="reqfill" data-id="${p.id}" ${dz(() => { const c = mc(); return inv(r.id) >= r.n || c === null || S.mana < c; })}>不足分を生成して渡す <small>${tx(() => { const c = mc(); return c === null ? '-' : fmt(c); })}</small></button>`}
+        <button class="btn sm" type="button" data-act="reqskip" data-id="${p.id}">また今度</button>
+      </div>`;
+    }
+    return `<div class="mis" ${cl(() => !!(S.reqs[p.id] && !S.reqs[p.id].wait && inv(S.reqs[p.id].id) >= S.reqs[p.id].n), 'ready')}>
+      <div class="hd"><h3>${esc(p.name)}</h3><span class="rw">${PERK_NAME[p.perk]} ${fmtX(perkOf(p.id))}</span></div>
+      <p class="small muted">${esc(p.role)}　仲 ${lv} / ${BOND_MAX}${lv < BOND_MAX ? `（次の段まで あと${bondNext(p.id) - bondPts(p.id)}回）` : '（いちばん深い）'}</p>
+      <div class="bond">${'<i class="on"></i>'.repeat(lv)}${'<i></i>'.repeat(BOND_MAX - lv)}</div>
+      ${body}
+      <div class="acts"><button class="btn${un ? ' mana' : ''}" type="button" data-act="story" data-id="${p.id}">話を読む${un ? `（新しい話 ${un}）` : ''}</button></div>
     </div>`;
   }).join('');
+  const later = PEOPLE.filter(p => !S.met[p.id]).map(p => `<div class="mis done"><span class="nm">まだ会っていない人</span><span class="ck">${esc(p.meetHint)}</span></div>`).join('');
   return `<section class="area-head">
-    <span class="eyebrow">依頼</span>
-    ${help('req', `<p class="muted small">村の人たちから素材や加工品の注文が届きます。報酬は価値の2.5倍のマナと名声です。名声が1増えるごとに、マナがずっと3%増えます。依頼は図鑑に登録したものから選ばれます。</p>`)}
+    <span class="eyebrow">町の人</span>
+    ${help('req', `<p class="muted small">町の人から、素材の頼みごとが届きます。渡すとマナと信頼が手に入り、その人との仲が深まります。仲が1段深まるごとに、その人に関わる効果がずっと上がり、新しい話を読めます。仲は周回しても残ります（相手は覚えていなくても、どこかで覚えているようです）。信頼が1増えるごとに、マナが3%増えます。</p>`)}
   </section>
-  <div class="panel"><div class="row-between"><span>名声</span><b>${tx(() => fmt(S.fame))}</b></div><div class="row-between small"><span class="muted">名声によるマナ</span><b class="q">${tx(() => fmtX(fameMult()))}</b></div></div>
-  ${cards}`;
+  <div class="panel"><div class="row-between"><span>信頼</span><b>${tx(() => fmt(S.fame))}</b></div><div class="row-between small"><span class="muted">信頼によるマナ</span><b class="q">${tx(() => fmtX(fameMult()))}</b></div></div>
+  ${cards || '<p class="small muted">まだ誰とも会っていません。</p>'}
+  ${later}`;
 }
 
 /* --- 図鑑 --- */
 function vBook() {
-  const seg = [['items', '素材の記録'], ['journal', '師匠の手記']]
+  const seg = [['items', '素材の記録'], ['journal', '古いノート']]
     .map(([k, n]) => `<button type="button" data-act="bookview" data-id="${k}" aria-pressed="${(ui.bookView || 'items') === k}">${n}${k === 'journal' && unreadJournal() ? '（新）' : ''}</button>`).join('');
   return `<div class="seg full" role="group" aria-label="図鑑の表示">${seg}</div>${ui.bookView === 'journal' ? vJournal() : vItems()}`;
 }
@@ -1898,8 +2014,8 @@ function vJournal() {
   setTimeout(() => { for (const j of JOURNAL) if (S.journal[j.id]) S.jread[j.id] = true; }, 0);
   return `
   <section class="area-head">
-    <span class="eyebrow">師匠の手記 ${got} / ${JOURNAL.length}ページ</span>
-    ${help('journal', `<p class="muted small">工房に残されていた手記。錬金術師として進むほど、読めるページが増えていきます。周回しても失われません。</p>`)}
+    <span class="eyebrow">古いノート ${got} / ${JOURNAL.length}ページ</span>
+    ${help('journal', `<p class="muted small">駅前の古本屋で買った、持ち主の分からないノート。進むほど、読めるページが増えていきます。周回しても失われません。</p>`)}
   </section>
   <div class="journal">${pages}</div>`;
 }
@@ -1955,13 +2071,13 @@ function vStone() {
       ${maxed ? '' : `<button class="btn pri sm" type="button" data-act="buypu" data-id="${p.id}" ${dz(() => S.stones < p.cost(l()))}>習得 <small>石${tx(() => fmt(p.cost(l())))}</small></button>`}
     </div>`;
   }).join('');
-  const keep = ['師匠の手記', '迷宮の最深到達階', 'ミッションの報酬（達成回数）', 'ホムンクルス（因果融合: 種類ごとに全員が1人にまとまり、能力値と技能はそれぞれ一番良いものが残る。上限+15、Lv1から育ち直す）', `熟練の${Math.round(Math.min(1, 0.1 + 0.1 * pu('skillKeep')) * 100)}%`, '賢者の石と、石で習得した強化']
-    .concat(pu('keepFame') ? ['名声'] : [], pu('keepBook') ? ['図鑑と加工の解放'] : [], pu('keepRef') ? ['精錬'] : [], pu('autodis') ? ['自動分解装置'] : []);
+  const keep = ['古いノート', 'よどみの最深到達', 'ミッションの報酬（達成回数）', 'ホムンクルス（因果融合: 種類ごとに全員が1人にまとまり、能力値と技能はそれぞれ一番良いものが残る。上限+15、Lv1から育ち直す）', `熟練の${Math.round(Math.min(1, 0.1 + 0.1 * pu('skillKeep')) * 100)}%`, '賢者の石と、石で習得した強化']
+    .concat(['町の人との仲（特典と話）'], pu('keepFame') ? ['信頼'] : [], pu('keepBook') ? ['図鑑と加工の解放'] : [], pu('keepRef') ? ['精錬'] : [], pu('autodis') ? ['自動分解装置'] : []);
   return `
   <section class="area-head">
     <span class="eyebrow">${S.run}周目</span>
     <h2>賢者の石</h2>
-    ${help('stone', `<p>師匠が探し続けた、完璧な物質。錬成すると世界がはじまりに戻り、錬金術師としての力の一部だけを持って、もう一度やり直します。</p><p><b>残るもの</b>: ${keep.join('、')}</p><p><b>はじまりに戻るもの</b>: マナ、素材、採取地と探索、腕前・使い魔・分解炉などの強化、依頼${pu('keepFame') ? '' : '、名声'}${pu('keepBook') ? '' : '、図鑑と加工の解放'}${pu('keepRef') ? '' : '、精錬'}、ミッションの達成状況（報酬は残る）</p><p>習得した強化は、周回しても失われません。</p>`)}
+    ${help('stone', `<p>ノートに書かれた、完璧な物質。錬成すると春のはじまりに戻り、身につけた力の一部だけを持って、もう一度やり直します。覚えているのは自分だけです。</p><p><b>残るもの</b>: ${keep.join('、')}</p><p><b>はじまりに戻るもの</b>: マナ、素材、採取地と探索、腕前・使い魔・分解炉などの強化、頼みごと${pu('keepFame') ? '' : '、信頼'}${pu('keepBook') ? '' : '、図鑑と加工の解放'}${pu('keepRef') ? '' : '、精錬'}、ミッションの達成状況（報酬は残る）</p><p>習得した強化は、周回しても失われません。</p>`)}
   </section>
   <div class="panel">
     <div class="row-between"><span>持っている賢者の石</span><b class="q">${tx(() => fmt(S.stones))} 個</b></div>
@@ -1972,7 +2088,7 @@ function vStone() {
     ${insHtml(STONE_IN, 1)}
     <div class="row-between"><span class="small">手に入る賢者の石</span><b class="q">${tx(() => fmt(stoneGain()))} 個</b></div>
     <p class="small muted">この周で集めたマナが多いほど増えます（この周の累計 ${tx(() => fmt(S.st.totalMana))} マナ）。</p>
-    <p class="small">残るもの: ミッションの報酬、ホムンクルス（種類ごとに因果融合）、迷宮の記録、熟練の一部、手記（くわしくは上の「説明」）</p>
+    <p class="small">残るもの: ミッションの報酬、ホムンクルス（種類ごとに因果融合）、よどみの記録、熟練の一部、ノート（くわしくは上の「説明」）</p>
     <div class="acts">${confirmBtn('pri', `data-act="prestige" ${dz(() => { const c = mc(); return c === null || S.mana < c; })}`, `錬成して周回する <small>${tx(() => { const c = mc(); return c === null ? '未登録の材料あり' : c > 0 ? '不足分 ' + fmt(c) + ' マナ' : '手持ちで足ります'; })}</small>`, 'もう一度タップで周回')}</div>
   </div>
   <h3>賢者の石で習得する強化</h3>
@@ -2051,14 +2167,15 @@ main.addEventListener('click', e => {
     case 'claim': { const m = MISS[id]; if (!m || !misOpen(m) || !ready(m)) break; if (m.deliver) S.inv[m.deliver] -= m.goal; complete(m); break; }
     case 'claimfill': { const m = MISS[id]; if (!m || !misOpen(m)) break; fillMissing({ [m.deliver]: m.goal }, 1); break; }
     case 'brute': { const m = MISS[id]; if (!m || !misOpen(m) || S.mana < m.brute) break; if (!armed(b)) return; S.mana -= m.brute; complete(m, 'マナで押し通した'); break; }
-    case 'req': deliverReq(Number(id)); break;
-    case 'reqfill': { const r = S.reqs[Number(id)]; if (r && !r.wait && fillMissing({ [r.id]: r.n }, 1)) deliverReq(Number(id)); break; }
-    case 'reqskip': S.reqs[Number(id)] = { wait: Date.now() + 30000 }; break;
+    case 'req': deliverReq(id); break;
+    case 'reqfill': { const r = S.reqs[id]; if (r && !r.wait && fillMissing({ [r.id]: r.n }, 1)) deliverReq(id); break; }
+    case 'reqskip': S.reqs[id] = { wait: Date.now() + 30000 }; break;
+    case 'story': openPerson(id); break;
     case 'buy': buy(id); break;
     case 'upview': ui.upView = id; break;
     case 'bookview': ui.bookView = id; break;
     case 'buypu': if (buyPu(id)) toast(`「${PU[id].name}」を習得しました`); break;
-    case 'prestige': { if (!armed(b)) return; const g = prestige(); if (g) { setTabs(); checkJournal(); celebrate('賢者の石', `${S.run}周目のはじまり`, `賢者の石 +${g}個。ホムンクルスたちは因果融合して、ひとつになった。`, 'var(--r4)'); window.scrollTo(0, 0); } break; }
+    case 'prestige': { if (!armed(b)) return; const g = prestige(); if (g) { setTabs(); checkJournal(); celebrate('春のはじまり', `${S.run}周目`, `賢者の石 +${g}個。古本屋の店主「${storeLine(S.run)}」`, 'var(--r4)'); window.scrollTo(0, 0); } break; }
     case 'buymax': { let n = 0; while (n < 1000 && buy(id)) n++; if (n > 1) toast(`${UP[id].name}を${n}レベル上げました`); break; }
   }
   update();
@@ -2253,6 +2370,39 @@ document.getElementById('verBtn').addEventListener('click', () => {
 });
 document.getElementById('verClose').addEventListener('click', () => { verBg.hidden = true; });
 verBg.addEventListener('click', e => { if (e.target === verBg) verBg.hidden = true; });
+// 話を読むシート
+const storyBg = document.getElementById('storyBg');
+function openStory(title, html) {
+  document.getElementById('storyTitle').textContent = title;
+  document.getElementById('storyBody').innerHTML = html;
+  storyBg.hidden = false;
+  document.getElementById('storyBody').scrollTop = 0;
+}
+const paras = t => t.split('\n').map(x => `<p>${esc(x)}</p>`).join('');
+const SCENE_TITLES = ['出会い', '1段目', '2段目', '3段目', '4段目', '5段目'];
+function openPerson(pid) {
+  const p = PERSON[pid];
+  if (!p || !S.met[pid]) return;
+  const lv = bondLv(pid);
+  const html = p.scenes.map((t, l) => {
+    if (l > lv) return `<div class="page locked"><span class="no">${SCENE_TITLES[l]}</span><p class="muted small">まだ読めない（仲が${l}段目になると読めます）</p></div>`;
+    const isNew = !S.scn[sceneKey(pid, l)];
+    S.scn[sceneKey(pid, l)] = true;
+    return `<article class="page"><div class="row-between"><span class="no">${SCENE_TITLES[l]}</span>${isNew ? '<span class="tag">新しい</span>' : ''}</div>${paras(t)}</article>`;
+  }).join('');
+  openStory(`${p.name}（${p.role}）`, html);
+  update();
+}
+const INTRO = '春から、この町でひとり暮らしを始めた。川と山と、駅前の小さな商店街があるだけの町だ。\n駅前の古本屋「ひだまり書房」で、表紙に何も書かれていない古いノートを買った。店主は、なぜか少しだけ笑っていた。\nその夜、色のない町で目を覚ます夢を見た。\n次の朝、河川敷で拾った小石を握ると、それは淡い光になってほどけた。';
+function showIntro() {
+  S.pref = S.pref || {};
+  if (S.pref.intro) return;
+  S.pref.intro = true;
+  openStory('はじまり', `<article class="page">${paras(INTRO)}</article><p class="small muted">まずは、採取の画面で素材を集めてみよう。</p>`);
+}
+document.getElementById('storyClose').addEventListener('click', () => { storyBg.hidden = true; });
+storyBg.addEventListener('click', e => { if (e.target === storyBg) storyBg.hidden = true; });
+
 // 前に遊んだときと版が違えば、変わった所を知らせる
 function notifyVersion() {
   S.pref = S.pref || {};
@@ -2303,7 +2453,7 @@ function tick() {
     }
   }
   if (frame % 5 === 0 || dt > 5) processAuto();
-  if (frame % 10 === 0) { refreshReqs(); checkJournal(); recordCurve(); }
+  if (frame % 10 === 0) { checkPeople(); refreshReqs(); checkJournal(); recordCurve(); }
   if (frame % 3 === 0) checkFeats(false);
   if (++frame % 2 === 0 || dt > 5) update();
 }
@@ -2325,6 +2475,7 @@ function start(data) {
   refreshReqs();
   render();
   notifyVersion();
+  showIntro();
   if (!(data && data.state) && S.savedAt) { const sec = (Date.now() - S.savedAt) / 1000; if (sec > 10) { offline(sec); update(); } }
   lastTick = Date.now();
   setInterval(tick, 100);
