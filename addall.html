@@ -291,6 +291,12 @@ details.help[open] summary { margin-bottom: 4px; }
 .vh-item ul { margin: 4px 0 0; padding-left: 1.2em; font-size: 13px; }
 
 [hidden] { display: none !important; }
+.rs-step { display: flex; gap: 8px; align-items: center; font-size: 13px; padding: 4px 0; border-top: 1px solid var(--line); }
+.rs-step .st { flex: none; min-width: 3.2em; font-size: 12px; color: var(--muted); }
+.rs-step.done .st { color: var(--ok); font-weight: 700; }
+.rs-step.next { font-weight: 700; }
+.rs-step.lock { color: var(--muted); }
+.ch.sel { border-color: var(--mana); box-shadow: 0 0 0 2px var(--mana-soft); }
 .bond { display: flex; gap: 4px; }
 .bond i { width: 22px; height: 6px; border-radius: 3px; background: var(--line); }
 .bond i.on { background: var(--ok); }
@@ -636,6 +642,7 @@ const UPS = [
     eff: l => l ? '設置済み' : '未設置', cost: () => 300 },
 ];
 const UP = Object.fromEntries(UPS.map(u => [u.id, u]));
+const upCost = (u, l) => u.cost(l) * (chDone('noup') ? 0.5 : 1);
 
 /* --- 古いノート（物語） --- */
 const JOURNAL = [
@@ -687,6 +694,7 @@ const FEATS = [
   { id: 'mission', name: 'ミッション', tab: 'mission', hint: '25回採取する', p: () => [S.st.manual + S.st.auto, 25], d: '達成すると、ずっと続く強化がもらえます。' },
   { id: 'book', name: '図鑑', tab: 'book', hint: '素材を5種類見つける', p: () => [regCount(), 5], d: '見つけたものが値打ちの順に並びます。古いノートもここで読めます。' },
   { id: 'lab', name: '工房', tab: 'lab', hint: 'マナを累計300集める', p: () => [S.life.totalMana, 300], d: '素材の分解と、加工品の解放ができます。' },
+  { id: 'research', name: '研究', sub: 'up', hint: 'マナを累計1,000集める', p: () => [S.life.totalMana, 1000], d: '強化の画面で、周ごとに伸ばし方を選ぶ研究ができます。' },
   { id: 'tools', name: '相棒', tab: 'tools', hint: 'マナを累計3,000集める', p: () => [S.life.totalMana, 3000], d: 'ホムンクルスを生み出して育てます。' },
   { id: 'maze', name: 'よどみ', tab: 'maze', hint: 'ホムンクルスを2人生み出す', p: () => [Math.max(S.homs.length, S.st.homsMade), 2], d: '夜、ノートを開いたまま眠ると、ホムンクルスと一緒に「よどみ」を進めます。' },
   { id: 'refine', name: '精錬', sub: 'lab', hint: 'マナを累計2万集める', p: () => [S.life.totalMana, 2e4], d: '工房で、同じ素材を使って品質を上げられます。' },
@@ -746,13 +754,14 @@ const fresh = () => ({
   up: { tool: 0, fam_a1: 0, fam_a2: 0, fam_a3: 0, furnace: 0, eye: 0, autodis: 0 },
   autoDis: false, done: {}, savedAt: 0, created: Date.now(),
   runAt: Date.now(), curve: [], prevCurve: [],
+  rs: {}, ch: null, nextCh: null, chDone: {},
 });
 function normalize(o) {
   const f = fresh();
   if (!o || typeof o !== 'object') return f;
   for (const k in f) {
     if (o[k] === undefined || o[k] === null) continue;
-    if (typeof f[k] === 'object' && !Array.isArray(f[k])) {
+    if (f[k] && typeof f[k] === 'object' && !Array.isArray(f[k])) {
       f[k] = Object.assign(f[k], o[k]);
       if (k === 'st') for (const kk of ['areaTaps', 'crafted']) f.st[kk] = Object.assign({}, o.st[kk] || {});
     } else f[k] = o[k];
@@ -764,6 +773,11 @@ function normalize(o) {
   for (const h of f.homs) if (!Array.isArray(h.pk)) h.pk = [];
   for (const k of ['curve', 'prevCurve']) if (!Array.isArray(f[k])) f[k] = [];
   if (!(f.runAt > 0)) f.runAt = Date.now();
+  // 実績のための通算の記録がなかった頃のセーブは、この周の記録で補う
+  if (!f.life.taps) f.life.taps = (f.st.manual || 0) + (f.st.auto || 0);
+  if (!f.life.crafts) f.life.crafts = Object.values(f.st.crafted || {}).reduce((a, b) => a + (b || 0), 0);
+  if (!f.life.reqs) f.life.reqs = f.st.reqDone || 0;
+  if (f.ch && !CH[f.ch]) f.ch = null;
   delete f.party;
   if (!Array.isArray(f.mazeTeam)) f.mazeTeam = [];
   f.mazeTeam = f.mazeTeam.filter(u => f.homs.some(h => h.u === u)).slice(0, 3);
@@ -825,13 +839,13 @@ const pu = id => S.pu[id] || 0;
 const homById = u => S.homs.find(h => h.u === u);
 const kindHoms = k => S.homs.filter(h => h.k === k);
 // 種類ごとに、能力値と技能はそれぞれ「その種類で一番高い子」のものが効く
-const kindBest = (k, st) => kindHoms(k).reduce((a, h) => Math.max(a, h.s[st]), 0);
+const kindBest = (k, st) => inCh('nohom') ? 0 : kindHoms(k).reduce((a, h) => Math.max(a, h.s[st]), 0);
 const statSum = st => KINDS.reduce((a, k) => a + kindBest(k.id, st), 0);
 // 能力値1ポイントごとに効果が2%ずつ掛け算で伸びる
 const statMult = st => 1.02 ** statSum(st);
-function kindRank(k, id) { let r = -1; for (const h of kindHoms(k)) for (const x of h.sk) if (x.id === id && x.r > r) r = x.r; return r; }
+function kindRank(k, id) { let r = -1; if (inCh('nohom')) return r; for (const h of kindHoms(k)) for (const x of h.sk) if (x.id === id && x.r > r) r = x.r; return r; }
 function traitLv(id) { let s = 0; for (const k of KINDS) { const r = kindRank(k.id, id); if (r >= 0) s += RANK_V[r]; } return s; }
-function capOf(h, st) { return Math.round(KIND[h.k].g[st] * 0.6) + 20 + 15 * h.f; }
+function capOf(h, st) { return Math.round(KIND[h.k].g[st] * 0.6) + 20 + 15 * h.f + (chDone('nohom') ? 30 : 0); }
 const expNeed = lv => Math.round(30 * 1.3 ** (lv - 1));
 const slotsOf = h => 3 + (h.f >= 3 ? 1 : 0) + (h.f >= 6 ? 1 : 0);
 const statTotal = h => STAT_IDS.reduce((a, st) => a + h.s[st], 0);
@@ -842,27 +856,27 @@ const maxStatTotal = () => S.homs.reduce((a, h) => Math.max(a, statTotal(h)), 0)
 const fameMult = () => (1 + 0.03 * S.fame) * mazeMult();
 const mazeMult = () => 1 + 0.02 * (S.life.mazeBest || 0);
 const skillMult = () => 1 + S.skill * 0.004;
-const skillGain = () => mult('skill') * (1 + 0.15 * traitLv('skill')) * statMult('dex') * bondMult('skill');
-const power = () => toolBase(S.up.tool) * skillMult() * mult('power') * 1.5 ** pu('power') * statMult('str') * (1 + 0.1 * traitLv('power')) * bondMult('power');
+const skillGain = () => mult('skill') * (1 + 0.15 * traitLv('skill')) * statMult('dex') * boost('skill') * rsSkill();
+const power = () => toolBase(S.up.tool) * skillMult() * mult('power') * 1.5 ** pu('power') * statMult('str') * (1 + 0.1 * traitLv('power')) * boost('power');
 const famLv = a => S.up['fam_' + a] || 0;
-const famMulti = () => mult('fam') * 1.5 ** pu('fam') * statMult('spd') * (1 + 0.1 * traitLv('fam'));
+const famMulti = () => mult('fam') * 1.5 ** pu('fam') * statMult('spd') * (1 + 0.1 * traitLv('fam')) * boost('fam') * rsFam();
 const famRate = (a = S.area) => famBase(famLv(a)) * famMulti();
 const famTotal = () => unlockedAreas().reduce((s, a) => s + famRate(a.id), 0);
-const manaMult = () => furnaceMult(S.up.furnace) * mult('mana') * 1.5 ** pu('mana') * statMult('int') * (1 + 0.08 * traitLv('mana')) * fameMult() * bondMult('mana');
+const manaMult = () => furnaceMult(S.up.furnace) * mult('mana') * 1.5 ** pu('mana') * statMult('int') * (1 + 0.08 * traitLv('mana')) * fameMult() * boost('mana') * rsMana();
 // 精錬は20段階。1段階ごとに品質+5%、100%で「完璧」（価値2.5倍）
 const REF_MAX = 20;
 const refSteps = id => Math.min(REF_MAX, S.ref[id] || 0);
 const qOf = id => refSteps(id) / REF_MAX;
 const perfect = id => refSteps(id) >= REF_MAX;
 const valMult = id => perfect(id) ? 2.5 : 1 + qOf(id);
-const baseVal = id => ITEM[id].v * valMult(id);
+const baseVal = id => ITEM[id].v * valMult(id) * (ITEM[id].kind === 'proc' ? rsProc() * (chDone('nofurnace') ? 3 : 1) : 1);
 const unitMana = id => baseVal(id) * manaMult();
 const eyeF = (eye = eyeLv(S.up.eye) + traitLv('luck') + statSum('luk') / 10) => 1 + 0.1 * eye;
 const autoDisOn = () => S.up.autodis > 0 && S.autoDis;
 
-const refineCost = id => Math.ceil(10 * 1.3 ** refSteps(id));
+const refineCost = id => Math.ceil(10 * 1.3 ** refSteps(id) * rsRefine());
 const procOn = p => (S.st.crafted[p.id] || 0) > 0 && S.unlocked[p.area];
-const exploreMult = () => (1 + 0.1 * traitLv('craft')) * 2 ** pu('explore') * statMult('exp') * bondMult('explore');
+const exploreMult = () => (1 + 0.1 * traitLv('craft')) * 2 ** pu('explore') * statMult('exp') * boost('explore') * rsExplore();
 function avgValue(a = S.area) {
   const f = eyeF(); const raws = availOf(a);
   const tot = raws.reduce((s, i) => s + i.w, 0);
@@ -985,7 +999,8 @@ function autoTaps(k, a) {
   S.st.auto += k;
   S.st.areaTaps[a] = (S.st.areaTaps[a] || 0) + k * exploreMult();
   S.skill += 0.1 * k * skillGain();
-  gainExp(0.25 * k, k > 50);
+  S.life.taps = (S.life.taps || 0) + k;
+  gainExp(0.25 * k * rsFamExp(), k > 50);
   return gather(power() * k, a);
 }
 function offline(sec) {
@@ -993,7 +1008,7 @@ function offline(sec) {
   try { offlineRun(sec); } finally { fxQuiet = q; }
 }
 function offlineRun(sec) {
-  sec = Math.min(sec, 8 * 3600);
+  sec = Math.min(sec, offlineCap());
   const before = S.mana;
   let taps = 0;
   for (const a of unlockedAreas()) { const t = famRate(a.id) * sec; if (t >= 1) { autoTaps(t, a.id); taps += t; } }
@@ -1030,6 +1045,7 @@ function craft(p, times) {
   const got = times;
   addItem(p.id, got);
   S.st.crafted[p.id] = (S.st.crafted[p.id] || 0) + times;
+  S.life.crafts = (S.life.crafts || 0) + times;
   return got;
 }
 // 精錬に足りない数をマナで生成する費用
@@ -1051,7 +1067,7 @@ function refine(id, maxTimes) {
 }
 const rnd = n => Math.floor(Math.random() * n);
 function makeHom(kind) {
-  if (S.homs.length >= MAX_HOMS || canMake(kind.in) < 1) return null;
+  if (inCh('nohom') || S.homs.length >= MAX_HOMS || canMake(kind.in) < 1) return null;
   for (const [id, n] of Object.entries(kind.in)) S.inv[id] -= n;
   const h = { u: S.homSeq++, k: kind.id, lv: 1, xp: 0, f: 0, s: {}, sk: [], pk: [] };
   for (const st of STAT_IDS) h.s[st] = Math.min(capOf(h, st), Math.round(kind.g[st] / 12) + rnd(5));
@@ -1120,7 +1136,7 @@ function gainExp(x, quiet) {
   const msgs = [];
   for (const h of S.homs) {
     if (h.lv >= LV_MAX) continue;
-    h.xp += x * bondMult('exp');
+    h.xp += x * boost('exp');
     const from = h.lv; let last = null;
     while (h.lv < LV_MAX && h.xp >= expNeed(h.lv)) { h.xp -= expNeed(h.lv); last = levelUp(h); }
     if (h.lv >= LV_MAX) h.xp = 0;
@@ -1171,7 +1187,8 @@ function complete(m, how) {
 function buy(id) {
   const u = UP[id], l = S.up[id];
   if (u.once && l >= 1) return false;
-  const c = u.cost(l);
+  if (upBlocked(id)) return false;
+  const c = upCost(u, l);
   if (S.mana < c) return false;
   S.mana -= c; S.up[id] = l + 1;
   if (id === 'autodis') S.autoDis = true;
@@ -1213,7 +1230,11 @@ function prestige() {
   n.prevCurve = o.curve;
   // 周回をまたいで残るもの
   n.run = o.run + 1; n.mc = o.mc; n.journal = o.journal; n.jread = o.jread; n.pref = o.pref; n.mazeTeam = o.mazeTeam.filter(u => n.homs.some(h => h.u === u)); n.open = o.open; n.newTab = {}; n.stones = o.stones + gain; n.pu = o.pu; n.bond = o.bond; n.met = o.met; n.scn = o.scn;
-  n.life = { totalMana: o.life.totalMana, prestiges: o.life.prestiges + 1, bestStones: Math.max(o.life.bestStones, gain) };
+  n.life = Object.assign({}, o.life, { prestiges: o.life.prestiges + 1, bestStones: Math.max(o.life.bestStones || 0, gain) });
+  n.chDone = Object.assign({}, o.chDone);
+  if (o.ch) n.chDone[o.ch] = true;
+  n.ch = o.nextCh && CH[o.nextCh] ? o.nextCh : null;
+  n.lastCh = o.ch || null;
   n.skill = o.skill * Math.min(1, 0.1 + 0.1 * pu('skillKeep'));
   n.homs = mergeByKind(o.homs);
   n.st.fusions = n.homs.length;
@@ -1222,7 +1243,7 @@ function prestige() {
   if (pu('keepBook')) { n.reg = Object.assign({}, o.reg); n.st.crafted = Object.assign({}, o.st.crafted); }
   if (pu('keepRef')) n.ref = Object.assign({}, o.ref);
   if (pu('autodis')) { n.up.autodis = 1; n.autoDis = o.autoDis; }
-  for (const a of AREAS) n.up['fam_' + a.id] = 5 * pu('famStart');
+  for (const a of AREAS) n.up['fam_' + a.id] = n.ch === 'nofam' || n.ch === 'noup' ? 0 : 5 * pu('famStart');
   n.created = o.created;
   S = n;
   ui.gArea = 'a1'; ui.misArea = 'a1'; ui.fuse = null; ui.tab = 'gather'; ui.upView = 'shop';
@@ -1315,7 +1336,7 @@ function mzFight(kind) {
 }
 function giveExp(h, x) {
   if (h.lv >= LV_MAX) return;
-  h.xp += x * bondMult('exp');
+  h.xp += x * boost('exp');
   const from = h.lv; let last = null;
   while (h.lv < LV_MAX && h.xp >= expNeed(h.lv)) { h.xp -= expNeed(h.lv); last = levelUp(h); }
   if (h.lv >= LV_MAX) h.xp = 0;
@@ -1358,6 +1379,92 @@ function mzReturn(lost) {
   S.maze = null;
   return false;
 }
+
+/* --- 研究（周ごとに選ぶ枝） --- */
+const RS_COST = [1e3, 1e5, 1e7, 1e9, 1e11];
+const RS_PICK = 2; // 1つの周で進められる派の数
+const RESEARCH = [
+  { id: 'gather', name: '採取派', d: '自分の手で集める力を伸ばす', steps: ['手で採取した数 ×2', '熟練の伸び ×2', '手で採取した数 ×3', '探索の進み ×2', '手で採取するたびに、その採取地の使い魔の1秒分も採取'] },
+  { id: 'fam', name: '使い魔派', d: '使い魔とホムンクルスに任せる', steps: ['使い魔の速さ ×1.5', '留守の間に働く時間 8時間 → 16時間', '使い魔の速さ ×2', '使い魔の採取で得るホムンクルスの経験値 ×4', '使い魔の速さ ×3'] },
+  { id: 'alch', name: '錬金派', d: 'ほどいて作る力を伸ばす', steps: ['マナ ×1.5', '加工品の値打ち ×2', '精錬に必要な数が半分', '頼みごとの報酬 ×3', 'マナ ×3'] },
+];
+const RS = Object.fromEntries(RESEARCH.map(r => [r.id, r]));
+const rsLv = id => S.rs[id] || 0;
+const rsHas = (id, step) => rsLv(id) >= step;
+const rsStarted = () => RESEARCH.filter(r => rsLv(r.id) > 0).length;
+const rsCan = id => rsLv(id) < RS_COST.length && (rsLv(id) > 0 || rsStarted() < RS_PICK) && S.mana >= RS_COST[rsLv(id)];
+function buyResearch(id) {
+  if (!rsCan(id)) return false;
+  const l = rsLv(id);
+  S.mana -= RS_COST[l]; S.rs[id] = l + 1;
+  celebrate('研究', `${RS[id].name} ${l + 1}段目`, RS[id].steps[l], 'var(--mana)');
+  return true;
+}
+// 研究の効果
+const rsManual = () => (rsHas('gather', 1) ? 2 : 1) * (rsHas('gather', 3) ? 3 : 1);
+const rsSkill = () => rsHas('gather', 2) ? 2 : 1;
+const rsExplore = () => rsHas('gather', 4) ? 2 : 1;
+const rsFam = () => (rsHas('fam', 1) ? 1.5 : 1) * (rsHas('fam', 3) ? 2 : 1) * (rsHas('fam', 5) ? 3 : 1);
+const offlineCap = () => (rsHas('fam', 2) ? 16 : 8) * 3600;
+const rsFamExp = () => rsHas('fam', 4) ? 4 : 1;
+const rsMana = () => (rsHas('alch', 1) ? 1.5 : 1) * (rsHas('alch', 5) ? 3 : 1);
+const rsProc = () => rsHas('alch', 2) ? 2 : 1;
+const rsRefine = () => rsHas('alch', 3) ? 0.5 : 1;
+const rsReq = () => rsHas('alch', 4) ? 3 : 1;
+
+/* --- 挑戦の周回 --- */
+const CHALLENGES = [
+  { id: 'nofam', name: '使い魔なし', rule: '使い魔を雇えない', reward: '手で採取するたびに、すべての採取地の使い魔の5秒分も採取する' },
+  { id: 'nofurnace', name: '分解炉なし', rule: '分解炉を強化できない', reward: '加工品の値打ち ×3' },
+  { id: 'nohom', name: 'ホムンクルスなし', rule: 'ホムンクルスの効果がなく、新しく生み出せない', reward: 'ホムンクルスの能力の上限 +30' },
+  { id: 'noup', name: '強化なし', rule: '採取の腕前・使い魔・分解炉・目利きを強化できない', reward: '工房の強化の値段が半分' },
+];
+const CH = Object.fromEntries(CHALLENGES.map(c => [c.id, c]));
+const inCh = id => S.ch === id;
+const chDone = id => !!(S.chDone && S.chDone[id]);
+// 挑戦中に買えない強化
+function upBlocked(id) {
+  if (inCh('noup') && id !== 'autodis') return true;
+  if (inCh('nofam') && id.startsWith('fam_')) return true;
+  if (inCh('nofurnace') && id === 'furnace') return true;
+  return false;
+}
+
+/* --- 終わりのない実績 --- */
+// 段は限りなく続く。1段ごとに、関係する効果が ×1.05（周回しても残る）
+const ACH_STEP = 1.05;
+const ACHS = [
+  { id: 'taps', name: '採取の手', what: '採取した回数（使い魔の分も含む）', perk: 'power', v: () => S.life.taps || 0, base: 100, mul: 10 },
+  { id: 'mana', name: 'マナの海', what: '集めたマナの累計', perk: 'mana', v: () => S.life.totalMana || 0, base: 1e3, mul: 100 },
+  { id: 'craft', name: '作る手', what: '加工した回数', perk: 'skill', v: () => S.life.crafts || 0, base: 10, mul: 10 },
+  { id: 'reqs', name: '町の顔なじみ', what: '頼みごとをかなえた回数', perk: 'explore', v: () => S.life.reqs || 0, base: 3, mul: 3 },
+  { id: 'deep', name: '夜歩き', what: 'よどみで進んだいちばんの深さ', perk: 'exp', v: () => S.life.mazeBest || 0, step: 5 },
+  { id: 'runs', name: '春をくり返す', what: '周回した回数', perk: 'fam', v: () => S.life.prestiges || 0, step: 1 },
+];
+const ACH_PERK = { power: '採取力', mana: 'マナ', skill: '熟練の伸び', explore: '探索の進み', exp: 'ホムンクルスの経験値', fam: '使い魔の速さ' };
+function achTier(a) {
+  const v = a.v();
+  if (a.step) return Math.floor(v / a.step);
+  if (v < a.base) return 0;
+  return Math.floor(Math.log(v / a.base) / Math.log(a.mul) + 1e-9) + 1;
+}
+const achNext = a => a.step ? (achTier(a) + 1) * a.step : a.base * a.mul ** achTier(a);
+const achPrev = a => a.step ? achTier(a) * a.step : achTier(a) ? a.base * a.mul ** (achTier(a) - 1) : 0;
+const achMult = perk => ACH_STEP ** ACHS.filter(a => a.perk === perk).reduce((s, a) => s + achTier(a), 0);
+const achTotal = () => ACHS.reduce((s, a) => s + achTier(a), 0);
+function checkAch() {
+  S.life.achSeen = S.life.achSeen || {};
+  for (const a of ACHS) {
+    const t = achTier(a), seen = S.life.achSeen[a.id];
+    if (seen === undefined) { S.life.achSeen[a.id] = t; continue; }
+    if (t > seen) {
+      S.life.achSeen[a.id] = t;
+      celebrate('実績', `${a.name} ${t}段`, `${ACH_PERK[a.perk]} ${fmtX(achMult(a.perk))}（ずっと残る）`, 'var(--brass)');
+    }
+  }
+}
+// 町の人と実績をまとめた倍率
+const boost = perk => bondMult(perk) * achMult(perk);
 
 /* --- 町の人（頼みごとと、仲を深める話） --- */
 // 仲の段に必要な、頼みごとをかなえた回数（累計）
@@ -1465,13 +1572,14 @@ function deliverReq(pid) {
   const r = S.reqs[pid], p = PERSON[pid];
   if (!p || !r || r.wait || inv(r.id) < r.n) return false;
   S.inv[r.id] -= r.n;
-  addMana(r.rw);
+  addMana(r.rw * rsReq());
+  S.life.reqs = (S.life.reqs || 0) + 1;
   const before = bondLv(pid);
   S.fame++; S.st.reqDone++;
   S.bond[pid] = bondPts(pid) + 1;
   S.reqs[pid] = { wait: Date.now() + 40000 };
   if (bondLv(pid) > before) celebrate('仲が深まった', `${p.short}　${bondLv(pid)}段目`, `${PERK_NAME[p.perk]} ${fmtX(perkOf(pid))}。新しい話を読めます`, 'var(--ok)');
-  else toast(`${p.short}の頼みごとをかなえた: +${fmt(r.rw)} マナ、信頼 +1`);
+  else toast(`${p.short}の頼みごとをかなえた: +${fmt(r.rw * rsReq())} マナ、信頼 +1`);
   return true;
 }
 
@@ -1501,8 +1609,8 @@ function structKey() {
     case 'tools': return `t${ua}|${S.homs.map(h => [h.u, h.lv, h.f, h.pk.length, STAT_IDS.map(st => h.s[st]).join('.'), h.sk.map(k => k.id + k.r).join('')].join(':')).join(',')}|${ui.traitHelp ? 'h' : ''}`;
     case 'mission': return `m${ui.misView}${ui.misArea}${ua}${S.run}:${MIS.filter(misOpen).length}|${ui.misView === 'req' ? PEOPLE.map(p => { const r = S.reqs[p.id]; return [S.met[p.id] ? 1 : 0, bondLv(p.id), r ? (r.wait ? 'w' + (r.none ? 'n' : '') : r.id + (inv(r.id) >= r.n ? 'y' : 'n')) : '-', personUnread(p)].join(''); }).join(',') : ''}`;
     case 'maze': return `z${S.maze ? [S.maze.floor, S.maze.choices.map(c => c.t + (c.hide ? 'h' : '')).join(''), JSON.stringify(S.maze.hp), S.maze.log.join('')].join('|') : 'off' + S.mazeTeam.join(',') + S.homs.map(h => h.u + ':' + h.lv).join(',')}`;
-    case 'book': return `b${ui.bookView || 'items'}${regCount()}${ua}${Object.keys(S.journal).length}`;
-    case 'up': return 'u' + (ui.upView || 'shop') + (S.prevCurve.length ? 'p' : '') + S.up.autodis + Object.keys(S.unlocked).join(',') + S.run + JSON.stringify(S.pu);
+    case 'book': return `b${ui.bookView || 'items'}${ui.bookView === 'ach' ? achTotal() : ''}${regCount()}${ua}${Object.keys(S.journal).length}`;
+    case 'up': return 'u' + (ui.upView || 'shop') + JSON.stringify(S.rs) + S.ch + S.nextCh + JSON.stringify(S.chDone) + featOpen('research') + (S.prevCurve.length ? 'p' : '') + S.up.autodis + Object.keys(S.unlocked).join(',') + S.run + JSON.stringify(S.pu);
   }
   return ui.tab;
 }
@@ -1624,10 +1732,13 @@ function bindTap() {
   const go = (x, y) => {
     S.area = ui.gArea;
     S.st.manual++;
+    S.life.taps = (S.life.taps || 0) + 1;
     S.st.areaTaps[S.area] = (S.st.areaTaps[S.area] || 0) + exploreMult();
     S.skill += skillGain();
     gainExp(1);
-    const got = gather(power());
+    const got = gather(power() * rsManual());
+    if (rsHas('gather', 5) && famRate(S.area) > 0) autoTaps(famRate(S.area), S.area);
+    if (chDone('nofam')) for (const a of unlockedAreas()) if (famRate(a.id) > 0) autoTaps(famRate(a.id) * 5, a.id);
     t.classList.add('hit');
     if (!reduceMotion && z.querySelectorAll('.ripple').length < 4) { const rp = document.createElement('span'); rp.className = 'ripple'; t.appendChild(rp); setTimeout(() => rp.remove(), 600); }
     clearTimeout(tapHitTimer);
@@ -1966,7 +2077,7 @@ function vReq() {
       const m = ITEM[r.id];
       const mc = () => missingCost({ [r.id]: r.n }, 1);
       body = `<p class="ask">${esc(p.ask[r.a || 0](m.name, fmt(r.n)))}</p>
-      <div class="row-between small"><span class="rc r${m.r}">${esc(m.name)} を ${fmt(r.n)}個</span><span class="rw">+${fmt(r.rw)} マナ・信頼+1・仲+1</span></div>
+      <div class="row-between small"><span class="rc r${m.r}">${esc(m.name)} を ${fmt(r.n)}個</span><span class="rw">+${fmt(r.rw * rsReq())} マナ・信頼+1・仲+1</span></div>
       <div class="prog"><i ${wd(() => Math.min(1, inv(r.id) / r.n) * 100)}></i></div>
       <div class="pv">手持ち ${tx(() => fmt(inv(r.id)))} / ${fmt(r.n)}</div>
       <div class="acts">
@@ -1995,9 +2106,9 @@ function vReq() {
 
 /* --- 図鑑 --- */
 function vBook() {
-  const seg = [['items', '素材の記録'], ['journal', '古いノート']]
+  const seg = [['items', '素材の記録'], ['journal', '古いノート'], ['ach', '実績']]
     .map(([k, n]) => `<button type="button" data-act="bookview" data-id="${k}" aria-pressed="${(ui.bookView || 'items') === k}">${n}${k === 'journal' && unreadJournal() ? '（新）' : ''}</button>`).join('');
-  return `<div class="seg full" role="group" aria-label="図鑑の表示">${seg}</div>${ui.bookView === 'journal' ? vJournal() : vItems()}`;
+  return `<div class="seg full" role="group" aria-label="図鑑の表示">${seg}</div>${ui.bookView === 'journal' ? vJournal() : ui.bookView === 'ach' ? vAch() : vItems()}`;
 }
 function vJournal() {
   const got = JOURNAL.filter(j => S.journal[j.id]).length;
@@ -2055,11 +2166,56 @@ function vItems() {
 }
 
 /* --- 強化 --- */
+/* --- 研究の画面 --- */
+function vResearch() {
+  const cols = RESEARCH.map(r => {
+    const l = rsLv(r.id), closed = l === 0 && rsStarted() >= RS_PICK;
+    const steps = r.steps.map((t, i) => {
+      const cls = i < l ? 'done' : i === l && !closed ? 'next' : 'lock';
+      return `<div class="rs-step ${cls}"><span class="st">${i < l ? '済' : (i + 1) + '段目'}</span><span>${esc(t)}</span></div>`;
+    }).join('');
+    const act = l >= RS_COST.length ? '<p class="small q">すべて研究しました</p>'
+      : closed ? `<p class="small muted">この周では、ほかの${RS_PICK}つの派を選んだので進められません</p>`
+      : `<div class="acts"><button class="btn pri" type="button" data-act="buyrs" data-id="${r.id}" ${dz(() => !rsCan(r.id))}>${l + 1}段目を研究 <small>${fmt(RS_COST[l])} マナ</small></button></div>`;
+    return `<div class="panel"><div class="row-between"><h3>${esc(r.name)}</h3><span class="small muted">${l} / ${RS_COST.length}</span></div><p class="small muted">${esc(r.d)}</p>${steps}${act}</div>`;
+  }).join('');
+  return `<section class="area-head"><span class="eyebrow">${S.run}周目の研究　選んだ派 ${rsStarted()} / ${RS_PICK}</span><h2>研究</h2>
+    ${help('research', `<p class="muted small">マナを払って、3つの派のどれかを段ごとに進めます。1つの周で進められるのは${RS_PICK}つの派までです。周回すると研究ははじめに戻るので、次の周では別の組み合わせを試せます。</p>`)}</section>
+  ${cols}`;
+}
+
+/* --- 挑戦の周回（賢者の石の画面の中） --- */
+function vChallenges() {
+  const now = S.ch ? `<div class="panel ch sel"><div class="row-between"><h3>挑戦中: ${esc(CH[S.ch].name)}</h3></div><p class="small">${esc(CH[S.ch].rule)}。賢者の石を錬成して周回すると達成です。</p><p class="small q">達成の特典: ${esc(CH[S.ch].reward)}</p><div class="acts">${confirmBtn('', 'data-act="quitch"', '挑戦をやめる（この周は普通に続く）', 'もう一度タップでやめる')}</div></div>` : '';
+  const list = CHALLENGES.map(c => {
+    const sel = S.nextCh === c.id;
+    return `<div class="row1 ch${sel ? ' sel' : ''}"><div class="r1main"><span class="nm">${esc(c.name)} ${chDone(c.id) ? '<span class="tag top">達成</span>' : ''}</span><span class="meta">条件: ${esc(c.rule)}</span><span class="meta">特典: ${esc(c.reward)}</span></div>
+      <button class="btn sm${sel ? ' okb' : ''}" type="button" data-act="pickch" data-id="${c.id}">${sel ? '選択中' : '次の周で挑む'}</button></div>`;
+  }).join('');
+  return `${now}<h3>挑戦の周回</h3>
+  ${help('challenge', `<p class="muted small">次の周を、条件つきの「挑戦」として始められます。条件を守ったまま賢者の石を錬成して周回すると達成になり、その挑戦の特典がずっと残ります。途中でやめても、失うものはありません（その周は普通の周になります）。</p>`)}
+  <p class="small">${S.nextCh ? `次の周は「${esc(CH[S.nextCh].name)}」の挑戦になります。` : '次の周は普通の周です。'}</p>
+  <div class="list tight">${list}</div>`;
+}
+
+/* --- 実績の画面（図鑑の中） --- */
+function vAch() {
+  const rows = ACHS.map(a => `<div class="mis">
+    <div class="hd"><h3>${esc(a.name)} <span class="small muted">${tx(() => achTier(a))}段</span></h3><span class="rw">${ACH_PERK[a.perk]} ${tx(() => fmtX(ACH_STEP ** achTier(a)))}</span></div>
+    <p class="small muted">${esc(a.what)}</p>
+    <div class="prog"><i ${wd(() => { const p = achPrev(a), n = achNext(a); return Math.max(0, Math.min(1, a.step ? (a.v() - p) / (n - p) : Math.log(Math.max(1, a.v()) / Math.max(1, p || 1)) / Math.log(n / Math.max(1, p || 1)))) * 100; })}></i></div>
+    <div class="pv">いま ${tx(() => fmt(a.v()))}　次の段 ${tx(() => fmt(achNext(a)))}</div>
+  </div>`).join('');
+  return `<section class="area-head"><span class="eyebrow">実績　合計 ${tx(() => achTotal())}段</span><h2>終わりのない実績</h2>
+    ${help('ach', `<p class="muted small">どの実績も段に終わりがありません。1段上がるごとに、関係する効果が ×${ACH_STEP} ずつ掛け算で伸び、周回しても残ります。</p>`)}</section>
+  ${rows}`;
+}
+
 function vUp() {
-  if (!featOpen('stone')) ui.upView = 'shop';
-  const seg = [['shop', '工房の強化'], ['stone', '賢者の石']]
-    .map(([k, n]) => `<button type="button" data-act="upview" data-id="${k}" aria-pressed="${(ui.upView || 'shop') === k}">${n}</button>`).join('');
-  return `${featOpen('stone') ? `<div class="seg full" role="group" aria-label="強化の種類">${seg}</div>` : ''}${ui.upView === 'stone' ? vStone() : vShop()}`;
+  const views = [['shop', '工房の強化'], ...(featOpen('research') ? [['research', '研究']] : []), ...(featOpen('stone') ? [['stone', '賢者の石']] : [])];
+  if (!views.some(([k]) => k === ui.upView)) ui.upView = 'shop';
+  const seg = views.map(([k, n]) => `<button type="button" data-act="upview" data-id="${k}" aria-pressed="${ui.upView === k}">${n}</button>`).join('');
+  return `${views.length > 1 ? `<div class="seg full" role="group" aria-label="強化の種類">${seg}</div>` : ''}${ui.upView === 'stone' ? vStone() : ui.upView === 'research' ? vResearch() : vShop()}`;
 }
 function vStone() {
   const mc = () => missingCost(STONE_IN, 1);
@@ -2091,6 +2247,7 @@ function vStone() {
     <p class="small">残るもの: ミッションの報酬、ホムンクルス（種類ごとに因果融合）、よどみの記録、熟練の一部、ノート（くわしくは上の「説明」）</p>
     <div class="acts">${confirmBtn('pri', `data-act="prestige" ${dz(() => { const c = mc(); return c === null || S.mana < c; })}`, `錬成して周回する <small>${tx(() => { const c = mc(); return c === null ? '未登録の材料あり' : c > 0 ? '不足分 ' + fmt(c) + ' マナ' : '手持ちで足ります'; })}</small>`, 'もう一度タップで周回')}</div>
   </div>
+  ${vChallenges()}
   <h3>賢者の石で習得する強化</h3>
   <div class="list tight">${pus}</div>`;
 }
@@ -2108,8 +2265,8 @@ function vShop() {
       ${u.msText ? `<div class="ms"><div class="row-between small"><span class="muted">次の節目</span><span>${tx(() => `Lv${msNext(l())} で `)}<b>${esc(u.msText)}</b>${tx(() => `（あと${msNext(l()) - l()}）`)}</span></div>
         <div class="prog"><i ${wd(() => (l() - msPrev(l())) / (msNext(l()) - msPrev(l())) * 100)}></i></div></div>` : ''}
       <div class="acts">
-        <button class="btn pri" type="button" data-act="buy" data-id="${u.id}" ${dz(() => S.mana < u.cost(l()))}>強化 <small>${tx(() => fmt(u.cost(l())))} マナ</small></button>
-        ${u.once ? '' : `<button class="btn" type="button" data-act="buymax" data-id="${u.id}" ${dz(() => S.mana < u.cost(l()))}>買えるだけ</button>`}
+        <button class="btn pri" type="button" data-act="buy" data-id="${u.id}" ${dz(() => upBlocked(u.id) || S.mana < upCost(u, l()))}>${upBlocked(u.id) ? '挑戦中は強化できない' : `強化 <small>${tx(() => fmt(upCost(u, l())))} マナ</small>`}</button>
+        ${u.once || upBlocked(u.id) ? '' : `<button class="btn" type="button" data-act="buymax" data-id="${u.id}" ${dz(() => S.mana < upCost(u, l()))}>買えるだけ</button>`}
       </div>
     </div>`;
   }).join('');
@@ -2173,9 +2330,12 @@ main.addEventListener('click', e => {
     case 'story': openPerson(id); break;
     case 'buy': buy(id); break;
     case 'upview': ui.upView = id; break;
+    case 'buyrs': buyResearch(id); break;
+    case 'pickch': S.nextCh = S.nextCh === id ? null : id; break;
+    case 'quitch': { if (!armed(b)) return; S.ch = null; toast('挑戦をやめました。この周は普通の周として続きます'); break; }
     case 'bookview': ui.bookView = id; break;
     case 'buypu': if (buyPu(id)) toast(`「${PU[id].name}」を習得しました`); break;
-    case 'prestige': { if (!armed(b)) return; const g = prestige(); if (g) { setTabs(); checkJournal(); celebrate('春のはじまり', `${S.run}周目`, `賢者の石 +${g}個。古本屋の店主「${storeLine(S.run)}」`, 'var(--r4)'); window.scrollTo(0, 0); } break; }
+    case 'prestige': { if (!armed(b)) return; const g = prestige(); if (g) { setTabs(); checkJournal(); if (S.lastCh) { celebrate('挑戦を達成', CH[S.lastCh].name, CH[S.lastCh].reward, 'var(--ok)'); delete S.lastCh; } celebrate('春のはじまり', `${S.run}周目`, `賢者の石 +${g}個。古本屋の店主「${storeLine(S.run)}」`, 'var(--r4)'); window.scrollTo(0, 0); } break; }
     case 'buymax': { let n = 0; while (n < 1000 && buy(id)) n++; if (n > 1) toast(`${UP[id].name}を${n}レベル上げました`); break; }
   }
   update();
@@ -2453,7 +2613,7 @@ function tick() {
     }
   }
   if (frame % 5 === 0 || dt > 5) processAuto();
-  if (frame % 10 === 0) { checkPeople(); refreshReqs(); checkJournal(); recordCurve(); }
+  if (frame % 10 === 0) { checkPeople(); refreshReqs(); checkJournal(); recordCurve(); checkAch(); }
   if (frame % 3 === 0) checkFeats(false);
   if (++frame % 2 === 0 || dt > 5) update();
 }
