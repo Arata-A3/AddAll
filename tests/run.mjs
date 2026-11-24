@@ -102,6 +102,34 @@ await test('研究は1つの周で2つの派まで', async () => {
     return { rs: save().rs, third: !!q('[data-act="buyrs"][data-id="fam"]') };`);
   ok(r.rs.gather === 1 && r.rs.alch === 1 && !r.third, JSON.stringify(r));
 });
+await test('同じ種類が何人もいる古いセーブは1人にまとまり、過ぎた節目の道を選べる', async () => {
+  const a = { u: 1, k: 'koro', lv: 12, xp: 0, f: 1, s: { str: 30, spd: 5, luk: 3, int: 5, exp: 6, dex: 9 }, sk: [{ id: 'power', r: 2 }], pk: [{ t: 's', o: ['str'] }] };
+  const b = { u: 2, k: 'koro', lv: 4, xp: 0, f: 0, s: { str: 10, spd: 20, luk: 3, int: 5, exp: 6, dex: 9 }, sk: [{ id: 'power', r: 4 }, { id: 'luck', r: 1 }], pk: [] };
+  await open({ ...mid, homs: [a, b], homSeq: 3 });
+  const r = await ev(`${H} const s = save(); const h = s.homs[0];
+    return { n: s.homs.length, lv: h.lv, str: h.s.str, spd: h.s.spd, power: h.sk.find(x => x.id === 'power').r, luck: !!h.sk.find(x => x.id === 'luck'), pk: h.pk.map(p => p.t).join('') };`);
+  ok(r.n === 1 && r.lv === 12 && r.str === 30 && r.spd === 20 && r.power === 4 && r.luck && r.pk === 'pp', JSON.stringify(r));
+});
+await test('道を4段とも同じにすると極みになり、採取力が伸びる', async () => {
+  const h = { u: 1, k: 'koro', lv: 20, xp: 0, f: 0, s: { str: 20, spd: 5, luk: 3, int: 5, exp: 6, dex: 9 }, sk: [{ id: 'power', r: 0 }], pk: [{ t: 'p' }, { t: 'p' }, { t: 'p' }, { t: 'p' }], path: [] };
+  await open({ ...mid, homs: [h], homSeq: 2 });
+  const r = await ev(`${H} tab('gather'); await sleep(100); const p0 = Number(qa('.stat b')[0].textContent.replace(/[^0-9.]/g, ''));
+    tab('tools'); await sleep(150);
+    for (let i = 0; i < 4; i++) { q('[data-act="pick"][data-v="mason"]').click(); await sleep(60); }
+    tab('gather'); await sleep(150); const p1 = Number(qa('.stat b')[0].textContent.replace(/[^0-9.]/g, ''));
+    const s = save(); return { path: s.homs[0].path.join(','), pk: s.homs[0].pk.length, ratio: p1 / p0 };`);
+  ok(r.path === 'mason,mason,mason,mason' && r.pk === 0 && r.ratio > 5, JSON.stringify(r));
+});
+await test('技能の枠がいっぱいのときは、1つ忘れて新しい技能を覚える', async () => {
+  const h = { u: 1, k: 'koro', lv: 20, xp: 0, f: 0, s: { str: 20, spd: 5, luk: 3, int: 5, exp: 6, dex: 9 }, sk: [{ id: 'power', r: 6 }, { id: 'skill', r: 2 }, { id: 'luck', r: 1 }], pk: [{ t: 'k', o: ['jackpot', 'power', 'skill'] }], path: [] };
+  await open({ ...mid, homs: [h], homSeq: 2 });
+  const r = await ev(`${H} tab('tools'); await sleep(150);
+    q('[data-act="pick"][data-v="jackpot"]').click(); await sleep(80);
+    const asked = qa('[data-act="pickswap"]').length;
+    q('[data-act="pickswap"][data-r="luck"]').click(); await sleep(80);
+    const s = save(); return { asked, sk: s.homs[0].sk.map(x => x.id + x.r).join(','), pk: s.homs[0].pk.length };`);
+  ok(r.asked === 3 && r.sk === 'power6,skill2,jackpot0' && r.pk === 0, JSON.stringify(r));
+});
 await test('相棒の絵が出て、採取すると笑い、連れていく子を選べる', async () => {
   await open({ ...mid, homs: [...mid.homs, { u: 2, k: 'kiri', lv: 3, xp: 0, f: 0, s: { str: 5, spd: 9, luk: 3, int: 5, exp: 6, dex: 4 }, sk: [] }], homSeq: 3 });
   const r = await ev(`${H} tab('gather'); await sleep(300);

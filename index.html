@@ -232,6 +232,13 @@ details.help[open] summary { margin-bottom: 4px; }
 .kimg { height: 150px; width: auto; flex: none; }
 .kinfo { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; min-width: 0; }
 .pickwho { display: flex; gap: 10px; align-items: center; }
+.paths3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.pth { display: flex; flex-direction: column; gap: 2px; padding: 6px 8px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); font-size: 13px; min-width: 0; }
+.pth .dots { letter-spacing: .1em; color: var(--muted); }
+.pth.on .dots { color: var(--mana); }
+.pth.top { border-color: var(--brass); }
+.pth.top .dots { color: var(--brass); }
+.pth small { font-size: 11px; color: var(--muted); overflow-wrap: anywhere; }
 .pickwho .himg { height: 84px; width: auto; flex: none; }
 .buddy { position: absolute; right: 2px; bottom: 2px; display: flex; flex-direction: column; align-items: center; pointer-events: none; animation: bob 3.2s ease-in-out infinite; }
 .buddy .himg { height: 150px; width: auto; }
@@ -256,9 +263,6 @@ details.help[open] summary { margin-bottom: 4px; }
 .chips.wrap { flex-wrap: wrap; overflow: visible; }
 .panel.fuse { border-color: var(--mana); }
 
-/* よどみ（迷宮） */
-.mzst { display: flex; flex-wrap: wrap; gap: 2px 12px; color: var(--muted); }
-.mzst b { color: var(--ink); }
 .hpline { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr) auto; gap: 8px; align-items: center; font-size: 13px; }
 .hpbar { height: 8px; border-radius: 4px; background: var(--surface2); overflow: hidden; }
 .hpbar i { display: block; height: 100%; background: var(--ok); }
@@ -330,9 +334,10 @@ details.help[open] summary { margin-bottom: 4px; }
 .cmp { color: var(--ok); font-weight: 700; }
 .ver { display: block; font-family: var(--f-body); font-size: 11px; font-weight: 500; color: var(--muted); background: none; border: 0; padding: 2px 0 0; cursor: pointer; letter-spacing: 0; }
 .picks { border: 2px solid var(--mana); }
-.pick-opts { display: grid; grid-template-columns: repeat(auto-fit, minmax(92px, 1fr)); gap: 6px; }
-.pick-opts .btn { flex-direction: column; gap: 2px; padding: 8px 6px; }
-.pick-opts .btn small { font-size: 11px; }
+.pick-opts { display: grid; grid-template-columns: 1fr; gap: 6px; }
+.pick-opts .btn { flex-direction: column; align-items: flex-start; text-align: left; gap: 2px; padding: 10px 12px; }
+.pick-opts .btn span { font-weight: 700; }
+.pick-opts .btn small { font-size: 12px; }
 .vh-item { border-top: 1px solid var(--line); padding-top: 8px; }
 .vh-item ul { margin: 4px 0 0; padding-left: 1.2em; font-size: 13px; }
 
@@ -426,7 +431,6 @@ details.help[open] summary { margin-bottom: 4px; }
   <button type="button" role="tab" data-tab="up" aria-selected="false"><span class="k">強</span>強化</button>
   <button type="button" role="tab" data-tab="lab" aria-selected="false"><span class="k">工</span>工房</button>
   <button type="button" role="tab" data-tab="tools" aria-selected="false"><span class="k">相</span>相棒<span class="badge" id="homBadge" hidden>0</span></button>
-  <button type="button" role="tab" data-tab="maze" aria-selected="false"><span class="k">淀</span>よどみ</button>
   <button type="button" role="tab" data-tab="mission" aria-selected="false"><span class="k">依</span>依頼<span class="badge" id="misBadge" hidden>0</span></button>
   <button type="button" role="tab" data-tab="book" aria-selected="false"><span class="k">鑑</span>図鑑<span class="badge" id="bookBadge" hidden>新</span></button>
 </nav>
@@ -497,6 +501,7 @@ details.help[open] summary { margin-bottom: 4px; }
 /* ===================== データ ===================== */
 // 版と変更の記録（新しいものを先頭に）
 const VERSIONS = [
+  { v: '2.2', date: '2026-11-25', changes: ['ホムンクルスの育て方を作り直しました。Lv5・10・15・20 で「道」を選び、ほかのレベルアップでは技能を覚えるか伸ばします', '同じ道を4段進めると「極み」で効果が倍。道は周回で選び直せ、覚えた技能は残ります', '技能を4つ追加（大当たり・早熟・器・夜なべ）。すべて S+ で「完璧」、その先は ★ で伸びます', 'ホムンクルスは1種類1人に。前のセーブの同じ種類の子は1人にまとめました', 'よどみをなくしました'] },
   { v: '2.1', date: '2026-11-25', changes: ['ホムンクルスに絵が付きました。名前もペブリナ・スプラン・ミスティア・プリムラ・コパード・モナイトに変わりました', '採取の画面に相棒が1人いて、採取すると笑います。放っておくと眠ります（相棒の画面の「採取に連れていく」で選べます）', 'プリムラは月見草と樹液、コパードは銅鉱石と石炭から生まれるようになりました'] },
   { v: '2.0', date: '2026-11-24', changes: ['舞台を現代の町に。古本屋で買ったノートから始まる物語に書き換え', '依頼を「町の人」の頼みごとに。5人と仲を深めると、話とずっと続く特典が手に入ります', '研究（周ごとに伸ばし方を選ぶ）、挑戦の周回、終わりのない実績を追加', '迷宮を「よどみ」（夜に行ける色のない町）に', 'スマホのホーム画面に入れて、アプリとして遊べるように', '設定で画面の明るさ（端末に合わせる・ライト・ダーク）を選べるように', '採取の画面に、その日の町のようすを一言', '直した不具合: 周回すると、よどみ（迷宮）のいちばん深い記録が消えていた'] },
   { v: '1.8', date: '2026-11-24', changes: ['ホムンクルスのレベルアップで、伸ばす能力を3つの候補から選べるように。Lv10・Lv20では上げる技能も選べます', '強化に節目を追加: Lv10・25・50・100（以後50ごと）で効果が大きく上がります', '「稼ぐ力」（1秒あたりのマナ）を画面上部に表示。周回後は前の周の同じ時点と比べます', '強化ごとに、買うと稼ぐ力がどれだけ増えるかを表示', '画面の左上に版を表示（押すと変更の記録）'] },
@@ -636,7 +641,6 @@ function favKind() {
 const RANKS = ['E', 'D', 'C', 'B', 'A', 'S', 'S+'];
 const RANK_V = [1, 2, 3, 5, 8, 12, 20];
 const RANK_MAX = RANKS.length - 1;
-const MAX_HOMS = 30;
 const LV_MAX = 20;
 const TRAITS = {
   power: { name: '豪腕', d: '1回の採取で手に入る素材の数が増えます。使い魔の採取にも効きます。', per: '採取力 +10%', now: l => `採取力 +${l * 10}%` },
@@ -645,7 +649,29 @@ const TRAITS = {
   mana: { name: '錬金', d: '分解や依頼で得られるマナが増えます。素材の価値が上がるので、生成に必要なマナも同じだけ増えます。', per: 'マナ +8%', now: l => `マナ +${l * 8}%` },
   fam: { name: '使役', d: 'すべての採取地の使い魔が速く採取します。', per: '使い魔の速さ +10%', now: l => `使い魔の速さ +${l * 10}%` },
   craft: { name: '洞察', d: '採取地の探索が速く進みます。珍しい素材が早く見つかるようになります。', per: '探索の進み +10%', now: l => `探索の進み +${l * 10}%` },
+  jackpot: { name: '大当たり', d: '手で採取したとき、ときどき素材が10倍手に入ります。', per: '確率 +1%', now: l => `確率 ${Math.min(50, l)}%` },
+  quick: { name: '早熟', d: 'すべての子が得る経験値が増えます。', per: '経験値 +15%', now: l => `経験値 +${l * 15}%` },
+  vessel: { name: '器', d: 'すべての子の能力の上限が上がります。', per: '上限 +1', now: l => `上限 +${l}` },
+  night: { name: '夜なべ', d: '留守の間に使い魔が働く時間が延びます。', per: '+1時間', now: l => `+${l}時間` },
 };
+// ランクは S+ の先も ★ で限りなく上がる（強さは ★1つごとに +4）
+const rankName = r => r <= RANK_MAX ? RANKS[r] : 'S+★' + (r - RANK_MAX > 1 ? r - RANK_MAX : '');
+const rankV = r => r <= RANK_MAX ? RANK_V[r] : RANK_V[RANK_MAX] + 4 * (r - RANK_MAX);
+// 道: Lv5・10・15・20 で、その子の3本の道から1つを1段進める。4段とも同じ道なら「極み」で効果が倍
+const PATH_LV = [5, 10, 15, 20];
+const ROLES = {
+  mason: { name: '石工', st: 'str', fx: '採取力', per: 0.5 },
+  keeper: { name: '番人', st: 'spd', fx: '使い魔の速さ', per: 0.5 },
+  seeker: { name: '宝探し', st: 'luk', fx: '目利き', add: 3 },
+  scholar: { name: '学者', st: 'int', fx: 'マナ', per: 0.4 },
+  explorer: { name: '探検家', st: 'exp', fx: '探索の進み', per: 0.5 },
+  artisan: { name: '職人', st: 'dex', fx: '熟練の伸び', per: 0.5 },
+};
+const KIND_ROLES = { koro: ['mason', 'artisan', 'keeper'], happa: ['seeker', 'artisan', 'keeper'], kiri: ['keeper', 'explorer', 'seeker'], morisu: ['scholar', 'seeker', 'artisan'], ruru: ['explorer', 'mason', 'scholar'], draco: ['scholar', 'mason', 'explorer'] };
+const roleSteps = (h, role) => (h.path || []).filter(x => x === role).length;
+const roleOne = (role, n) => { const r = ROLES[role], top = n >= PATH_LV.length ? 2 : 1; return r.add ? r.add * n * top : (1 + r.per * n) * top; };
+const roleMult = role => inCh('nohom') ? 1 : S.homs.reduce((a, h) => a * roleOne(role, roleSteps(h, role)), 1);
+const roleAdd = role => inCh('nohom') ? 0 : S.homs.reduce((a, h) => a + roleOne(role, roleSteps(h, role)), 0);
 const TRAIT_IDS = Object.keys(TRAITS);
 
 const RW_NAME = { power: '採取力', mana: 'マナ', fam: '使い魔の速さ', skill: '熟練の伸び' };
@@ -671,7 +697,7 @@ const MIS = [
   // 霧の出る里山
   { id: 'f1', area: 'a2', name: '里山の第一歩', text: '霧の出る里山で100回採取する', prog: () => S.st.areaTaps.a2 || 0, goal: 100, rw: ['power', 1.3], brute: 1e6 },
   { id: 'f2', area: 'a2', name: '土を育てる', text: '腐葉土を50個納品する', deliver: 'humus', goal: 50, rw: ['mana', 1.2], brute: 3e6 },
-  { id: 'f3', area: 'a2', name: '兄弟', text: '同じ種類のホムンクルスを2人そろえる', prog: () => Math.max(0, ...KINDS.map(k => kindHoms(k.id).length)), goal: 2, rw: ['power', 1.3], brute: 5e6 },
+  { id: 'f3', area: 'a2', name: '仲間', text: 'ホムンクルスを3人生み出す', prog: () => S.homs.length, goal: 3, rw: ['power', 1.3], brute: 5e6 },
   { id: 'f4', area: 'a2', name: '樹脂の納品', text: '樹脂を30個納品する', deliver: 'resin', goal: 30, rw: ['fam', 1.3], brute: 1e7 },
   { id: 'f5', area: 'a2', name: '育ち盛り', text: 'ホムンクルスをLv20まで育てる', prog: () => maxHomLv(), goal: 20, rw: ['skill', 1.5], brute: 3e7 },
   { id: 'f6', area: 'a2', name: '里山の図鑑', text: '里山の素材10種類をすべて図鑑に登録する', prog: () => areaReg('a2'), goal: 10, rw: ['mana', 1.5], brute: 1e8 },
@@ -711,7 +737,7 @@ const UPS = [
   { id: 'furnace', name: '分解炉', info: '分解で得られるマナが増えます。生成に必要なマナも同じだけ増えます。',
     eff: l => `マナ ${fmtX(furnaceMult(l))}`, cost: l => 120 * 1.75 ** l, msText: 'マナ ×2' },
   { id: 'eye', name: '目利き', info: '珍しい素材ほど、追加で多く手に入ります。ありふれた素材の数は変わりません。',
-    eff: l => RARITY.slice(1).map((n, i) => `${n} ${fmtX(eyeF(eyeLv(l) + traitLv('luck') + statSum('luk') / 10) ** (i + 1))}`).join('　'), cost: l => 250 * 2.1 ** l, long: true, msText: '目利き +5' },
+    eff: l => RARITY.slice(1).map((n, i) => `${n} ${fmtX(eyeF(eyeLv(l) + traitLv('luck') + statSum('luk') / 10 + roleAdd('seeker')) ** (i + 1))}`).join('　'), cost: l => 250 * 2.1 ** l, long: true, msText: '目利き +5' },
   { id: 'autodis', name: '自動分解装置', once: true, info: '採取した素材を、その場でマナに変えます。採取画面でオン・オフできます。',
     eff: l => l ? '設置済み' : '未設置', cost: () => 300 },
 ];
@@ -730,10 +756,10 @@ const JOURNAL = [
     text: '土と水とマナから、手伝いの子を生み出せる。ほかの人の目には、ただの小石や葉っぱにしか見えない。\nヒヨリという子にだけは、どういうわけか見えていた。今もそうだろうか。' },
   { id: 'j5', title: '霧の里山', hint: '霧の出る里山へ行く', cond: () => !!S.unlocked.a2,
     text: '里山の霧は、マナが濃すぎて目に見えるようになったものだ。\n光る苔に触れるときは、そっと。あれは、誰かが昔あそこでほどいたものの名残だ。' },
-  { id: 'j16', title: '色のない町', hint: 'よどみに入る', cond: () => (S.life.mazeBest || 0) >= 1,
+  { id: 'j16', title: '色のない町', hint: '2回周回する', cond: () => (S.life.prestiges || 0) >= 2,
     text: 'ノートを開いたまま眠ると、色のない町で目が覚める。ここと同じ道、同じ店、同じ川。人だけがいない。\nほどかれなかったマナが、埃や錆の形をとってうろついている。あれが何なのか、わたしにもまだ分からない。' },
-  { id: 'j6', title: '因果の融合', hint: '同じ種類の子を2人そろえる', cond: () => KINDS.some(k => kindHoms(k.id).length >= 2),
-    text: '同じ土から生まれた子でも、育ち方はそれぞれ違う。\nはじまりに戻るとき、子たちは一つになり、それぞれの良いところだけが残る。わたしはこれを因果の融合と呼んでいる。' },
+  { id: 'j6', title: '因果の融合', hint: '相棒を連れて周回する', cond: () => (S.life.prestiges || 0) >= 1 && S.homs.some(h => h.f >= 1),
+    text: '同じ土から生まれた子でも、どの道を歩くかで育ち方はまるで違う。\nはじまりに戻るとき、子は歩いた道を忘れる。けれど覚えたことは残り、器だけが少し大きくなる。わたしはこれを因果の融合と呼んでいる。' },
   { id: 'j7', title: '完璧な小石', hint: '素材を完璧まで精錬する', cond: () => ITEMS.some(i => perfect(i.id)),
     text: '完璧な小石を見たことがあるだろうか。わたしはある。ただの石ころなのに、目が離せなかった。\n完璧とは、それ以上何も足さなくてよい状態のことだ。' },
   { id: 'j8', title: '閉じた鉱山', hint: '閉じた鉱山へ行く', cond: () => !!S.unlocked.a3,
@@ -770,7 +796,6 @@ const FEATS = [
   { id: 'lab', name: '工房', tab: 'lab', hint: 'マナを累計300集める', p: () => [S.life.totalMana, 300], d: '素材の分解と、加工品の解放ができます。' },
   { id: 'research', name: '研究', sub: 'up', hint: 'マナを累計1,000集める', p: () => [S.life.totalMana, 1000], d: '強化の画面で、周ごとに伸ばし方を選ぶ研究ができます。' },
   { id: 'tools', name: '相棒', tab: 'tools', hint: 'マナを累計3,000集める', p: () => [S.life.totalMana, 3000], d: 'ホムンクルスを生み出して育てます。' },
-  { id: 'maze', name: 'よどみ', tab: 'maze', hint: 'ホムンクルスを2人生み出す', p: () => [Math.max(S.homs.length, S.st.homsMade), 2], d: '夜、ノートを開いたまま眠ると、ホムンクルスと一緒に「よどみ」を進めます。' },
   { id: 'refine', name: '精錬', sub: 'lab', hint: 'マナを累計2万集める', p: () => [S.life.totalMana, 2e4], d: '工房で、同じ素材を使って品質を上げられます。' },
   { id: 'req', name: '町の人', sub: 'mission', hint: 'ミッションを3つ達成する', p: () => [Object.values(S.mc).reduce((a, b) => a + b, 0), 3], d: '依頼の画面で、町の人の頼みごとを聞けます。仲が深まると、ずっと続く特典と話が手に入ります。' },
   { id: 'stone', name: '賢者の石', sub: 'up', hint: '閉じた鉱山へ行く', p: () => [S.unlocked.a3 || S.run > 1 ? 1 : 0, 1], d: '強化の画面で、賢者の石を錬成して周回できます。' },
@@ -819,7 +844,7 @@ function nextGoal() {
 /* ===================== 状態 ===================== */
 const fresh = () => ({
   v: 6, mana: 0, skill: 0, fame: 0,
-  run: 1, mc: {}, stones: 0, pu: {}, journal: {}, jread: {}, pref: { num: 'ja' }, open: {}, newTab: {}, life: { totalMana: 0, prestiges: 0, bestStones: 0, mazeBest: 0 }, maze: null, mazeTeam: [],
+  run: 1, mc: {}, stones: 0, pu: {}, journal: {}, jread: {}, pref: { num: 'ja' }, open: {}, newTab: {}, life: { totalMana: 0, prestiges: 0, bestStones: 0, mazeBest: 0 },
   area: 'a1', unlocked: { a1: true },
   inv: {}, reg: {}, col: {}, dis: {}, ref: {},
   homs: [], homSeq: 1,
@@ -845,7 +870,12 @@ function normalize(o) {
   if (!Array.isArray(f.homs)) f.homs = [];
   f.homs = f.homs.filter(h => h && KIND[h.k]);
   if (!KIND[f.fav]) f.fav = null;
-  for (const h of f.homs) if (!Array.isArray(h.pk)) h.pk = [];
+  // 道がなかった頃のセーブ（同じ種類が何人もいる形）: 種類ごとに1人にまとめ、過ぎた節目の道は選び直せるようにする
+  if (f.homs.some(h => !Array.isArray(h.path)) || new Set(f.homs.map(h => h.k)).size < f.homs.length) {
+    f.homs = mergeByKind(f.homs, false);
+    for (const h of f.homs) { h.path = []; h.pk = PATH_LV.filter(l => h.lv >= l).map(() => ({ t: 'p' })); }
+  }
+  for (const h of f.homs) h.pk = (Array.isArray(h.pk) ? h.pk : []).filter(p => p && (p.t === 'p' || (p.t === 'k' && Array.isArray(p.o) && p.o.every(id => TRAITS[id]))));
   for (const k of ['curve', 'prevCurve']) if (!Array.isArray(f[k])) f[k] = [];
   if (!(f.runAt > 0)) f.runAt = Date.now();
   // 実績のための通算の記録がなかった頃のセーブは、この周の記録で補う
@@ -854,9 +884,7 @@ function normalize(o) {
   if (!f.life.reqs) f.life.reqs = f.st.reqDone || 0;
   if (f.ch && !CH[f.ch]) f.ch = null;
   delete f.party;
-  if (!Array.isArray(f.mazeTeam)) f.mazeTeam = [];
-  f.mazeTeam = f.mazeTeam.filter(u => f.homs.some(h => h.u === u)).slice(0, 3);
-  if (f.maze && (!Array.isArray(f.maze.team) || !f.maze.team.some(u => f.homs.some(h => h.u === u)))) f.maze = null;
+  delete f.maze; delete f.mazeTeam; delete f.mazeLast;
   // 道具だった頃のセーブ: 装備していた道具を、同じ枠の役目のホムンクルスに変えて引き継ぐ
   if ((o.v || 1) < 5 && Array.isArray(o.tools) && o.eq) {
     const byTool = { hand: 'koro', waist: 'happa', neck: 'happa' };
@@ -919,25 +947,25 @@ const statSum = st => KINDS.reduce((a, k) => a + kindBest(k.id, st), 0);
 // 能力値1ポイントごとに効果が2%ずつ掛け算で伸びる
 const statMult = st => 1.02 ** statSum(st);
 function kindRank(k, id) { let r = -1; if (inCh('nohom')) return r; for (const h of kindHoms(k)) for (const x of h.sk) if (x.id === id && x.r > r) r = x.r; return r; }
-function traitLv(id) { let s = 0; for (const k of KINDS) { const r = kindRank(k.id, id); if (r >= 0) s += RANK_V[r]; } return s; }
-function capOf(h, st) { return Math.round(KIND[h.k].g[st] * 0.6) + 20 + 15 * h.f + (chDone('nohom') ? 30 : 0); }
+function traitLv(id) { let s = 0; for (const k of KINDS) { const r = kindRank(k.id, id); if (r >= 0) s += rankV(r); } return s; }
+function capOf(h, st) { return Math.round(KIND[h.k].g[st] * 0.6) + 20 + 15 * h.f + (chDone('nohom') ? 30 : 0) + traitLv('vessel'); }
 const expNeed = lv => Math.round(30 * 1.3 ** (lv - 1));
 const slotsOf = h => 3 + (h.f >= 3 ? 1 : 0) + (h.f >= 6 ? 1 : 0);
 const statTotal = h => STAT_IDS.reduce((a, st) => a + h.s[st], 0);
-const isUltimate = h => STAT_IDS.every(st => h.s[st] >= capOf(h, st)) && h.sk.length >= slotsOf(h) && h.sk.every(k => k.r >= RANK_MAX);
+// 完璧: 技能の枠がすべて埋まり、すべて S+ 以上
+const isUltimate = h => h.sk.length >= slotsOf(h) && h.sk.every(k => k.r >= RANK_MAX);
 const maxHomLv = () => S.homs.reduce((a, h) => Math.max(a, h.lv), 0);
 const maxRank = () => S.homs.reduce((a, h) => Math.max(a, ...h.sk.map(k => k.r), 0), 0);
 const maxStatTotal = () => S.homs.reduce((a, h) => Math.max(a, statTotal(h)), 0);
-const fameMult = () => (1 + 0.03 * S.fame) * mazeMult();
-const mazeMult = () => 1 + 0.02 * (S.life.mazeBest || 0);
+const fameMult = () => 1 + 0.03 * S.fame;
 const skillMult = () => 1 + S.skill * 0.004;
-const skillGain = () => mult('skill') * (1 + 0.15 * traitLv('skill')) * statMult('dex') * boost('skill') * rsSkill();
-const power = () => toolBase(S.up.tool) * skillMult() * mult('power') * 1.5 ** pu('power') * statMult('str') * (1 + 0.1 * traitLv('power')) * boost('power');
+const skillGain = () => mult('skill') * (1 + 0.15 * traitLv('skill')) * statMult('dex') * roleMult('artisan') * boost('skill') * rsSkill();
+const power = () => toolBase(S.up.tool) * skillMult() * mult('power') * 1.5 ** pu('power') * statMult('str') * (1 + 0.1 * traitLv('power')) * roleMult('mason') * boost('power');
 const famLv = a => S.up['fam_' + a] || 0;
-const famMulti = () => mult('fam') * 1.5 ** pu('fam') * statMult('spd') * (1 + 0.1 * traitLv('fam')) * boost('fam') * rsFam();
+const famMulti = () => mult('fam') * 1.5 ** pu('fam') * statMult('spd') * (1 + 0.1 * traitLv('fam')) * roleMult('keeper') * boost('fam') * rsFam();
 const famRate = (a = S.area) => famBase(famLv(a)) * famMulti();
 const famTotal = () => unlockedAreas().reduce((s, a) => s + famRate(a.id), 0);
-const manaMult = () => furnaceMult(S.up.furnace) * mult('mana') * 1.5 ** pu('mana') * statMult('int') * (1 + 0.08 * traitLv('mana')) * fameMult() * boost('mana') * rsMana();
+const manaMult = () => furnaceMult(S.up.furnace) * mult('mana') * 1.5 ** pu('mana') * statMult('int') * (1 + 0.08 * traitLv('mana')) * roleMult('scholar') * fameMult() * boost('mana') * rsMana();
 // 精錬は20段階。1段階ごとに品質+5%、100%で「完璧」（価値2.5倍）
 const REF_MAX = 20;
 const refSteps = id => Math.min(REF_MAX, S.ref[id] || 0);
@@ -946,12 +974,12 @@ const perfect = id => refSteps(id) >= REF_MAX;
 const valMult = id => perfect(id) ? 2.5 : 1 + qOf(id);
 const baseVal = id => ITEM[id].v * valMult(id) * (ITEM[id].kind === 'proc' ? rsProc() * (chDone('nofurnace') ? 3 : 1) : 1);
 const unitMana = id => baseVal(id) * manaMult();
-const eyeF = (eye = eyeLv(S.up.eye) + traitLv('luck') + statSum('luk') / 10) => 1 + 0.1 * eye;
+const eyeF = (eye = eyeLv(S.up.eye) + traitLv('luck') + statSum('luk') / 10 + roleAdd('seeker')) => 1 + 0.1 * eye;
 const autoDisOn = () => S.up.autodis > 0 && S.autoDis;
 
 const refineCost = id => Math.ceil(10 * 1.3 ** refSteps(id) * rsRefine());
 const procOn = p => (S.st.crafted[p.id] || 0) > 0 && S.unlocked[p.area];
-const exploreMult = () => (1 + 0.1 * traitLv('craft')) * 2 ** pu('explore') * statMult('exp') * boost('explore') * rsExplore();
+const exploreMult = () => (1 + 0.1 * traitLv('craft')) * roleMult('explorer') * 2 ** pu('explore') * statMult('exp') * boost('explore') * rsExplore();
 function avgValue(a = S.area) {
   const f = eyeF(); const raws = availOf(a);
   const tot = raws.reduce((s, i) => s + i.w, 0);
@@ -1142,118 +1170,123 @@ function refine(id, maxTimes) {
 }
 const rnd = n => Math.floor(Math.random() * n);
 function makeHom(kind) {
-  if (inCh('nohom') || S.homs.length >= MAX_HOMS || canMake(kind.in) < 1) return null;
+  if (inCh('nohom') || S.homs.some(x => x.k === kind.id) || canMake(kind.in) < 1) return null;
   for (const [id, n] of Object.entries(kind.in)) S.inv[id] -= n;
-  const h = { u: S.homSeq++, k: kind.id, lv: 1, xp: 0, f: 0, s: {}, sk: [], pk: [] };
+  const h = { u: S.homSeq++, k: kind.id, lv: 1, xp: 0, f: 0, s: {}, sk: [], pk: [], path: [] };
   for (const st of STAT_IDS) h.s[st] = Math.min(capOf(h, st), Math.round(kind.g[st] / 12) + rnd(5));
-  h.sk.push({ id: kind.sk[0], r: Math.random() < 0.3 ? 1 : 0 });
-  if (Math.random() < 0.6) { const pool = kind.sk.slice(1).concat(TRAIT_IDS).filter(id => !h.sk.some(k => k.id === id)); h.sk.push({ id: pool[rnd(Math.min(pool.length, kind.sk.length + 1))], r: 0 }); }
+  h.sk.push({ id: kind.sk[0], r: 0 });
   S.homs.push(h);
   S.st.homsMade++;
   return h;
 }
-// レベルアップ: 成長率（%）に従って能力が伸びる。100%を超える分は確定で+1
+const ROLE_OF_STAT = Object.fromEntries(Object.entries(ROLES).map(([id, r]) => [r.st, id]));
+const shuffled = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = rnd(i + 1); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+// 技能の候補3つ: 枠が空いていれば新しい技能を2つまで、埋まっていれば入れ替えの候補を1つ。残りは持っている技能のランク上げ
+function skillOpts(h) {
+  const own = shuffled(h.sk.map(x => x.id));
+  const news = shuffled(TRAIT_IDS.filter(id => !h.sk.some(x => x.id === id)));
+  const nNew = Math.min(news.length, h.sk.length < slotsOf(h) ? 2 : 1);
+  let o = news.slice(0, nNew).concat(own).slice(0, 3);
+  if (o.length < 3) o = o.concat(news.slice(nNew, nNew + 3 - o.length));
+  return o;
+}
+// レベルアップ: 成長率（%）に従って能力が伸びる（道を進めた能力は1段ごとに +40%）。Lv5・10・15・20 は道、ほかは技能を選ぶ
 function levelUp(h) {
   const g = KIND[h.k].g, got = {};
   for (const st of STAT_IDS) {
-    const n = Math.floor(g[st] / 100) + (Math.random() < (g[st] % 100) / 100 ? 1 : 0);
+    const rate = g[st] + 40 * roleSteps(h, ROLE_OF_STAT[st]);
+    const n = Math.floor(rate / 100) + (Math.random() < (rate % 100) / 100 ? 1 : 0);
     const add = Math.min(n, capOf(h, st) - h.s[st]);
     if (add > 0) { h.s[st] += add; got[st] = add; }
   }
   h.lv++;
-  // 成長の選択: 上限に届いていない能力から3つの候補を出し、プレイヤーが1つ選ぶ
-  const open = STAT_IDS.filter(st => h.s[st] < capOf(h, st));
-  for (let i = open.length - 1; i > 0; i--) { const j = rnd(i + 1); [open[i], open[j]] = [open[j], open[i]]; }
-  if (open.length) h.pk.push({ t: 's', o: open.slice(0, 3) });
-  // Lv10とLv20: 上げる技能を選ぶ（候補が1つだけならそのまま上がる）
-  let sk = null;
-  if (h.lv === 10 || h.lv === LV_MAX) {
-    const up = h.sk.filter(k => k.r < RANK_MAX);
-    if (up.length === 1) { sk = up[0]; sk.r++; }
-    else if (up.length > 1) h.pk.push({ t: 'k' });
-  }
-  return { got, sk };
+  h.pk.push(PATH_LV.includes(h.lv) ? { t: 'p' } : { t: 'k', o: skillOpts(h) });
+  return { got };
 }
-// 選んだときに伸びる能力値
-const PICK_ADD = 2;
-// まだ選べる成長だけを残す（上限に届いた能力の候補などを除く）
-function cleanPicks(h) {
-  h.pk = h.pk.filter(p => p.t === 's' ? p.o.some(st => h.s[st] < capOf(h, st)) : h.sk.some(k => k.r < RANK_MAX));
-  return h.pk;
-}
-function applyPick(h, val) {
-  const p = cleanPicks(h)[0];
+// 道を進めた能力は、その場で +5
+const PATH_ADD = 5;
+const cleanPicks = h => h.pk;
+const needSwap = (h, id) => !h.sk.some(x => x.id === id) && h.sk.length >= slotsOf(h);
+function applyPick(h, val, rep) {
+  const p = h.pk[0];
   if (!p) return null;
-  if (p.t === 's') {
-    if (!p.o.includes(val) || h.s[val] >= capOf(h, val)) return null;
-    const add = Math.min(PICK_ADD, capOf(h, val) - h.s[val]);
-    h.s[val] += add; h.pk.shift();
-    return `${KIND[h.k].name}の${STAT[val].name}が +${add}`;
+  const nm = KIND[h.k].name;
+  if (p.t === 'p') {
+    if (!KIND_ROLES[h.k].includes(val)) return null;
+    h.path.push(val); h.pk.shift();
+    const st = ROLES[val].st, add = Math.max(0, Math.min(PATH_ADD, capOf(h, st) - h.s[st]));
+    h.s[st] += add;
+    const n = roleSteps(h, val);
+    if (n >= PATH_LV.length) celebrate('極み', `${nm}　${ROLES[val].name}の極み`, `${ROLES[val].fx}の効果が倍になりました`, 'var(--brass)', homSrc(h.k, 1));
+    return `${nm}は${ROLES[val].name}の道を進んだ（${n}段目）`;
   }
-  const k = h.sk.find(x => x.id === val && x.r < RANK_MAX);
-  if (!k) return null;
-  k.r++; h.pk.shift();
-  return `${KIND[h.k].name}の${TRAITS[k.id].name}が ${RANKS[k.r]} に`;
+  if (!p.o.includes(val)) return null;
+  const own = h.sk.find(x => x.id === val);
+  let msg;
+  if (own) { own.r++; msg = `${nm}の${TRAITS[val].name}が ${rankName(own.r)} に`; }
+  else if (h.sk.length < slotsOf(h)) { h.sk.push({ id: val, r: 0 }); msg = `${nm}が${TRAITS[val].name}を覚えた`; }
+  else {
+    const i = h.sk.findIndex(x => x.id === rep);
+    if (i < 0) return null;
+    msg = `${nm}が${TRAITS[rep].name}を忘れて、${TRAITS[val].name}を覚えた`;
+    h.sk[i] = { id: val, r: 0 };
+  }
+  h.pk.shift();
+  if (isUltimate(h) && !h.done) { h.done = 1; celebrate('完璧', nm, 'すべての技能が S+ に届きました。この先は ★ で伸びていきます', 'var(--brass)', homSrc(h.k, 1)); }
+  return msg;
 }
-// おまかせ: 能力はその種類の成長率が一番高いもの、技能は上がったときに一番強くなるもの
+// おまかせ: 道は一番進んでいる道（極みを目指す）、技能は空き枠があれば覚え、なければ一番低いランクを上げる
 function autoPickVal(h, p) {
-  if (p.t === 's') return p.o.filter(st => h.s[st] < capOf(h, st)).sort((a, b) => KIND[h.k].g[b] - KIND[h.k].g[a])[0];
-  return h.sk.filter(k => k.r < RANK_MAX).sort((a, b) => (RANK_V[b.r + 1] - RANK_V[b.r]) - (RANK_V[a.r + 1] - RANK_V[a.r]))[0].id;
+  if (p.t === 'p') return KIND_ROLES[h.k].slice().sort((a, b) => roleSteps(h, b) - roleSteps(h, a))[0];
+  const nw = p.o.find(id => !h.sk.some(x => x.id === id) && !needSwap(h, id));
+  if (nw) return nw;
+  const own = h.sk.filter(x => p.o.includes(x.id)).sort((a, b) => a.r - b.r)[0];
+  return own ? own.id : null;
 }
 function autoPicks(h) {
   let n = 0;
-  while (cleanPicks(h).length && n < 100) { if (!applyPick(h, autoPickVal(h, h.pk[0]))) h.pk.shift(); n++; }
+  while (h.pk.length && n < 100) { const v = autoPickVal(h, h.pk[0]); if (!v || !applyPick(h, v)) h.pk.shift(); n++; }
   return n;
 }
-const pickCount = () => S.homs.reduce((a, h) => a + cleanPicks(h).length, 0);
+const pickCount = () => S.homs.reduce((a, h) => a + h.pk.length, 0);
 const homName = h => KIND[h.k].name + (h.f ? `（融合${h.f}）` : '');
 function gainExp(x, quiet, list = S.homs) {
   const msgs = [];
   let face = null;
   for (const h of list) {
     if (h.lv >= LV_MAX) continue;
-    h.xp += x * boost('exp');
+    h.xp += x * boost('exp') * (1 + 0.15 * traitLv('quick'));
     const from = h.lv; let last = null;
     while (h.lv < LV_MAX && h.xp >= expNeed(h.lv)) { h.xp -= expNeed(h.lv); last = levelUp(h); }
     if (h.lv >= LV_MAX) { h.xp = 0; celebrate('育ちきった', `${KIND[h.k].name} Lv${LV_MAX}`, '因果融合で、上限を超えてさらに強くなれます', 'var(--brass)', homSrc(h.k, 1)); }
     if (!last) continue;
     face = face || homSrc(h.k, 1);
     if (quiet || h.lv - from > 1) msgs.push(`${KIND[h.k].name} Lv${from}→Lv${h.lv}`);
-    else msgs.push(`${KIND[h.k].name}がLv${h.lv}になった！ ${Object.entries(last.got).map(([st, n]) => STAT[st].name + '+' + n).join(' ') || '（伸びなかった）'}${last.sk ? `　${TRAITS[last.sk.id].name}が${RANKS[last.sk.r]}に` : ''}${h.pk.length ? '　成長を選べます' : ''}`);
+    else msgs.push(`${KIND[h.k].name}がLv${h.lv}になった！ ${PATH_LV.includes(h.lv) ? '道を選べます' : '技能を選べます'}`);
   }
   if (msgs.length) { if (quiet) toast(msgs.slice(0, 3).join('　') + (msgs.length > 3 ? `　ほか${msgs.length - 3}体` : ''), 3500); else banner('レベルアップ！ ' + msgs[0] + (msgs.length > 1 ? `　ほか${msgs.length - 1}体` : ''), false, face); }
 }
-// 周回のとき（因果融合）: 種類ごとに全員を1人にまとめる
-function mergeByKind(homs) {
-  // 融合回数が1増え、能力の上限が+15される
+// 種類ごとに1人にまとめる。fuse のとき（周回の因果融合）は融合回数+1で上限+15、Lv1から育ち直し、道は選び直し
+function mergeByKind(homs, fuse = true) {
   const out = [];
   for (const k of KINDS) {
     const g = homs.filter(h => h.k === k.id);
     if (!g.length) continue;
-    g.sort((a, b) => b.f - a.f || statTotal(b) - statTotal(a));
+    g.sort((a, b) => b.f - a.f || b.lv - a.lv || statTotal(b) - statTotal(a));
     const base = JSON.parse(JSON.stringify(g[0]));
-    for (const st of STAT_IDS) base.s[st] = Math.min(capOf(base, st), Math.max(...g.map(h => h.s[st])));
+    if (!Array.isArray(base.path)) base.path = [];
+    for (const st of STAT_IDS) base.s[st] = Math.max(...g.map(h => h.s[st]));
     const best = {};
     for (const h of g) for (const sk of h.sk) best[sk.id] = Math.max(best[sk.id] ?? -1, sk.r);
     const sk = base.sk.map(x => ({ id: x.id, r: best[x.id] }));
     const rest = Object.entries(best).filter(([id]) => !sk.some(x => x.id === id)).sort((a, b) => b[1] - a[1]);
     for (const [id, r] of rest) { if (sk.length >= slotsOf(base)) break; sk.push({ id, r }); }
     base.sk = sk;
-    // レベルは1に戻り、上がった上限に向かってまた育つ
-    base.lv = 1; base.xp = 0; base.pk = [];
-    base.f += 1;
+    if (fuse) { base.lv = 1; base.xp = 0; base.pk = []; base.path = []; base.f += 1; }
+    for (const st of STAT_IDS) base.s[st] = Math.min(capOf(base, st), base.s[st]);
     out.push(base);
   }
   return out;
-}
-const homValue = h => Object.entries(KIND[h.k].in).reduce((a, [id, n]) => a + n * unitMana(id), 0) * (1 + h.lv / 10);
-function releaseHom(u) {
-  const h = homById(u); if (!h) return 0;
-  const g = homValue(h); addMana(g);
-  S.homs = S.homs.filter(x => x !== h);
-  S.mazeTeam = S.mazeTeam.filter(x => x !== u);
-  if (S.maze && S.maze.team.includes(u)) { S.maze.team = S.maze.team.filter(x => x !== u); if (!S.maze.team.length) mzReturn(false); }
-  return g;
 }
 function ready(m) { return m.deliver ? inv(m.deliver) >= m.goal : m.prog() >= m.goal; }
 function complete(m, how) {
@@ -1306,7 +1339,7 @@ function prestige() {
   const o = S, n = fresh();
   n.prevCurve = o.curve;
   // 周回をまたいで残るもの
-  n.run = o.run + 1; n.mc = o.mc; n.journal = o.journal; n.jread = o.jread; n.pref = o.pref; n.mazeTeam = o.mazeTeam.filter(u => n.homs.some(h => h.u === u)); n.open = o.open; n.newTab = {}; n.stones = o.stones + gain; n.pu = o.pu; n.bond = o.bond; n.met = o.met; n.scn = o.scn;
+  n.run = o.run + 1; n.mc = o.mc; n.journal = o.journal; n.jread = o.jread; n.pref = o.pref; n.open = o.open; n.newTab = {}; n.stones = o.stones + gain; n.pu = o.pu; n.bond = o.bond; n.met = o.met; n.scn = o.scn;
   n.life = Object.assign({}, o.life, { prestiges: o.life.prestiges + 1, bestStones: Math.max(o.life.bestStones || 0, gain) });
   n.chDone = Object.assign({}, o.chDone);
   if (o.ch) n.chDone[o.ch] = true;
@@ -1327,129 +1360,6 @@ function prestige() {
   ui.gArea = 'a1'; ui.misArea = 'a1'; ui.fuse = null; ui.tab = 'gather'; ui.upView = 'shop';
   refreshReqs();
   return gain;
-}
-
-/* --- ホムンクルスの迷宮 --- */
-const MAZE_TEAM = 3;
-const FOES = ['埃のかたまり', '錆びた影', '霧の影', '水晶の虫', '誰かの影', '鉄くずの巨体', '星を呑む影', '原初の影'];
-const foeName = fl => FOES[Math.min(FOES.length - 1, Math.floor((fl - 1) / 10))];
-const PATHS = {
-  foe: { name: '影', d: 'ほどくと、マナと経験値' },
-  elite: { name: '濃い影', d: '手ごわいが、報酬は3倍' },
-  chest: { name: '忘れ物', d: 'マナと素材が手に入る' },
-  spring: { name: '水たまり', d: '澄んだ水。HPが4割回復する' },
-  altar: { name: '祠', d: 'この探索の間、攻撃力+15%' },
-  boss: { name: 'よどみの芯', d: '深さ10ごとの芯。ほどくと大きな報酬' },
-};
-function teamTrait(team, id) { let s = 0; for (const h of team) for (const k of h.sk) if (k.id === id) s += RANK_V[k.r]; return s; }
-function cstat(h, team, buff) {
-  const st = h.s;
-  return {
-    maxhp: Math.round(20 + 4 * st.str + 2 * st.dex + 2 * h.lv),
-    atk: (3 + 0.8 * st.str + 0.6 * st.int) * (1 + 0.05 * teamTrait(team, 'power')) * (1 + 0.15 * buff),
-    dbl: Math.min(0.75, st.spd / 120 + 0.01 * teamTrait(team, 'fam')),
-    crit: Math.min(0.6, st.luk / 150 + 0.01 * teamTrait(team, 'luck')),
-    dodge: Math.min(0.5, st.dex / 250),
-  };
-}
-const foeStats = (fl, kind) => {
-  const m = kind === 'boss' ? 6 : kind === 'elite' ? 2.5 : 1;
-  return { name: (kind === 'boss' ? '芯・' : kind === 'elite' ? '濃い' : '') + foeName(fl), hp: Math.round(30 * 1.18 ** fl * m), atk: 4 * 1.15 ** fl * (kind === 'boss' ? 2 : kind === 'elite' ? 1.5 : 1) };
-};
-const mzReward = (fl, kind) => 20 * 1.25 ** fl * (kind === 'boss' ? 10 : kind === 'elite' ? 3 : 1) * manaMult() * (1 + 0.05 * teamTrait(mzTeam(), 'mana'));
-const mzTeam = () => (S.maze ? S.maze.team : S.mazeTeam).map(homById).filter(Boolean);
-const seeAll = () => teamTrait(mzTeam(), 'craft') >= 5 || mzTeam().reduce((a, h) => a + h.s.exp, 0) >= 120;
-function genChoices(fl) {
-  if (fl % 10 === 0) return [{ t: 'boss' }];
-  const pick = () => { const r = Math.random(); return r < 0.45 ? 'foe' : r < 0.6 ? 'elite' : r < 0.75 ? 'chest' : r < 0.88 ? 'spring' : 'altar'; };
-  const c = [pick(), pick(), pick()].map(t => ({ t }));
-  if (!seeAll()) c[Math.floor(Math.random() * 3)].hide = true;
-  return c;
-}
-function mzStart() {
-  const team = S.mazeTeam.map(homById).filter(Boolean);
-  if (!team.length) return false;
-  const hp = {}; for (const h of team) hp[h.u] = cstat(h, team, 0).maxhp;
-  S.maze = { floor: 1, team: team.map(h => h.u), hp, buff: 0, bag: { mana: 0, items: {}, stones: 0 }, choices: genChoices(1), log: ['ノートを開いたまま眠りについた。色のない町で目を覚ます。'] };
-  return true;
-}
-function mzFight(kind) {
-  const m = S.maze, team = mzTeam(), fl = m.floor;
-  const foe = foeStats(fl, kind);
-  const cs = Object.fromEntries(team.map(h => [h.u, cstat(h, team, m.buff)]));
-  let fhp = foe.hp, hits = 0, crits = 0, taken = 0, rounds = 0;
-  const alive = () => team.filter(h => m.hp[h.u] > 0);
-  while (fhp > 0 && alive().length && rounds < 40) {
-    rounds++;
-    for (const h of alive()) {
-      const c = cs[h.u];
-      const n = 1 + (Math.random() < c.dbl ? 1 : 0);
-      for (let i = 0; i < n && fhp > 0; i++) { const cr = Math.random() < c.crit; fhp -= c.atk * (cr ? 2 : 1) * (0.85 + Math.random() * 0.3); hits++; if (cr) crits++; }
-    }
-    if (fhp <= 0) break;
-    const tg = alive(); const t = tg[Math.floor(Math.random() * tg.length)];
-    if (Math.random() < cs[t.u].dodge) continue;
-    const d = Math.round(foe.atk * (0.85 + Math.random() * 0.3));
-    m.hp[t.u] = Math.max(0, m.hp[t.u] - d); taken += d;
-  }
-  const down = team.filter(h => m.hp[h.u] <= 0).map(h => KIND[h.k].name);
-  if (fhp > 0) {
-    // 全滅（または決着がつかない）: 集めた報酬の半分を失って戻る
-    const lost = m.bag.mana / 2;
-    m.bag.mana -= lost;
-    for (const id in m.bag.items) m.bag.items[id] = Math.floor(m.bag.items[id] / 2);
-    m.bag.stones = Math.floor(m.bag.stones / 2);
-    m.log = [`${foe.name}に押し返された……（${rounds}ターン）。持ち物の半分を落として、目を覚ました。`];
-    return mzReturn(true);
-  }
-  const gain = mzReward(fl, kind);
-  m.bag.mana += gain;
-  let extra = '';
-  if (kind === 'boss' && fl >= 30) { m.bag.stones++; extra = '　賢者の石を1個見つけた！'; }
-  const xp = 3 * fl * (kind === 'boss' ? 4 : kind === 'elite' ? 2 : 1) * (1 + 0.1 * teamTrait(team, 'skill'));
-  for (const h of team) if (m.hp[h.u] > 0) giveExp(h, xp);
-  if (kind === 'boss') celebrate('よどみの芯をほどいた', foe.name, `深さ${fl}　+${fmt(gain)} マナ${extra}`, 'var(--bad)'); else banner(`${foe.name}をほどいた！ +${fmt(gain)} マナ`, true);
-  m.log = [`${foe.name}をほどいた！（${rounds}ターン、攻撃${hits}回${crits ? `・会心${crits}回` : ''}）　受けたダメージ ${fmt(taken)}${down.length ? `　${down.join('・')}が倒れた` : ''}`, `+${fmt(gain)} マナ　経験値 +${fmt(xp)}${extra}`];
-  return true;
-}
-// よどみで戦った子だけに経験値を与える
-const giveExp = (h, x) => gainExp(x, false, [h]);
-function mzChest() {
-  const m = S.maze, fl = m.floor;
-  const gain = mzReward(fl, 'foe') * 1.5;
-  m.bag.mana += gain;
-  const pool = ITEMS.filter(i => i.kind === 'raw' && S.unlocked[i.area] && S.reg[i.id]).sort((a, b) => b.v - a.v);
-  let got = '';
-  if (pool.length) {
-    const it = pool[Math.floor(Math.random() * Math.ceil(pool.length / 2))];
-    const n = Math.ceil(10 * 1.15 ** fl);
-    m.bag.items[it.id] = (m.bag.items[it.id] || 0) + n;
-    got = `、${it.name} ×${fmt(n)}`;
-  }
-  m.log = [`誰かの忘れ物を見つけた。+${fmt(gain)} マナ${got}`];
-}
-function mzGo(i) {
-  const m = S.maze; if (!m) return;
-  const c = m.choices[i]; if (!c) return;
-  let t = c.t;
-  if (t === 'foe' || t === 'elite' || t === 'boss') { if (!mzFight(t)) return; if (!S.maze) return; }
-  else if (t === 'chest') mzChest();
-  else if (t === 'spring') { for (const h of mzTeam()) { const mx = cstat(h, mzTeam(), m.buff).maxhp; if (m.hp[h.u] > 0) m.hp[h.u] = Math.min(mx, m.hp[h.u] + Math.round(mx * 0.4)); } m.log = ['澄んだ水たまりで休んだ。HPが回復した。']; }
-  else if (t === 'altar') { m.buff++; m.log = [`道ばたの祠に手を合わせた。攻撃力 +15%（この探索の間 合計+${m.buff * 15}%）`]; }
-  m.floor++;
-  if (m.floor - 1 > (S.life.mazeBest || 0)) S.life.mazeBest = m.floor - 1;
-  m.choices = genChoices(m.floor);
-}
-function mzReturn(lost) {
-  const m = S.maze; if (!m) return false;
-  addMana(m.bag.mana);
-  for (const id in m.bag.items) if (m.bag.items[id] > 0) addItem(id, m.bag.items[id]);
-  S.stones += m.bag.stones;
-  const items = Object.entries(m.bag.items).filter(([, n]) => n > 0).map(([id, n]) => `${ITEM[id].name}×${fmt(n)}`).join('、');
-  toast(`${lost ? '飛び起きた' : '静かに目を覚ました'}（深さ${m.floor}）: +${fmt(m.bag.mana)} マナ${items ? '、' + items : ''}${m.bag.stones ? `、賢者の石 +${m.bag.stones}` : ''}`, 6000);
-  S.mazeLast = m.log;
-  S.maze = null;
-  return false;
 }
 
 /* --- 研究（周ごとに選ぶ枝） --- */
@@ -1477,7 +1387,7 @@ const rsManual = () => (rsHas('gather', 1) ? 2 : 1) * (rsHas('gather', 3) ? 3 : 
 const rsSkill = () => rsHas('gather', 2) ? 2 : 1;
 const rsExplore = () => rsHas('gather', 4) ? 2 : 1;
 const rsFam = () => (rsHas('fam', 1) ? 1.5 : 1) * (rsHas('fam', 3) ? 2 : 1) * (rsHas('fam', 5) ? 3 : 1);
-const offlineCap = () => (rsHas('fam', 2) ? 16 : 8) * 3600;
+const offlineCap = () => ((rsHas('fam', 2) ? 16 : 8) + traitLv('night')) * 3600;
 const rsFamExp = () => rsHas('fam', 4) ? 4 : 1;
 const rsMana = () => (rsHas('alch', 1) ? 1.5 : 1) * (rsHas('alch', 5) ? 3 : 1);
 const rsProc = () => rsHas('alch', 2) ? 2 : 1;
@@ -1510,7 +1420,7 @@ const ACHS = [
   { id: 'mana', name: 'マナの海', what: '集めたマナの累計', perk: 'mana', v: () => S.life.totalMana || 0, base: 1e3, mul: 100 },
   { id: 'craft', name: '作る手', what: '加工した回数', perk: 'skill', v: () => S.life.crafts || 0, base: 10, mul: 10 },
   { id: 'reqs', name: '町の顔なじみ', what: '頼みごとをかなえた回数', perk: 'explore', v: () => S.life.reqs || 0, base: 3, mul: 3 },
-  { id: 'deep', name: '夜歩き', what: 'よどみで進んだいちばんの深さ', perk: 'exp', v: () => S.life.mazeBest || 0, step: 5 },
+  { id: 'ranks', name: '完璧への道', what: '相棒の技能のランクの合計', perk: 'exp', v: () => S.homs.reduce((a, h) => a + h.sk.reduce((b, k) => b + k.r + 1, 0), 0), step: 5 },
   { id: 'runs', name: '春をくり返す', what: '周回した回数', perk: 'fam', v: () => S.life.prestiges || 0, step: 1 },
 ];
 const ACH_PERK = { power: '採取力', mana: 'マナ', skill: '熟練の伸び', explore: '探索の進み', exp: 'ホムンクルスの経験値', fam: '使い魔の速さ' };
@@ -1552,7 +1462,7 @@ const TOWN_LINES = [
   { c: () => S.st.homsMade >= 1, t: 'ポケットの小石が、ときどき温かい。' },
   { c: () => !!S.unlocked.a2, t: '春の風が、里山の霧の匂いを運んでくる。' },
   { c: () => !!S.unlocked.a3, t: '鉱山の入口の看板が、前に見たときより少し傾いていた。' },
-  { c: () => (S.life.mazeBest || 0) >= 1, t: '夜になると、川の向こうの街灯が一つだけ色を失う。' },
+  { c: () => (S.life.prestiges || 0) >= 2, t: '夜になると、川の向こうの街灯が一つだけ色を失う。' },
   { c: () => S.run >= 2, t: 'この春を、前にも見た気がする。' },
   { c: () => S.run >= 3, t: '誰かが、河原の石を一列に並べていた。値打ちの低いものから順に。' },
 ];
@@ -1698,9 +1608,8 @@ function structKey() {
       if (ui.labView === 'refine') return base + regSig(labIds()) + labIds().map(id => perfect(id) ? 1 : 0).join('');
       return base + regSig(labIds());
     }
-    case 'tools': return `t${ua}|${S.homs.map(h => [h.u, h.lv, h.f, h.pk.length, STAT_IDS.map(st => h.s[st]).join('.'), h.sk.map(k => k.id + k.r).join('')].join(':')).join(',')}|${ui.traitHelp ? 'h' : ''}|${favKind()}`;
+    case 'tools': return `t${ua}|${S.homs.map(h => [h.u, h.lv, h.f, h.pk.length, STAT_IDS.map(st => h.s[st]).join('.'), h.sk.map(k => k.id + k.r).join(''), h.path.join('.')].join(':')).join(',')}|${ui.traitHelp ? 'h' : ''}|${favKind()}`;
     case 'mission': return `m${ui.misView}${ui.misArea}${ua}${S.run}:${MIS.filter(misOpen).length}|${ui.misView === 'req' ? PEOPLE.map(p => { const r = S.reqs[p.id]; return [S.met[p.id] ? 1 : 0, bondLv(p.id), r ? (r.wait ? 'w' + (r.none ? 'n' : '') : r.id + (inv(r.id) >= r.n ? 'y' : 'n')) : '-', personUnread(p)].join(''); }).join(',') : ''}`;
-    case 'maze': return `z${S.maze ? [S.maze.floor, S.maze.choices.map(c => c.t + (c.hide ? 'h' : '')).join(''), JSON.stringify(S.maze.hp), S.maze.log.join('')].join('|') : 'off' + S.mazeTeam.join(',') + S.homs.map(h => h.u + ':' + h.lv).join(',')}`;
     case 'book': return `b${ui.bookView || 'items'}${ui.bookView === 'ach' ? achTotal() : ''}${regCount()}${ua}${Object.keys(S.journal).length}`;
     case 'up': return 'u' + (ui.upView || 'shop') + JSON.stringify(S.rs) + S.ch + S.nextCh + JSON.stringify(S.chDone) + featOpen('research') + (S.prevCurve.length ? 'p' : '') + S.up.autodis + Object.keys(S.unlocked).join(',') + S.run + JSON.stringify(S.pu);
   }
@@ -1708,7 +1617,7 @@ function structKey() {
 }
 function render() {
   B = [];
-  const fn = { maze: vMaze, gather: vGather, lab: vLab, tools: vTools, mission: vMission, book: vBook, up: vUp }[ui.tab];
+  const fn = { gather: vGather, lab: vLab, tools: vTools, mission: vMission, book: vBook, up: vUp }[ui.tab];
   main.innerHTML = fn();
   B.forEach((b, i) => { b.el = main.querySelector(`[data-b="${i}"]`); b.last = undefined; });
   lastKey = structKey();
@@ -1849,7 +1758,9 @@ function bindTap() {
     S.st.areaTaps[S.area] = (S.st.areaTaps[S.area] || 0) + exploreMult();
     S.skill += skillGain();
     gainExp(1);
-    const got = gather(power() * rsManual());
+    const jp = Math.random() * 100 < Math.min(50, traitLv('jackpot'));
+    const got = gather(power() * rsManual() * (jp ? 10 : 1));
+    if (jp) banner('大当たり！ 素材が10倍', true);
     if (rsHas('gather', 5) && famRate(S.area) > 0) autoTaps(famRate(S.area), S.area);
     if (chDone('nofam')) for (const a of unlockedAreas()) if (famRate(a.id) > 0) autoTaps(famRate(a.id) * 5, a.id);
     buddyTap();
@@ -1984,166 +1895,105 @@ function vLabRefine() {
 }
 
 /* --- 道具 --- */
-const rankTag = k => `<span class="tag${k.r >= 5 ? ' top' : ''}">${TRAITS[k.id].name} ${RANKS[k.r]}</span>`;
+const rankTag = k => `<span class="tag${k.r >= RANK_MAX ? ' top' : ''}">${TRAITS[k.id].name} ${rankName(k.r)}</span>`;
 const skillTags = h => {
   const free = slotsOf(h) - h.sk.length;
   return `<div class="tags">${h.sk.map(rankTag).join('')}${'<span class="tag none">空き</span>'.repeat(Math.max(0, free))}</div>`;
 };
-function statGrid(h, cmp) {
+function statGrid(h) {
   return `<div class="sgrid">${STATS.map(st => {
     const v = h.s[st.id], c = capOf(h, st.id);
-    const up = cmp && cmp[st.id] > v ? cmp[st.id] : null;
-    return `<div class="sc${v >= c ? ' max' : ''}"><span class="sl">${st.name}</span><b>${up !== null ? `${v}<span class="arrow">→${up}</span>` : v}</b><span class="cap">/${c}</span><i style="width:${Math.min(100, v / c * 100)}%"></i></div>`;
+    return `<div class="sc${v >= c ? ' max' : ''}"><span class="sl">${st.name}</span><b>${v}</b><span class="cap">/${c}</span><i style="width:${Math.min(100, v / c * 100)}%"></i></div>`;
   }).join('')}</div>`;
 }
-function homLine(h, acts) {
-  const k = KIND[h.k];
-  return `<div class="row1 r${k.r}">
-    ${homFace(h.k, h.lv >= LV_MAX ? 1 : 0)}
-    <div class="r1main"><span class="nm">${esc(k.name)} <span class="small muted">Lv${h.lv}${h.f ? '・融合' + h.f : ''}</span></span>
-      <span class="meta">${STATS.map(st => `${st.name}${h.s[st.id]}`).join(' ')}</span>
-      <span class="meta">${h.sk.map(x => TRAITS[x.id].name + RANKS[x.r]).join('・') || '技能なし'}</span>
-      ${h.lv < LV_MAX ? `<span class="prog thin"><i style="width:${h.xp / expNeed(h.lv) * 100}%"></i></span>` : ''}</div>
-    ${acts}
-  </div>`;
+const roleFx = (role, n) => ROLES[role].add ? `目利き +${fmtD(roleOne(role, n) / 10)}` : `${ROLES[role].fx} ${fmtX(roleOne(role, n))}`;
+// 道の進み: 3本それぞれの段（●）
+function pathLine(h) {
+  return `<div class="paths3">${KIND_ROLES[h.k].map(r => {
+    const n = roleSteps(h, r);
+    return `<span class="pth${n >= PATH_LV.length ? ' top' : n ? ' on' : ''}"><b>${ROLES[r].name}</b> <span class="dots">${'●'.repeat(n)}${'○'.repeat(PATH_LV.length - n)}</span>${n ? `<small>${esc(roleFx(r, n))}</small>` : ''}</span>`;
+  }).join('')}</div>`;
 }
-function homCard(h, acts, opts = {}) {
-  const k = KIND[h.k];
-  const ult = isUltimate(h);
-  return `<div class="hom r${k.r}${opts.sel ? ' sel' : ''}">
-    <div class="top-row"><span class="nm">${esc(k.name)}${ult ? ' <span class="tag top">究極</span>' : ''}</span><span class="own small">Lv <b>${tx(() => h.lv)}</b> / ${LV_MAX}${h.f ? `　融合${h.f}回` : ''}</span></div>
-    ${h.lv < LV_MAX ? `<div class="prog thin"><i ${wd(() => h.lv >= LV_MAX ? 100 : h.xp / expNeed(h.lv) * 100)}></i></div>` : '<p class="small q">Lv上限。因果融合でさらに強くなれます</p>'}
-    ${opts.compact ? '' : statGrid(h, opts.cmp)}
-    ${skillTags(h)}
-    ${acts ? `<div class="acts">${acts}</div>` : ''}
-  </div>`;
-}
-// 成長の選択（レベルアップのたびに1件）
+// 成長の選択（レベルアップのたびに1件。Lv5・10・15・20 は道、ほかは技能）
 function vPicks() {
-  const h = S.homs.find(x => cleanPicks(x).length);
+  const h = S.homs.find(x => x.pk.length);
   if (!h) return '';
-  const p = h.pk[0], total = pickCount();
-  let opts;
-  if (p.t === 's') {
-    opts = p.o.map(st => {
-      const cap = capOf(h, st), nv = Math.min(cap, h.s[st] + PICK_ADD), full = h.s[st] >= cap;
-      const d = Math.max(0, nv - kindBest(h.k, st));
-      const eff = full ? '上限です' : d > 0 ? (st === 'luk' ? `目利き +${fmtD(d / 10)}` : `${STAT[st].fx} ${fmtX(1.02 ** d)}`) : '今は効果なし';
-      return `<button class="btn${d > 0 ? ' mana' : ''}" type="button" data-act="pick" data-id="${h.u}" data-v="${st}"${full ? ' disabled' : ''}><span>${STAT[st].name} +${nv - h.s[st]}</span><small>${h.s[st]}→${nv}（上限${cap}）</small><small>${eff}</small></button>`;
+  const p = h.pk[0], total = pickCount(), nm = esc(KIND[h.k].name);
+  let ask, opts;
+  if (p.t === 'p') {
+    ask = `節目です。どの道を進みますか（${h.path.length + 1} / ${PATH_LV.length}段目）`;
+    opts = KIND_ROLES[h.k].map(r => {
+      const n = roleSteps(h, r), top = n + 1 >= PATH_LV.length;
+      return `<button class="btn${top ? ' mana' : ''}" type="button" data-act="pick" data-id="${h.u}" data-v="${r}"><span>${ROLES[r].name}の道 ${n + 1}段目</span><small>${esc(roleFx(r, n))} → ${esc(roleFx(r, n + 1))}</small><small>${STAT[ROLES[r].st].name} +${PATH_ADD}、伸びやすくなる${top ? '。極み: 効果が倍' : ''}</small></button>`;
     }).join('');
+  } else if (ui.swap && ui.swap.u === h.u && p.o.includes(ui.swap.id)) {
+    ask = `${TRAITS[ui.swap.id].name}を覚えるには、技能を1つ忘れます。どれを忘れますか`;
+    opts = h.sk.map(x => `<button class="btn" type="button" data-act="pickswap" data-id="${h.u}" data-v="${ui.swap.id}" data-r="${x.id}"><span>${TRAITS[x.id].name} ${rankName(x.r)}</span><small>を忘れる</small></button>`).join('')
+      + `<button class="btn" type="button" data-act="pickswapno"><span>やめる</span></button>`;
   } else {
-    opts = h.sk.filter(x => x.r < RANK_MAX).map(x => {
-      const kr = kindRank(h.k, x.id), up = x.r + 1 > kr;
-      return `<button class="btn${up ? ' mana' : ''}" type="button" data-act="pick" data-id="${h.u}" data-v="${x.id}"><span>${TRAITS[x.id].name} ${RANKS[x.r]}→${RANKS[x.r + 1]}</span><small>${up ? `強さ ${RANK_V[kr]}→${RANK_V[x.r + 1]}` : '今は効果なし'}</small></button>`;
+    ask = 'どの技能を覚える・伸ばしますか';
+    opts = p.o.map(id => {
+      const own = h.sk.find(x => x.id === id), tr = TRAITS[id];
+      if (own) return `<button class="btn mana" type="button" data-act="pick" data-id="${h.u}" data-v="${id}"><span>${tr.name} ${rankName(own.r)}→${rankName(own.r + 1)}</span><small>強さ ${rankV(own.r)}→${rankV(own.r + 1)}（強さ1ごとに${tr.per}）</small><small>${esc(tr.d)}</small></button>`;
+      return `<button class="btn" type="button" data-act="pick" data-id="${h.u}" data-v="${id}"><span>${tr.name}を覚える</span><small>${esc(tr.d)}強さ1ごとに${tr.per}</small>${needSwap(h, id) ? '<small>枠がいっぱい: 1つ忘れて覚える</small>' : ''}</button>`;
     }).join('');
   }
   return `<div class="panel picks">
     <div class="row-between"><h3>成長を選ぶ</h3><span class="small muted">残り ${total}件</span></div>
-    <div class="pickwho">${homImg(h.k, 1, 'himg')}<p class="small"><b>${esc(KIND[h.k].name)}</b> Lv${h.lv}${h.f ? '・融合' + h.f : ''}: ${p.t === 's' ? `どの能力を伸ばしますか（選んだ能力が +${PICK_ADD}）` : 'どの技能のランクを上げますか'}</p></div>
+    <div class="pickwho">${homImg(h.k, 1, 'himg')}<p class="small"><b>${nm}</b> Lv${h.lv}${h.f ? '・融合' + h.f : ''}: ${ask}</p></div>
+    ${p.t === 'p' ? pathLine(h) : skillTags(h)}
     <div class="pick-opts">${opts}</div>
-    <p class="small muted">効果は、種類ごとに一番高い子の値が効きます。色の付いた候補を選ぶと、今の効果が上がります。選ばずに周回したときは、おまかせで選ばれます。</p>
+    <p class="small muted">道は周回すると選び直せます。覚えた技能は周回しても残ります。選ばずに周回したときは、おまかせで選ばれます。</p>
     <div class="acts"><button class="btn" type="button" data-act="pickauto">残りをすべておまかせ（${total}件）</button></div>
   </div>`;
 }
 function vTools() {
   const effects = STATS.map(st => `<div class="row-between"><span>${st.name} <span class="small muted">${st.fx}</span></span><b>${tx(() => st.id === 'luk' ? '目利き +' + fmtD(statSum('luk') / 10) : fmtX(statMult(st.id)))}</b></div>`).join('');
+  const roles = Object.keys(ROLES).filter(r => S.homs.some(h => roleSteps(h, r))).map(r => `<div class="row-between"><span>${ROLES[r].name}の道 <span class="small muted">${ROLES[r].fx}</span></span><b>${tx(() => ROLES[r].add ? '目利き +' + fmtD(roleAdd(r) / 10) : fmtX(roleMult(r)))}</b></div>`).join('');
   const sk = TRAIT_IDS.filter(id => traitLv(id) > 0).map(id => `${TRAITS[id].name} ${TRAITS[id].now(traitLv(id))}`).join('、');
-  const groups = KINDS.filter(k => kindHoms(k.id).length).map(k => {
-    const hs = kindHoms(k.id).sort((a, b) => b.f - a.f || statTotal(b) - statTotal(a));
-    const best = { k: k.id, f: Math.max(...hs.map(h => h.f)), s: {}, sk: [] };
-    for (const st of STAT_IDS) best.s[st] = kindBest(k.id, st);
-    best.sk = TRAIT_IDS.map(id => ({ id, r: kindRank(k.id, id) })).filter(x => x.r >= 0).sort((a, b) => b.r - a.r);
-    const cards = hs.map(h => homLine(h, confirmBtn('sm', `data-act="release" data-id="${h.u}"`, '別れる', 'もう一度で別れる'))).join('');
-    const fav = favKind() === k.id;
+  const fk = favKind();
+  const cards = KINDS.map(k => S.homs.find(h => h.k === k.id)).filter(Boolean).map(h => {
+    const k = KIND[h.k], fav = fk === k.id, ult = isUltimate(h);
     return `<div class="panel kind r${k.r}">
-      <div class="khead">${homImg(k.id, fav ? 1 : 0, 'himg kimg')}
-        <div class="kinfo"><h3>${esc(k.name)}</h3>
+      <div class="khead">${homImg(k.id, fav || ult ? 1 : 0, 'himg kimg')}
+        <div class="kinfo"><h3>${esc(k.name)}${ult ? ' <span class="tag top">完璧</span>' : ''}</h3>
           <p class="small muted">${esc(k.d)}</p>
-          ${best.f ? `<span class="small muted">因果融合${best.f}回</span>` : ''}
+          <span class="small">Lv <b>${tx(() => h.lv)}</b> / ${LV_MAX}${h.f ? `　因果融合${h.f}回` : ''}</span>
+          ${h.lv < LV_MAX ? `<div class="prog thin"><i ${wd(() => h.lv >= LV_MAX ? 100 : h.xp / expNeed(h.lv) * 100)}></i></div>` : '<span class="small q">Lv上限。周回の因果融合で、さらに上を目指せます</span>'}
           ${fav ? '<span class="tag top">採取に連れている</span>' : `<button class="btn sm" type="button" data-act="fav" data-id="${k.id}">採取に連れていく</button>`}
         </div></div>
-      <h4>いま効いている力（この種類で一番高いもの）</h4>
-      ${statGrid(best)}
-      <div class="tags">${best.sk.map(rankTag).join('') || '<span class="tag none">技能なし</span>'}</div>
-      <h4>この種類の子たち（${hs.length}人）</h4>
-      <div class="list tight">${cards}</div>
+      <h4>道</h4>${pathLine(h)}
+      <h4>能力</h4>${statGrid(h)}
+      <h4>技能（枠 ${slotsOf(h)}）</h4>${skillTags(h)}
     </div>`;
   }).join('');
   const kinds = unlockedAreas().map(a => {
-    const rows = KINDS.filter(k => k.area === a.id).map(k => {
+    const rows = KINDS.filter(k => k.area === a.id && !S.homs.some(h => h.k === k.id)).map(k => {
       const mc = () => missingCost(k.in, 1);
-      const bestSt = STAT_IDS.slice().sort((x, y) => k.g[y] - k.g[x]).slice(0, 2).map(st => STAT[st].name).join('・');
       return `<div class="item r${k.r}">
-        <div class="top-row"><span class="nm mkname">${homFace(k.id)}${esc(k.name)}</span><span class="own small muted">得意: ${bestSt}　いま${kindHoms(k.id).length}人</span></div>
+        <div class="top-row"><span class="nm mkname">${homFace(k.id)}${esc(k.name)}</span><span class="own small muted">道: ${KIND_ROLES[k.id].map(r => ROLES[r].name).join('・')}</span></div>
         <p class="small muted">${esc(k.d)}</p>
         ${insHtml(k.in, 1)}
         <div class="acts">
-          <button class="btn pri" type="button" data-act="mkhom" data-id="${k.id}" ${dz(() => canMake(k.in) < 1 || S.homs.length >= MAX_HOMS)}>生み出す</button>
-          <button class="btn mana" type="button" data-act="mkhomfill" data-id="${k.id}" ${dz(() => { const c = mc(); return c === null || c === 0 || S.mana < c || S.homs.length >= MAX_HOMS; })}>不足分を生成して生み出す <small>${tx(() => { const c = mc(); return c === null ? '未登録の材料あり' : fmt(c); })}</small></button>
+          <button class="btn pri" type="button" data-act="mkhom" data-id="${k.id}" ${dz(() => canMake(k.in) < 1)}>生み出す</button>
+          <button class="btn mana" type="button" data-act="mkhomfill" data-id="${k.id}" ${dz(() => { const c = mc(); return c === null || c === 0 || S.mana < c; })}>不足分を生成して生み出す <small>${tx(() => { const c = mc(); return c === null ? '未登録の材料あり' : fmt(c); })}</small></button>
         </div>
       </div>`;
     }).join('');
-    return `<h4>${esc(a.name)}で生まれる子</h4>${rows}`;
+    return rows ? `<h4>${esc(a.name)}で生まれる子</h4>${rows}` : '';
   }).join('');
   return `
   <section class="area-head"><span class="eyebrow">相棒</span><h2>ホムンクルス</h2>
-    ${help('tools', `<p class="muted small">生み出した子は全員、採取のたびに経験値を得て育ちます。レベルが上がると、その子の成長率に従って能力値が伸び、さらに3つの候補から1つ選んで伸ばせます。種類ごとに、能力値と技能はそれぞれ一番高い子のものが効きます。</p><p class="muted small">周回すると「因果融合」が起き、種類ごとに全員が1人にまとまって、それぞれの一番良い能力値と技能が残ります。そのたびに能力の上限が15上がり、Lv1から育ち直します。</p>`)}</section>
+    ${help('tools', `<p class="muted small">生み出した子は、採取のたびに経験値を得て育ちます。Lv5・10・15・20 の節目では、その子の3本の道から1つを1段進めます。同じ道を進めるほど効果が大きく、4段とも同じ道なら「極み」で効果が倍になります。ほかのレベルアップでは、技能を覚えるか、持っている技能のランクを上げます。</p><p class="muted small">周回すると「因果融合」が起き、能力の上限が15上がってLv1から育ち直します。道は選び直せ、覚えた技能と能力値は残ります。技能の枠がすべて S+ になると「完璧」。その先も ★ で限りなく伸びます。</p>`)}</section>
   ${vPicks()}
-  <div class="panel">
+  ${S.homs.length ? `<div class="panel">
     <div class="small muted">ホムンクルスの効果（能力値1ごとに効果が2%ずつ掛け算で伸びます）</div>
-    <div class="list tight">${effects}</div>
+    <div class="list tight">${effects}${roles}</div>
     <div class="row-between"><p class="small muted">技能: ${sk || 'なし'}</p><button class="btn" type="button" data-act="traithelp" aria-expanded="${!!ui.traitHelp}">${ui.traitHelp ? '技能の説明を閉じる' : '技能の説明'}</button></div>
-    ${ui.traitHelp ? `<p class="small muted">技能のランクは E・D・C・B・A・S・S+ の7段階で、強さはそれぞれ ${RANK_V.join('・')} です。種類ごとに一番高いランクが効き、種類どうしは足し合わせます。Lv10とLv20になったとき、選んだ1つのランクが上がります。</p>${TRAIT_IDS.map(id => { const tr = TRAITS[id]; const l = traitLv(id); return `<div class="item"><div class="top-row"><span class="nm">${tr.name}</span><span class="own small">${l ? `<b class="q">強さ${l}（${tr.now(l)}）</b>` : '<span class="muted">なし</span>'}</span></div><div class="meta">${esc(tr.d)}強さ1ごとに${tr.per}。</div></div>`; }).join('')}` : ''}
-  </div>
-  ${groups || '<p class="small muted">まだホムンクルスがいません。下の「生み出す」で作ってみましょう。</p>'}
-  <h3>生み出す（全部で ${S.homs.length} / ${MAX_HOMS}人）</h3>
-  ${help('make', `<p class="small muted">同じ種類でも、育ち方は一人ひとり違います。何人か育てておくと、周回のときに良いところが集まります。</p>`)}
-  <div class="list">${kinds}</div>`;
-}
-
-/* --- 迷宮 --- */
-function vMaze() {
-  const best = S.life.mazeBest || 0;
-  const head = `<section class="area-head"><span class="eyebrow">色のない町　いちばん深く ${fmt(best)}（マナ ${fmtX(mazeMult())}）</span><h2>よどみ</h2>
-    ${help('maze', `<p class="muted small">ノートを開いたまま眠ると、人のいない色のない町で目を覚まします。そこには、ほどかれなかったマナが固まった「よどみ」があり、埃や錆の形をとってうろついています。ホムンクルスを最大${MAZE_TEAM}人連れて、よどみをほどきながら奥へ進みます。深いほど手ごわく、報酬も大きくなります。いつでも目を覚まして持ち帰れますが、全員が倒れると集めたものの半分を失います。いちばん深く進んだ深さ1つごとに、マナがずっと2%増えます。</p>`)}</section>`;
-  const m = S.maze;
-  if (!m) {
-    const team = S.mazeTeam;
-    const cards = S.homs.slice().sort((a, b) => statTotal(b) - statTotal(a)).map(h => {
-      const on = team.includes(h.u);
-      const c = cstat(h, S.homs.filter(x => team.includes(x.u)), 0);
-      return `<div class="hom r${KIND[h.k].r}${on ? ' sel' : ''}">
-        <div class="top-row"><span class="nm mkname">${homFace(h.k, on ? 1 : 0)}${esc(KIND[h.k].name)}</span><span class="own small">Lv ${h.lv}${h.f ? `　融合${h.f}回` : ''}</span></div>
-        <div class="mzst small"><span>HP <b>${fmt(c.maxhp)}</b></span><span>攻撃 <b>${fmt(c.atk)}</b></span><span>2回攻撃 ${Math.round(c.dbl * 100)}%</span><span>会心 ${Math.round(c.crit * 100)}%</span><span>回避 ${Math.round(c.dodge * 100)}%</span></div>
-        ${skillTags(h)}
-        <div class="acts"><button class="btn ${on ? 'okb' : ''}" type="button" data-act="mzpick" data-id="${h.u}" ${!on && team.length >= MAZE_TEAM ? 'disabled' : ''}>${on ? '連れていく（外す）' : team.length >= MAZE_TEAM ? 'もう連れていけない' : '連れていく'}</button></div>
-      </div>`;
-    }).join('');
-    const last = S.mazeLast ? `<div class="panel"><div class="small muted">前の夜</div>${S.mazeLast.map(l => `<p class="small">${esc(l)}</p>`).join('')}</div>` : '';
-    return `${head}${last}
-    <div class="panel"><div class="row-between"><span>連れていく子 ${team.length} / ${MAZE_TEAM}</span><button class="btn pri" type="button" data-act="mzstart" ${team.length ? '' : 'disabled'}>眠りにつく</button></div>
-    ${help('team', `<p class="small muted">力と知恵が攻撃、力と器用がHP、速さが2回攻撃、運が会心、器用が回避に効きます。技能「豪腕」は攻撃、「修練」は経験値、「錬金」は報酬、「洞察」は分かれ道の先を見通す力になります。</p>`)}</div>
-    <div class="list">${cards || '<p class="small muted">ホムンクルスがいません。相棒の画面で生み出してください。</p>'}</div>`;
-  }
-  const team = mzTeam();
-  const bars = team.map(h => { const mx = cstat(h, team, m.buff).maxhp, hp = m.hp[h.u]; return `<div class="hpline${hp <= 0 ? ' down' : ''}"><span class="mkname">${homFace(h.k, hp <= 0 ? 2 : 0)}${esc(KIND[h.k].name)} Lv${h.lv}</span><span class="hpbar"><i style="width:${Math.max(0, hp / mx * 100)}%"></i></span><span class="small">${hp <= 0 ? '戦闘不能' : fmt(hp) + '/' + fmt(mx)}</span></div>`; }).join('');
-  const bagItems = Object.entries(m.bag.items).filter(([, n]) => n > 0).map(([id, n]) => `${ITEM[id].name}×${fmt(n)}`).join('、');
-  const choices = m.choices.map((c, i) => {
-    const p = PATHS[c.t];
-    if (c.hide) return `<button class="path" type="button" data-act="mzgo" data-id="${i}"><b>？</b><span class="small muted">行ってみないとわからない</span></button>`;
-    const foe = (c.t === 'foe' || c.t === 'elite' || c.t === 'boss') ? foeStats(m.floor, c.t) : null;
-    return `<button class="path ${c.t}" type="button" data-act="mzgo" data-id="${i}"><b>${p.name}${foe ? '：' + esc(foe.name) : ''}</b><span class="small muted">${p.d}${foe ? `（HP ${fmt(foe.hp)}・攻撃 ${fmt(foe.atk)}）` : ''}</span></button>`;
-  }).join('');
-  return `${head}
-  <div class="panel mz">
-    <div class="row-between"><h3>深さ ${fmt(m.floor)}</h3><span class="small muted">${m.buff ? `祠の加護 攻撃+${m.buff * 15}%` : ''}</span></div>
-    ${bars}
-    <div class="small">持ち物: <b class="q">${fmt(m.bag.mana)} マナ</b>${bagItems ? '、' + bagItems : ''}${m.bag.stones ? `、賢者の石 ${m.bag.stones}個` : ''}</div>
-  </div>
-  <div class="panel">${m.log.map(l => `<p class="small">${esc(l)}</p>`).join('')}</div>
-  <h3>分かれ道</h3>
-  <div class="paths">${choices}</div>
-  <div class="acts">${confirmBtn('', 'data-act="mzback"', '目を覚ます（持ち物を持ち帰る）', 'もう一度タップで目を覚ます')}</div>`;
+    ${ui.traitHelp ? `<p class="small muted">技能のランクは E・D・C・B・A・S・S+ で、強さはそれぞれ ${RANK_V.join('・')}。S+ の先は ★ が1つ増えるごとに強さ +4 です。全員の強さを足し合わせて効きます。</p>${TRAIT_IDS.map(id => { const tr = TRAITS[id]; const l = traitLv(id); return `<div class="item"><div class="top-row"><span class="nm">${tr.name}</span><span class="own small">${l ? `<b class="q">強さ${l}（${tr.now(l)}）</b>` : '<span class="muted">なし</span>'}</span></div><div class="meta">${esc(tr.d)}強さ1ごとに${tr.per}。</div></div>`; }).join('')}` : ''}
+  </div>` : ''}
+  ${cards || '<p class="small muted">まだホムンクルスがいません。下の「生み出す」で作ってみましょう。</p>'}
+  ${kinds ? `<h3>生み出す</h3><div class="list">${kinds}</div>` : ''}`;
 }
 
 /* --- ミッションと依頼 --- */
@@ -2348,7 +2198,7 @@ function vStone() {
       ${maxed ? '' : `<button class="btn pri sm" type="button" data-act="buypu" data-id="${p.id}" ${dz(() => S.stones < p.cost(l()))}>習得 <small>石${tx(() => fmt(p.cost(l())))}</small></button>`}
     </div>`;
   }).join('');
-  const keep = ['古いノート', 'よどみの最深到達', 'ミッションの報酬（達成回数）', 'ホムンクルス（因果融合: 種類ごとに全員が1人にまとまり、能力値と技能はそれぞれ一番良いものが残る。上限+15、Lv1から育ち直す）', `熟練の${Math.round(Math.min(1, 0.1 + 0.1 * pu('skillKeep')) * 100)}%`, '賢者の石と、石で習得した強化']
+  const keep = ['古いノート', 'ミッションの報酬（達成回数）', 'ホムンクルス（因果融合: 能力値と技能が残り、上限+15。Lv1から育ち直し、道は選び直せる）', `熟練の${Math.round(Math.min(1, 0.1 + 0.1 * pu('skillKeep')) * 100)}%`, '賢者の石と、石で習得した強化']
     .concat(['町の人との仲（特典と話）'], pu('keepFame') ? ['信頼'] : [], pu('keepBook') ? ['図鑑と加工の解放'] : [], pu('keepRef') ? ['精錬'] : [], pu('autodis') ? ['自動分解装置'] : []);
   return `
   <section class="area-head">
@@ -2365,7 +2215,7 @@ function vStone() {
     ${insHtml(STONE_IN, 1)}
     <div class="row-between"><span class="small">手に入る賢者の石</span><b class="q">${tx(() => fmt(stoneGain()))} 個</b></div>
     <p class="small muted">この周で集めたマナが多いほど増えます（この周の累計 ${tx(() => fmt(S.st.totalMana))} マナ）。</p>
-    <p class="small">残るもの: ミッションの報酬、ホムンクルス（種類ごとに因果融合）、よどみの記録、熟練の一部、ノート（くわしくは上の「説明」）</p>
+    <p class="small">残るもの: ミッションの報酬、ホムンクルス（因果融合）、熟練の一部、ノート（くわしくは上の「説明」）</p>
     <div class="acts">${confirmBtn('pri', `data-act="prestige" ${dz(() => { const c = mc(); return c === null || S.mana < c; })}`, `錬成して周回する <small>${tx(() => { const c = mc(); return c === null ? '未登録の材料あり' : c > 0 ? '不足分 ' + fmt(c) + ' マナ' : '手持ちで足ります'; })}</small>`, 'もう一度タップで周回')}</div>
   </div>
   ${vChallenges()}
@@ -2431,16 +2281,13 @@ main.addEventListener('click', e => {
     case 'force': { const c = unitMana(id) * 10; if (S.mana < c) break; if (!armed(b)) return; S.mana -= c; addItem(id, 1); toast(`強制錬成で${ITEM[id].name}が生まれた`); break; }
     case 'unlockcraft': { const p = ITEM[id]; if (procOn(p)) break; if (canMake(p.in) < 1 && !fillMissing(p.in, 1)) break; if (craft(p, 1)) { toast(`${p.name}を解放しました。これからは不足分を生成で作れます`, 4000); } break; }
     case 'mkhom': { const h = makeHom(KIND[id]); if (h) homToast(h); break; }
-    case 'mkhomfill': { if (S.homs.length >= MAX_HOMS) break; if (fillMissing(KIND[id].in, 1)) { const h = makeHom(KIND[id]); if (h) homToast(h); } break; }
-    case 'release': { if (!armed(b)) return; const u = Number(id); const g = releaseHom(u); toast(`ホムンクルスと別れました: +${fmt(g)} マナ`); break; }
+    case 'mkhomfill': { if (S.homs.some(h => h.k === id)) break; if (fillMissing(KIND[id].in, 1)) { const h = makeHom(KIND[id]); if (h) homToast(h); } break; }
     case 'traithelp': ui.traitHelp = !ui.traitHelp; break;
-    case 'pick': { const h = homById(Number(id)); const msg = h && applyPick(h, b.dataset.v); if (msg) toast(msg); break; }
+    case 'pick': { const h = homById(Number(id)); if (!h) break; const v = b.dataset.v; if (h.pk[0] && h.pk[0].t === 'k' && needSwap(h, v)) { ui.swap = { u: h.u, id: v }; render(); break; } const msg = applyPick(h, v); if (msg) toast(msg); ui.swap = null; break; }
+    case 'pickswap': { const h = homById(Number(id)); const msg = h && applyPick(h, b.dataset.v, b.dataset.r); if (msg) toast(msg); ui.swap = null; render(); break; }
+    case 'pickswapno': ui.swap = null; render(); break;
     case 'pickauto': { const n = S.homs.reduce((a, h) => a + autoPicks(h), 0); if (n) toast(`${n}件をおまかせで選びました`); break; }
     case 'fav': { S.fav = id; toast(`${KIND[id].name}を採取に連れていきます`); break; }
-    case 'mzpick': { const u = Number(id); if (S.mazeTeam.includes(u)) S.mazeTeam = S.mazeTeam.filter(x => x !== u); else if (S.mazeTeam.length < MAZE_TEAM) S.mazeTeam.push(u); break; }
-    case 'mzstart': mzStart(); break;
-    case 'mzgo': mzGo(Number(id)); break;
-    case 'mzback': if (!armed(b)) return; mzReturn(false); break;
     case 'misview': ui.misView = id; break;
     case 'misarea': ui.misArea = id; break;
     case 'claim': { const m = MISS[id]; if (!m || !misOpen(m) || !ready(m)) break; if (m.deliver) S.inv[m.deliver] -= m.goal; complete(m); break; }
@@ -2463,8 +2310,8 @@ main.addEventListener('click', e => {
   update();
 });
 function homToast(h) {
-  const sk = h.sk.map(k => TRAITS[k.id].name + ' ' + RANKS[k.r]).join('、');
-  if (kindHoms(h.k).length === 1) celebrate('生まれました', KIND[h.k].name, KIND[h.k].d, RC(KIND[h.k].r), homSrc(h.k, 1));
+  const sk = h.sk.map(k => TRAITS[k.id].name + ' ' + rankName(k.r)).join('、');
+  celebrate('生まれました', KIND[h.k].name, KIND[h.k].d, RC(KIND[h.k].r), homSrc(h.k, 1));
   toast(`${KIND[h.k].name}が生まれました: ${sk}`, 4000);
 }
 document.querySelector('.tabs').addEventListener('click', e => {
